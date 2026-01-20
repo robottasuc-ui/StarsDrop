@@ -39,11 +39,16 @@
         .animate-float { animation: floating 3s ease-in-out infinite; }
         .icon-game { width: 55px; height: 55px; object-fit: contain; }
 
-        /* Стили для новых модалок */
+        /* Модалка */
         .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: none; align-items: flex-end; }
-        .modal-content { background: #17212b; width: 100%; border-radius: 24px 24px 0 0; padding: 24px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .pay-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); width: 100%; padding: 16px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .pay-btn:active { background: rgba(255,255,255,0.1); transform: scale(0.98); }
+        .modal-content { background: #17212b; width: 100%; border-radius: 24px 24px 0 0; padding: 24px; border-top: 1px solid rgba(255,255,255,0.1); padding-bottom: 40px; }
+        
+        /* Вкладки в модалке */
+        .tab-btn { padding: 12px; font-weight: 800; font-size: 12px; border-bottom: 2px solid transparent; color: #4b5563; flex: 1; text-align: center; transition: 0.3s; cursor: pointer; }
+        .tab-btn.active { color: white; border-bottom-color: #7b2ff7; }
+        
+        .pay-grid-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 16px; border-radius: 16px; text-align: center; transition: 0.2s; cursor: pointer; }
+        .pay-grid-item:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
@@ -57,19 +62,19 @@
                         <img id="user-pic" src="https://via.placeholder.com/100" class="w-full h-full object-cover" alt="Ava">
                     </div>
                     <div class="flex flex-col">
-                        <span id="user-name" class="text-sm font-bold text-white uppercase tracking-tight">@VibePlayer</span>
+                        <span id="user-name" class="text-sm font-bold text-white uppercase tracking-tight">@User</span>
                         <span id="user-id" class="text-[10px] text-gray-400 font-medium tracking-wide">ID: 00000000</span>
                     </div>
                 </div>
                 
                 <div class="flex flex-col gap-2">
-                    <div onclick="openTonModal()" class="cursor-pointer bg-black/60 px-3 py-2 rounded-full flex items-center border border-blue-500/40 min-w-[125px] active:scale-95 transition-transform">
-                        <div class="w-5 h-5 flex-shrink-0 flex items-center justify-center"><img src="ton.png" class="max-w-full max-h-full" alt=""></div>
+                    <div onclick="openPayModal('ton')" class="cursor-pointer bg-black/60 px-3 py-2 rounded-full flex items-center border border-blue-500/40 min-w-[125px]">
+                        <div class="w-5 h-5 flex-shrink-0 flex items-center justify-center"><img src="ton.png" class="max-w-full max-h-full"></div>
                         <span class="text-blue-400 font-black text-[10px] ml-2 flex-grow">TON</span>
                         <span id="ton-balance" class="font-bold text-sm ml-auto">0.00</span>
                     </div>
-                    <div onclick="openStarsModal()" class="cursor-pointer bg-black/60 px-3 py-2 rounded-full flex items-center border border-yellow-500/40 min-w-[125px] active:scale-95 transition-transform">
-                        <div class="w-5 h-5 flex-shrink-0 flex items-center justify-center"><img src="star.png" class="max-w-full max-h-full" alt=""></div>
+                    <div onclick="openPayModal('stars')" class="cursor-pointer bg-black/60 px-3 py-2 rounded-full flex items-center border border-yellow-500/40 min-w-[125px]">
+                        <div class="w-5 h-5 flex-shrink-0 flex items-center justify-center"><img src="star.png" class="max-w-full max-h-full"></div>
                         <span class="text-yellow-500 font-black text-[10px] ml-2 flex-grow">STARS</span>
                         <span id="stars-balance" class="font-bold text-sm ml-auto">0</span>
                     </div>
@@ -81,15 +86,11 @@
                     <div class="absolute inset-0 bg-purple-600/20 blur-[70px] rounded-full animate-pulse"></div>
                     <img src="hero.png" alt="Hero" class="relative z-10 w-56 h-56 object-contain animate-float">
                 </div>
-                <h1 class="text-4xl font-black tracking-tighter mt-4 uppercase">Starsdrop</h1>
-                <p class="text-[10px] text-purple-300/70 uppercase tracking-[0.2em] font-medium leading-relaxed whitespace-nowrap mt-2">
-                    Уносимся на вершину космических игр!
-                </p>
+                <h1 class="text-4xl font-black tracking-tighter mt-4 uppercase italic">Starsdrop</h1>
+                <p class="text-[10px] text-purple-300/70 uppercase tracking-[0.2em] font-medium mt-2">Космические призы ждут</p>
             </div>
 
-            <button class="btn-main w-full py-4 font-black text-sm uppercase tracking-widest active:scale-[0.96] transition-all">
-                Начать полет к призам >>
-            </button>
+            <button class="btn-main w-full py-4 font-black text-sm uppercase tracking-widest active:scale-95 transition-all">Начать полет >></button>
 
             <div class="grid grid-cols-3 gap-3">
                 <div class="card"><span class="text-[9px] text-gray-400 font-bold uppercase mb-1">Кейсы</span><img src="case.png" class="icon-game"></div>
@@ -98,45 +99,40 @@
             </div>
 
             <div class="flex justify-around items-center pt-4 border-t border-white/5">
-                <div onclick="openTonModal()" class="flex flex-col items-center text-[8px] font-bold text-gray-500 cursor-pointer active:text-white transition-colors"><span class="text-xs mb-1">⊞</span>ДЕПОЗИТ</div>
-                <div onclick="openStarsModal()" class="flex flex-col items-center text-[8px] font-bold text-gray-500 cursor-pointer active:text-white transition-colors"><span class="text-xs mb-1">▤</span>МАГАЗИН</div>
-                <div class="flex flex-col items-center text-[10px] font-black text-blue-400"><span class="text-sm mb-1">◆</span>TON</div>
+                <div onclick="openPayModal('ton')" class="flex flex-col items-center text-[8px] font-bold text-gray-500 cursor-pointer active:text-white"><span class="text-xs mb-1">⊞</span>ДЕПОЗИТ</div>
+                <div onclick="openPayModal('stars')" class="flex flex-col items-center text-[8px] font-bold text-gray-500 cursor-pointer active:text-white"><span class="text-xs mb-1">▤</span>МАГАЗИН</div>
+                <div class="flex flex-col items-center text-[10px] font-black text-blue-400"><span class="text-sm mb-1">◆</span>ГЛАВНАЯ</div>
                 <div class="flex flex-col items-center text-[8px] font-bold text-gray-500"><span class="text-xs mb-1">▲</span>ТОП</div>
                 <div class="flex flex-col items-center text-[8px] font-bold text-gray-500"><span class="text-xs mb-1">◉</span>ПРОФИЛЬ</div>
             </div>
         </div>
 
-        <div id="ton-modal" class="modal-overlay" onclick="closeModals()">
+        <div id="pay-modal" class="modal-overlay" onclick="closeModals()">
             <div class="modal-content" onclick="event.stopPropagation()">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-lg font-black uppercase text-blue-400">Пополнить TON</h2>
-                    <span class="text-[10px] text-gray-500 font-bold uppercase">UQD3...8Yx</span>
+                <div class="flex gap-4 mb-6 border-b border-white/10">
+                    <div id="tab-ton" onclick="switchTab('ton')" class="tab-btn active uppercase">Ton Pay</div>
+                    <div id="tab-stars" onclick="switchTab('stars')" class="tab-btn uppercase">Stars Shop</div>
                 </div>
-                <div class="grid grid-cols-2 gap-3 mb-6">
-                    <button onclick="payTon(1)" class="bg-white/5 border border-white/10 p-4 rounded-xl font-bold active:bg-white/10">1 TON</button>
-                    <button onclick="payTon(5)" class="bg-white/5 border border-white/10 p-4 rounded-xl font-bold active:bg-white/10">5 TON</button>
-                    <button onclick="payTon(10)" class="bg-purple-500/10 border border-purple-500/50 p-4 rounded-xl font-bold text-purple-400 active:bg-purple-500/20">10 TON</button>
-                    <button onclick="payTon(50)" class="bg-white/5 border border-white/10 p-4 rounded-xl font-bold active:bg-white/10">50 TON</button>
-                </div>
-                <button onclick="closeModals()" class="w-full text-gray-500 font-bold text-[10px] uppercase tracking-widest">Закрыть</button>
-            </div>
-        </div>
 
-        <div id="stars-modal" class="modal-overlay" onclick="closeModals()">
-            <div class="modal-content" onclick="event.stopPropagation()">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-lg font-black uppercase text-yellow-500">Магазин Stars</h2>
-                    <span id="stars-info" class="text-[10px] text-gray-500 font-bold">⭐ Баланс: 0</span>
+                <div id="content-ton" class="grid grid-cols-2 gap-3">
+                    <div onclick="payTon(1)" class="pay-grid-item font-bold">1 TON</div>
+                    <div onclick="payTon(5)" class="pay-grid-item font-bold">5 TON</div>
+                    <div onclick="payTon(10)" class="pay-grid-item font-bold border-purple-500/50 text-purple-400">10 TON</div>
+                    <div onclick="payTon(50)" class="pay-grid-item font-bold">50 TON</div>
                 </div>
-                <button onclick="payStars(500)" class="pay-btn">
-                    <span class="font-bold text-yellow-500">⭐ 500 Звёзд</span>
-                    <span class="text-sm font-medium text-gray-400">389.00 UAH</span>
-                </button>
-                <button onclick="payStars(1000)" class="pay-btn">
-                    <span class="font-bold text-yellow-500">⭐ 1 000 Звёзд</span>
-                    <span class="text-sm font-medium text-gray-400">779.00 UAH</span>
-                </button>
-                <button onclick="closeModals()" class="w-full text-gray-500 font-bold text-[10px] uppercase tracking-widest mt-4">Закрыть</button>
+
+                <div id="content-stars" class="hidden space-y-2">
+                    <div onclick="payStars(500)" class="pay-grid-item flex justify-between items-center">
+                        <span class="font-bold text-yellow-500">⭐ 500 Звёзд</span>
+                        <span class="text-xs text-gray-400">389.00 UAH</span>
+                    </div>
+                    <div onclick="payStars(1000)" class="pay-grid-item flex justify-between items-center">
+                        <span class="font-bold text-yellow-500">⭐ 1 000 Звёзд</span>
+                        <span class="text-xs text-gray-400">779.00 UAH</span>
+                    </div>
+                </div>
+
+                <button onclick="closeModals()" class="w-full text-gray-500 font-bold text-[10px] uppercase tracking-widest mt-8">Закрыть</button>
             </div>
         </div>
     </div>
@@ -145,12 +141,11 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // 1. Настройка TON Connect
         const tonConnectUI = new TONConnectUI.TonConnectUI({
-            manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/manifest.json', // Замени на свой, когда будет готов
-            buttonRootId: 'ton-connect-btn'
+            manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/manifest.json'
         });
 
+        // Данные юзера
         const user = tg.initDataUnsafe?.user;
         if (user) {
             document.getElementById('user-name').innerText = user.username ? `@${user.username}` : user.first_name;
@@ -158,79 +153,71 @@
             if (user.photo_url) document.getElementById('user-pic').src = user.photo_url;
         }
 
-        // 2. Управление модальными окнами
-        function openTonModal() { document.getElementById('ton-modal').style.display = 'flex'; }
-        function openStarsModal() { document.getElementById('stars-modal').style.display = 'flex'; }
-        function closeModals() { 
-            document.getElementById('ton-modal').style.display = 'none'; 
-            document.getElementById('stars-modal').style.display = 'none'; 
+        // Управление модалкой и вкладками
+        function openPayModal(type) {
+            document.getElementById('pay-modal').style.display = 'flex';
+            switchTab(type);
         }
 
-        // 3. Логика пополнения TON
-        async function payTon(amountInTon) {
-            closeModals();
-            if (!tonConnectUI.connected) {
-                await tonConnectUI.openModal();
-                return;
+        function closeModals() { document.getElementById('pay-modal').style.display = 'none'; }
+
+        function switchTab(type) {
+            const tTab = document.getElementById('tab-ton'), sTab = document.getElementById('tab-stars');
+            const tCon = document.getElementById('content-ton'), sCon = document.getElementById('content-stars');
+            if(type === 'ton') {
+                tTab.classList.add('active'); sTab.classList.remove('active');
+                tCon.classList.remove('hidden'); sCon.classList.add('hidden');
+            } else {
+                sTab.classList.add('active'); tTab.classList.remove('active');
+                sCon.classList.remove('hidden'); tCon.classList.add('hidden');
             }
-            
-            const transaction = {
+        }
+
+        // Оплата TON
+        async function payTon(amount) {
+            if (!tonConnectUI.connected) { await tonConnectUI.openModal(); return; }
+            const tx = {
                 validUntil: Math.floor(Date.now() / 1000) + 300,
                 messages: [{
                     address: "UQD3Ova8MrxhXHacmHgQVcT-TTLF8pZYKBo67egsBCl6M8Yx",
-                    amount: (amountInTon * 1000000000).toString(),
-                    payload: btoa(user.id.toString()) // Отправляем ID в комментарии для твоего бота
+                    amount: (amount * 1000000000).toString(),
+                    payload: btoa(user.id.toString())
                 }]
             };
-
-            try {
-                await tonConnectUI.sendTransaction(transaction);
-                tg.showAlert(`Транзакция на ${amountInTon} TON отправлена! Баланс обновится скоро.`);
-            } catch (e) {
-                console.error(e);
-            }
+            try { await tonConnectUI.sendTransaction(tx); closeModals(); } catch (e) { console.error(e); }
         }
 
-        // 4. Логика покупки Звезд (вызов счета от твоего бота)
+        // Оплата STARS
         async function payStars(amount) {
-            closeModals();
             try {
-                const response = await fetch(`http://localhost:8000/create_stars_invoice/${user.id}/${amount}`);
-                const data = await response.json();
-                if(data.link) {
-                    tg.openInvoice(data.link);
-                }
-            } catch (e) {
-                tg.showAlert("Бот не отвечает. Запустите bot.py на компьютере.");
-            }
+                const res = await fetch(`http://localhost:8000/create_stars_invoice/${user.id}/${amount}`);
+                const data = await res.json();
+                if(data.link) tg.openInvoice(data.link);
+            } catch (e) { tg.showAlert("Бот не отвечает. Проверь bot.py на ПК!"); }
         }
 
-        // 5. Постоянное обновление баланса из базы данных
-        async function updateBalanceUI() {
+        // Баланс
+        async function updateBal() {
             if (!user) return;
             try {
-                const response = await fetch(`http://localhost:8000/get_balance/${user.id}`);
-                const data = await response.json();
+                const res = await fetch(`http://localhost:8000/get_balance/${user.id}`);
+                const data = await res.json();
                 document.getElementById('ton-balance').innerText = data.balance.toFixed(2);
-                // Если добавишь звезды в API, обнови и их:
-                // document.getElementById('stars-balance').innerText = data.stars;
             } catch (e) {}
         }
-        setInterval(updateBalanceUI, 10000);
-        updateBalanceUI();
+        setInterval(updateBal, 10000); updateBal();
 
-        // Анимация звезд
+        // Звезды фона
         function createStars() {
             const container = document.getElementById('star-container');
             for (let i = 0; i < 50; i++) {
                 const star = document.createElement('div');
                 star.className = 'star-particle';
                 const size = Math.random() * 3 + 1 + 'px';
-                star.style.width = size;
-                star.style.height = size;
+                star.style.width = size; star.style.height = size;
                 star.style.left = Math.random() * 100 + '%';
                 star.style.animationDuration = Math.random() * 3 + 2 + 's';
-                star.style.animationDelay = Math.random() * 10 + 's'; 
+                star.style.animationDelay = Math.random() * 5 + 's';
                 star.style.opacity = Math.random() * 0.8 + 0.2;
                 container.appendChild(star);
             }
