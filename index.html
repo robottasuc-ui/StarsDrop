@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StarsDrop</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #050208; color: white; font-family: sans-serif; overflow: hidden; margin: 0; display: flex; justify-content: center; }
+        .gradient-bg { background: radial-gradient(circle at top, #1e0d36 0%, #08040d 100%); width: 100%; max-width: 450px; height: 100vh; position: relative; overflow: hidden; }
+        
+        #star-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
+        /* ИСПРАВЛЕННАЯ АНИМАЦИЯ: вылет из-за границы (-100px) */
+        @keyframes fall { 
+            0% { transform: translateY(-100px); opacity: 0; } 
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(110vh); opacity: 0; } 
+        }
+        
+        .star-particle { 
+            position: absolute; 
+            background-color: #fff; 
+            border-radius: 50%; 
+            pointer-events: none; 
+            animation: fall linear infinite; 
+            box-shadow: 0 0 5px #fff; 
+            will-change: transform; 
+        }
+
+        .app-container { position: relative; z-index: 10; height: 100%; flex-direction: column; display: flex; justify-content: space-between; padding: 20px; }
+        
+        /* Стиль контейнера аватарки */
+        .avatar-container {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 2px solid rgba(168, 85, 247, 0.4);
+            overflow: hidden;
+            background: #1a1a1b;
+            flex-shrink: 0;
+        }
+
+        .card { 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 12px; 
+            height: 100px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s;
+        }
+        .card:active { transform: scale(0.95); }
+        .btn-main { background: linear-gradient(90deg, #7b2ff7, #b122e3); border-radius: 14px; box-shadow: 0 4px 20px rgba(123, 47, 247, 0.4); }
+        
+        @keyframes floating { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        .animate-float { animation: floating 3s ease-in-out infinite; }
+        .icon-game { width: 55px; height: 55px; object-fit: contain; }
+    </style>
+</head>
+<body>
+    <div class="gradient-bg">
+        <div id="star-container"></div>
+
+        <div class="app-container">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="avatar-container">
+                        <img id="user-pic" src="https://via.placeholder.com/100" class="w-full h-full object-cover" alt="Ava">
+                    </div>
+                    <div class="flex flex-col">
+                        <span id="user-name" class="text-sm font-bold text-white uppercase tracking-tight">@VibePlayer</span>
+                        <span id="user-id" class="text-[10px] text-gray-400 font-medium tracking-wide">ID: 00000000</span>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col gap-2">
+                    <div class="bg-black/60 px-3 py-2 rounded-full flex items-center border border-blue-500/40 min-w-[125px]">
+                        <div class="w-5 h-5 flex-shrink-0 flex items-center justify-center"><img src="ton.png" class="max-w-full max-h-full" alt=""></div>
+                        <span class="text-blue-400 font-black text-[10px] ml-2 flex-grow">TON</span>
+                        <span class="font-bold text-sm ml-auto">0</span>
+                    </div>
+                    <div class="bg-black/60 px-3 py-2 rounded-full flex items-center border border-yellow-500/40 min-w-[125px]">
+                        <div class="w-5 h-5 flex-shrink-0 flex items-center justify-center"><img src="star.png" class="max-w-full max-h-full" alt=""></div>
+                        <span class="text-yellow-500 font-black text-[10px] ml-2 flex-grow">STARS</span>
+                        <span class="font-bold text-sm ml-auto">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center text-center">
+                <div class="relative w-64 h-64 flex items-center justify-center">
+                    <div class="absolute inset-0 bg-purple-600/20 blur-[70px] rounded-full animate-pulse"></div>
+                    <img src="hero.png" alt="Hero" class="relative z-10 w-56 h-56 object-contain animate-float">
+                </div>
+                <h1 class="text-4xl font-black tracking-tighter mt-4 uppercase">Starsdrop</h1>
+                <p class="text-[10px] text-purple-300/70 uppercase tracking-[0.2em] font-medium leading-relaxed whitespace-nowrap mt-2">
+                    Уносимся на вершину космических игр!
+                </p>
+            </div>
+
+            <button class="btn-main w-full py-4 font-black text-sm uppercase tracking-widest active:scale-[0.96] transition-all">
+                Начать полет к призам >>
+            </button>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div class="card"><span class="text-[9px] text-gray-400 font-bold uppercase mb-1">Кейсы</span><img src="case.png" class="icon-game" alt=""></div>
+                <div class="card border-purple-500/50 bg-purple-500/10"><span class="text-[9px] text-gray-200 font-bold uppercase mb-1">Рулетка</span><img src="spin.png" class="icon-game" alt=""></div>
+                <div class="card"><span class="text-[9px] text-gray-400 font-bold uppercase mb-1">Мини игры</span><img src="mini.png" class="icon-game" alt=""></div>
+            </div>
+
+            <div class="flex justify-around items-center pt-4 border-t border-white/5">
+                <div class="flex flex-col items-center text-[8px] font-bold text-gray-500"><span class="text-xs mb-1">⊞</span>ДЕПОЗИТ</div>
+                <div class="flex flex-col items-center text-[8px] font-bold text-gray-500"><span class="text-xs mb-1">▤</span>МАГАЗИН</div>
+                <div class="flex flex-col items-center text-[10px] font-black text-blue-400"><span class="text-sm mb-1">◆</span>TON</div>
+                <div class="flex flex-col items-center text-[8px] font-bold text-gray-500"><span class="text-xs mb-1">▲</span>ТОП</div>
+                <div class="flex flex-col items-center text-[8px] font-bold text-gray-500"><span class="text-xs mb-1">◉</span>ПРОФИЛЬ</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Подтягиваем данные пользователя
+        const user = tg.initDataUnsafe?.user;
+        if (user) {
+            document.getElementById('user-name').innerText = user.username ? `@${user.username}` : user.first_name;
+            document.getElementById('user-id').innerText = `ID: ${user.id}`;
+            if (user.photo_url) {
+                document.getElementById('user-pic').src = user.photo_url;
+            }
+        }
+
+        // Логика звезд
+        function createStars() {
+            const container = document.getElementById('star-container');
+            for (let i = 0; i < 50; i++) {
+                const star = document.createElement('div');
+                star.className = 'star-particle';
+                const size = Math.random() * 3 + 1 + 'px';
+                star.style.width = size;
+                star.style.height = size;
+                star.style.left = Math.random() * 100 + '%';
+                star.style.animationDuration = Math.random() * 3 + 2 + 's';
+                star.style.animationDelay = Math.random() * 10 + 's'; 
+                star.style.opacity = Math.random() * 0.8 + 0.2;
+                container.appendChild(star);
+            }
+        }
+        createStars();
+    </script>
+</body>
+</html>
