@@ -6,13 +6,13 @@
     <title>StarsDrop</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
         body { background-color: #050208; color: white; font-family: sans-serif; overflow: hidden; margin: 0; display: flex; justify-content: center; }
         .gradient-bg { background: radial-gradient(circle at top, #1e0d36 0%, #08040d 100%); width: 100%; max-width: 450px; height: 100vh; position: relative; overflow: hidden; }
         
         #star-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
 
-        /* ИСПРАВЛЕННАЯ АНИМАЦИЯ: вылет из-за границы (-100px) */
         @keyframes fall { 
             0% { transform: translateY(-100px); opacity: 0; } 
             10% { opacity: 1; }
@@ -24,42 +24,26 @@
             position: absolute; 
             background-color: #fff; 
             border-radius: 50%; 
-            pointer-events: none; 
             animation: fall linear infinite; 
             box-shadow: 0 0 5px #fff; 
             will-change: transform; 
         }
 
         .app-container { position: relative; z-index: 10; height: 100%; flex-direction: column; display: flex; justify-content: space-between; padding: 20px; }
-        
-        /* Стиль контейнера аватарки */
-        .avatar-container {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            border: 2px solid rgba(168, 85, 247, 0.4);
-            overflow: hidden;
-            background: #1a1a1b;
-            flex-shrink: 0;
-        }
-
-        .card { 
-            background: rgba(255, 255, 255, 0.05); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-            border-radius: 12px; 
-            height: 100px; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.1s;
-        }
+        .avatar-container { width: 42px; height: 42px; border-radius: 50%; border: 2px solid rgba(168, 85, 247, 0.4); overflow: hidden; background: #1a1a1b; flex-shrink: 0; }
+        .card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: transform 0.1s; }
         .card:active { transform: scale(0.95); }
         .btn-main { background: linear-gradient(90deg, #7b2ff7, #b122e3); border-radius: 14px; box-shadow: 0 4px 20px rgba(123, 47, 247, 0.4); }
         
         @keyframes floating { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
         .animate-float { animation: floating 3s ease-in-out infinite; }
         .icon-game { width: 55px; height: 55px; object-fit: contain; }
+
+        /* Стили для новых модалок */
+        .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: none; align-items: flex-end; }
+        .modal-content { background: #17212b; width: 100%; border-radius: 24px 24px 0 0; padding: 24px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .pay-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); width: 100%; padding: 16px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .pay-btn:active { background: rgba(255,255,255,0.1); transform: scale(0.98); }
     </style>
 </head>
 <body>
@@ -79,15 +63,15 @@
                 </div>
                 
                 <div class="flex flex-col gap-2">
-                    <div class="bg-black/60 px-3 py-2 rounded-full flex items-center border border-blue-500/40 min-w-[125px]">
+                    <div onclick="openTonModal()" class="cursor-pointer bg-black/60 px-3 py-2 rounded-full flex items-center border border-blue-500/40 min-w-[125px] active:scale-95 transition-transform">
                         <div class="w-5 h-5 flex-shrink-0 flex items-center justify-center"><img src="ton.png" class="max-w-full max-h-full" alt=""></div>
                         <span class="text-blue-400 font-black text-[10px] ml-2 flex-grow">TON</span>
-                        <span class="font-bold text-sm ml-auto">0</span>
+                        <span id="ton-balance" class="font-bold text-sm ml-auto">0.00</span>
                     </div>
-                    <div class="bg-black/60 px-3 py-2 rounded-full flex items-center border border-yellow-500/40 min-w-[125px]">
+                    <div onclick="openStarsModal()" class="cursor-pointer bg-black/60 px-3 py-2 rounded-full flex items-center border border-yellow-500/40 min-w-[125px] active:scale-95 transition-transform">
                         <div class="w-5 h-5 flex-shrink-0 flex items-center justify-center"><img src="star.png" class="max-w-full max-h-full" alt=""></div>
                         <span class="text-yellow-500 font-black text-[10px] ml-2 flex-grow">STARS</span>
-                        <span class="font-bold text-sm ml-auto">0</span>
+                        <span id="stars-balance" class="font-bold text-sm ml-auto">0</span>
                     </div>
                 </div>
             </div>
@@ -108,37 +92,134 @@
             </button>
 
             <div class="grid grid-cols-3 gap-3">
-                <div class="card"><span class="text-[9px] text-gray-400 font-bold uppercase mb-1">Кейсы</span><img src="case.png" class="icon-game" alt=""></div>
-                <div class="card border-purple-500/50 bg-purple-500/10"><span class="text-[9px] text-gray-200 font-bold uppercase mb-1">Рулетка</span><img src="spin.png" class="icon-game" alt=""></div>
-                <div class="card"><span class="text-[9px] text-gray-400 font-bold uppercase mb-1">Мини игры</span><img src="mini.png" class="icon-game" alt=""></div>
+                <div class="card"><span class="text-[9px] text-gray-400 font-bold uppercase mb-1">Кейсы</span><img src="case.png" class="icon-game"></div>
+                <div class="card border-purple-500/50 bg-purple-500/10"><span class="text-[9px] text-gray-200 font-bold uppercase mb-1">Рулетка</span><img src="spin.png" class="icon-game"></div>
+                <div class="card"><span class="text-[9px] text-gray-400 font-bold uppercase mb-1">Мини игры</span><img src="mini.png" class="icon-game"></div>
             </div>
 
             <div class="flex justify-around items-center pt-4 border-t border-white/5">
-                <div class="flex flex-col items-center text-[8px] font-bold text-gray-500"><span class="text-xs mb-1">⊞</span>ДЕПОЗИТ</div>
-                <div class="flex flex-col items-center text-[8px] font-bold text-gray-500"><span class="text-xs mb-1">▤</span>МАГАЗИН</div>
+                <div onclick="openTonModal()" class="flex flex-col items-center text-[8px] font-bold text-gray-500 cursor-pointer active:text-white transition-colors"><span class="text-xs mb-1">⊞</span>ДЕПОЗИТ</div>
+                <div onclick="openStarsModal()" class="flex flex-col items-center text-[8px] font-bold text-gray-500 cursor-pointer active:text-white transition-colors"><span class="text-xs mb-1">▤</span>МАГАЗИН</div>
                 <div class="flex flex-col items-center text-[10px] font-black text-blue-400"><span class="text-sm mb-1">◆</span>TON</div>
                 <div class="flex flex-col items-center text-[8px] font-bold text-gray-500"><span class="text-xs mb-1">▲</span>ТОП</div>
                 <div class="flex flex-col items-center text-[8px] font-bold text-gray-500"><span class="text-xs mb-1">◉</span>ПРОФИЛЬ</div>
             </div>
         </div>
+
+        <div id="ton-modal" class="modal-overlay" onclick="closeModals()">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-black uppercase text-blue-400">Пополнить TON</h2>
+                    <span class="text-[10px] text-gray-500 font-bold uppercase">UQD3...8Yx</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <button onclick="payTon(1)" class="bg-white/5 border border-white/10 p-4 rounded-xl font-bold active:bg-white/10">1 TON</button>
+                    <button onclick="payTon(5)" class="bg-white/5 border border-white/10 p-4 rounded-xl font-bold active:bg-white/10">5 TON</button>
+                    <button onclick="payTon(10)" class="bg-purple-500/10 border border-purple-500/50 p-4 rounded-xl font-bold text-purple-400 active:bg-purple-500/20">10 TON</button>
+                    <button onclick="payTon(50)" class="bg-white/5 border border-white/10 p-4 rounded-xl font-bold active:bg-white/10">50 TON</button>
+                </div>
+                <button onclick="closeModals()" class="w-full text-gray-500 font-bold text-[10px] uppercase tracking-widest">Закрыть</button>
+            </div>
+        </div>
+
+        <div id="stars-modal" class="modal-overlay" onclick="closeModals()">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-black uppercase text-yellow-500">Магазин Stars</h2>
+                    <span id="stars-info" class="text-[10px] text-gray-500 font-bold">⭐ Баланс: 0</span>
+                </div>
+                <button onclick="payStars(500)" class="pay-btn">
+                    <span class="font-bold text-yellow-500">⭐ 500 Звёзд</span>
+                    <span class="text-sm font-medium text-gray-400">389.00 UAH</span>
+                </button>
+                <button onclick="payStars(1000)" class="pay-btn">
+                    <span class="font-bold text-yellow-500">⭐ 1 000 Звёзд</span>
+                    <span class="text-sm font-medium text-gray-400">779.00 UAH</span>
+                </button>
+                <button onclick="closeModals()" class="w-full text-gray-500 font-bold text-[10px] uppercase tracking-widest mt-4">Закрыть</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Инициализация Telegram WebApp
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Подтягиваем данные пользователя
+        // 1. Настройка TON Connect
+        const tonConnectUI = new TONConnectUI.TonConnectUI({
+            manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/manifest.json', // Замени на свой, когда будет готов
+            buttonRootId: 'ton-connect-btn'
+        });
+
         const user = tg.initDataUnsafe?.user;
         if (user) {
             document.getElementById('user-name').innerText = user.username ? `@${user.username}` : user.first_name;
             document.getElementById('user-id').innerText = `ID: ${user.id}`;
-            if (user.photo_url) {
-                document.getElementById('user-pic').src = user.photo_url;
+            if (user.photo_url) document.getElementById('user-pic').src = user.photo_url;
+        }
+
+        // 2. Управление модальными окнами
+        function openTonModal() { document.getElementById('ton-modal').style.display = 'flex'; }
+        function openStarsModal() { document.getElementById('stars-modal').style.display = 'flex'; }
+        function closeModals() { 
+            document.getElementById('ton-modal').style.display = 'none'; 
+            document.getElementById('stars-modal').style.display = 'none'; 
+        }
+
+        // 3. Логика пополнения TON
+        async function payTon(amountInTon) {
+            closeModals();
+            if (!tonConnectUI.connected) {
+                await tonConnectUI.openModal();
+                return;
+            }
+            
+            const transaction = {
+                validUntil: Math.floor(Date.now() / 1000) + 300,
+                messages: [{
+                    address: "UQD3Ova8MrxhXHacmHgQVcT-TTLF8pZYKBo67egsBCl6M8Yx",
+                    amount: (amountInTon * 1000000000).toString(),
+                    payload: btoa(user.id.toString()) // Отправляем ID в комментарии для твоего бота
+                }]
+            };
+
+            try {
+                await tonConnectUI.sendTransaction(transaction);
+                tg.showAlert(`Транзакция на ${amountInTon} TON отправлена! Баланс обновится скоро.`);
+            } catch (e) {
+                console.error(e);
             }
         }
 
-        // Логика звезд
+        // 4. Логика покупки Звезд (вызов счета от твоего бота)
+        async function payStars(amount) {
+            closeModals();
+            try {
+                const response = await fetch(`http://localhost:8000/create_stars_invoice/${user.id}/${amount}`);
+                const data = await response.json();
+                if(data.link) {
+                    tg.openInvoice(data.link);
+                }
+            } catch (e) {
+                tg.showAlert("Бот не отвечает. Запустите bot.py на компьютере.");
+            }
+        }
+
+        // 5. Постоянное обновление баланса из базы данных
+        async function updateBalanceUI() {
+            if (!user) return;
+            try {
+                const response = await fetch(`http://localhost:8000/get_balance/${user.id}`);
+                const data = await response.json();
+                document.getElementById('ton-balance').innerText = data.balance.toFixed(2);
+                // Если добавишь звезды в API, обнови и их:
+                // document.getElementById('stars-balance').innerText = data.stars;
+            } catch (e) {}
+        }
+        setInterval(updateBalanceUI, 10000);
+        updateBalanceUI();
+
+        // Анимация звезд
         function createStars() {
             const container = document.getElementById('star-container');
             for (let i = 0; i < 50; i++) {
