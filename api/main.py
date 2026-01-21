@@ -5,44 +5,40 @@ import requests
 from vercel_kv import KV
 
 app = Flask(__name__)
-# Разрешаем запросы со всех доменов и любые заголовки
-CORS(app, resources={r"/*": {"origins": "*"}})
+# Включаем CORS правильно, чтобы он сам обрабатывал OPTIONS запросы
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-# Принудительная настройка переменных для Vercel KV
+# Проброс ключей базы
 if os.getenv("STORAGE_KV_URL"):
     os.environ["KV_URL"] = os.getenv("STORAGE_KV_URL")
     os.environ["KV_REST_API_URL"] = os.getenv("STORAGE_KV_REST_API_URL")
     os.environ["KV_REST_API_TOKEN"] = os.getenv("STORAGE_KV_REST_API_TOKEN")
-    os.environ["KV_REST_API_READ_ONLY_TOKEN"] = os.getenv("STORAGE_KV_REST_API_READ_ONLY_TOKEN")
 
 # Инициализация базы
-try:
-    kv = KV()
-except Exception as e:
-    print(f"KV Init Error: {e}")
+kv = KV()
 
 CRYPTO_PAY_TOKEN = '519389:AAnFdMg1D8ywsfVEd0aA02B8872Zzz61ATO'
 
-@app.route('/')
+@app.route('/api/')
 def home():
-    return "Backend is Active", 200
+    return jsonify({"status": "active", "info": "StarsDrop API"}), 200
 
-@app.route('/get_balance/<user_id>', methods=['GET', 'OPTIONS'])
+# ВАЖНО: Добавили /api/ в начало пути
+@app.route('/api/get_balance/<user_id>', methods=['GET'])
 def get_balance(user_id):
-    if request.method == 'OPTIONS':
-        return _build_cors_prelight_response()
     try:
         key = f"user:{user_id}"
-        user_data = kv.get(key) or {"balance": 0.0, "stars": 0}
-        return _corsify_actual_response(jsonify(user_data))
+        # Исправлено: если данных нет, возвращаем структуру, чтобы фронт не падал
+        user_data = kv.get(key)
+        if not user_data:
+            user_data = {"balance": 0.0, "stars": 0}
+        return jsonify(user_data), 200
     except Exception as e:
-        return _corsify_actual_response(jsonify({"balance": 0.0, "stars": 0, "error": str(e)}))
+        return jsonify({"balance": 0.0, "stars": 0, "error": str(e)}), 200
 
-@app.route('/create_pay', methods=['POST', 'OPTIONS'])
+# ВАЖНО: Добавили /api/ в начало пути
+@app.route('/api/create_pay', methods=['POST'])
 def create_pay():
-    if request.method == 'OPTIONS':
-        return _build_cors_prelight_response()
-    
     data = request.json
     uid = data.get('user_id')
     amount = data.get('amount')
@@ -57,19 +53,7 @@ def create_pay():
     try:
         r = requests.post("https://pay.crypt.bot/api/createInvoice", json=payload, headers=headers).json()
         if r.get('ok'):
-            return _corsify_actual_response(jsonify(r['result']))
-        return _corsify_actual_response(jsonify({"error": "crypto_bot_err"}), 500)
+            return jsonify(r['result']), 200
+        return jsonify({"error": "crypto_bot_err", "details": r}), 400
     except Exception as e:
-        return _corsify_actual_response(jsonify({"error": str(e)}), 500)
-
-# Функции для исправления CORS (чтобы браузер не блокировал запросы)
-def _build_cors_prelight_response():
-    response = make_response()
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    response.headers.add("Access-Control-Allow-Headers", "*")
-    response.headers.add("Access-Control-Allow-Methods", "*")
-    return response
-
-def _corsify_actual_response(response):
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    return response
+        return jsonify({"error": str(e)}), 500
