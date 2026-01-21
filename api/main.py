@@ -2,36 +2,38 @@ import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
-from vercel_kv import KV
+import redis
+import json
 
 app = Flask(__name__)
-# Разрешаем CORS для всех путей, начинающихся с /api/
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-# ХАК ДЛЯ ТВОИХ СКРИНШОТОВ:
-# Перекладываем значения из STORAGE_... в те переменные, которые ждет библиотека KV
-if os.getenv("STORAGE_KV_URL"):
-    os.environ["KV_URL"] = os.getenv("STORAGE_KV_URL")
-    os.environ["KV_REST_API_URL"] = os.getenv("STORAGE_KV_REST_API_URL")
-    os.environ["KV_REST_API_TOKEN"] = os.getenv("STORAGE_KV_REST_API_TOKEN")
-    os.environ["KV_REST_API_READ_ONLY_TOKEN"] = os.getenv("STORAGE_KV_REST_API_READ_ONLY_TOKEN")
+# ТВОЙ КЛЮЧ ПРЯМО ЗДЕСЬ
+REDIS_URL = "redis://default:9x1pwcq9Vp94gWovLw1qMQQZ5euiZy5w@redis-13357.crce220.us-east-1-4.ec2.cloud.redislabs.com:13357"
 
-# Инициализируем базу (теперь она увидит ключи)
+# Подключаемся к Redis
 try:
-    kv = KV()
+    r_db = redis.from_url(REDIS_URL, decode_responses=True)
+    # Простая проверка связи
+    r_db.ping()
+    db_connected = True
 except Exception as e:
-    print(f"KV Error: {e}")
-    kv = None
+    print(f"Redis Error: {e}")
+    r_db = None
+    db_connected = False
 
 CRYPTO_PAY_TOKEN = '519389:AAnFdMg1D8ywsfVEd0aA02B8872Zzz61ATO'
 
 @app.route('/api/get_balance/<user_id>', methods=['GET'])
 def get_balance(user_id):
-    if not kv:
+    if not r_db:
         return jsonify({"balance": 0.0, "stars": 0, "db": "offline"}), 200
     try:
-        user_data = kv.get(f"user:{user_id}")
-        if not user_data:
+        # В Redis Labs данные обычно лежат в строках, парсим JSON
+        data = r_db.get(f"user:{user_id}")
+        if data:
+            user_data = json.loads(data)
+        else:
             user_data = {"balance": 0.0, "stars": 0}
         return jsonify(user_data), 200
     except Exception as e:
@@ -54,11 +56,14 @@ def create_pay():
         r = requests.post("https://pay.crypt.bot/api/createInvoice", json=payload, headers=headers).json()
         if r.get('ok'):
             return jsonify(r['result']), 200
-        return jsonify({"error": "crypto_bot_err", "details": r}), 400
+        return jsonify({"error": "crypto_bot_err"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Для проверки работоспособности в браузере
 @app.route('/api/health')
 def health():
-    return jsonify({"status": "ok", "db_connected": kv is not None}), 200
+    return jsonify({
+        "status": "ok", 
+        "db_connected": db_connected,
+        "source": "redis-labs"
+    }), 200
