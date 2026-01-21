@@ -1,85 +1,75 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
 import requests
 from vercel_kv import KV
 
 app = Flask(__name__)
-CORS(app)
+# Разрешаем запросы со всех доменов и любые заголовки
+CORS(app, resources={r"/*": {"origins": "*"}})
 
-# Исправляем проблему "MISSING": принудительно копируем ключи из STORAGE_ в обычные
+# Принудительная настройка переменных для Vercel KV
 if os.getenv("STORAGE_KV_URL"):
     os.environ["KV_URL"] = os.getenv("STORAGE_KV_URL")
     os.environ["KV_REST_API_URL"] = os.getenv("STORAGE_KV_REST_API_URL")
     os.environ["KV_REST_API_TOKEN"] = os.getenv("STORAGE_KV_REST_API_TOKEN")
     os.environ["KV_REST_API_READ_ONLY_TOKEN"] = os.getenv("STORAGE_KV_REST_API_READ_ONLY_TOKEN")
 
-# Теперь KV() точно найдет ключи
-kv = KV()
+# Инициализация базы
+try:
+    kv = KV()
+except Exception as e:
+    print(f"KV Init Error: {e}")
 
 CRYPTO_PAY_TOKEN = '519389:AAnFdMg1D8ywsfVEd0aA02B8872Zzz61ATO'
 
 @app.route('/')
 def home():
-    # Проверка для тебя: если увидишь "KV_READY", значит база подключена!
-    kv_status = "KV_READY" if os.getenv("KV_URL") else "KV_FAIL"
-    return jsonify({"status": "online", "database": kv_status}), 200
+    return "Backend is Active", 200
 
-@app.route('/get_balance/<user_id>')
+@app.route('/get_balance/<user_id>', methods=['GET', 'OPTIONS'])
 def get_balance(user_id):
+    if request.method == 'OPTIONS':
+        return _build_cors_prelight_response()
     try:
         key = f"user:{user_id}"
         user_data = kv.get(key) or {"balance": 0.0, "stars": 0}
-        return jsonify(user_data)
+        return _corsify_actual_response(jsonify(user_data))
     except Exception as e:
-        return jsonify({"balance": 0.0, "stars": 0, "error": str(e)})
+        return _corsify_actual_response(jsonify({"balance": 0.0, "stars": 0, "error": str(e)}))
 
-@app.route('/create_pay', methods=['POST'])
+@app.route('/create_pay', methods=['POST', 'OPTIONS'])
 def create_pay():
+    if request.method == 'OPTIONS':
+        return _build_cors_prelight_response()
+    
     data = request.json
     uid = data.get('user_id')
     amount = data.get('amount')
     
-    url = "https://pay.crypt.bot/api/createInvoice"
-    headers = {"Crypto-Pay-API-Token": CRYPTO_PAY_TOKEN}
     payload = {
         "asset": "TON",
         "amount": str(amount),
         "description": f"Deposit ID: {uid}"
     }
-    
-    try:
-        r = requests.post(url, json=payload, headers=headers).json()
-        if r.get('ok'):
-            return jsonify(r['result'])
-        return jsonify({"error": "api_err"}), 500
-    except:
-        return jsonify({"error": "server_err"}), 500
-
-@app.route('/check_pay/<invoice_id>/<user_id>')
-def check_pay(invoice_id, user_id):
-    url = f"https://pay.crypt.bot/api/getInvoices?invoice_ids={invoice_id}"
     headers = {"Crypto-Pay-API-Token": CRYPTO_PAY_TOKEN}
     
     try:
-        r = requests.get(url, headers=headers).json()
-        if r.get('ok') and r['result']['items']:
-            inv = r['result']['items'][0]
-            if inv['status'] == 'paid':
-                key = f"user:{user_id}"
-                history_key = f"paid_inv:{user_id}"
-                
-                paid_invoices = kv.get(history_key) or []
-                if str(invoice_id) not in [str(i) for i in paid_invoices]:
-                    current_data = kv.get(key) or {"balance": 0.0, "stars": 0}
-                    current_data["balance"] = round(current_data["balance"] + float(inv['amount']), 2)
-                    
-                    paid_invoices.append(invoice_id)
-                    kv.set(key, current_data)
-                    kv.set(history_key, paid_invoices)
-                    
-                    return jsonify({"paid": True, "new_balance": current_data["balance"]})
-                return jsonify({"paid": True, "message": "Already added"})
-        return jsonify({"paid": False})
-    except:
-        return jsonify({"paid": False})
+        r = requests.post("https://pay.crypt.bot/api/createInvoice", json=payload, headers=headers).json()
+        if r.get('ok'):
+            return _corsify_actual_response(jsonify(r['result']))
+        return _corsify_actual_response(jsonify({"error": "crypto_bot_err"}), 500)
+    except Exception as e:
+        return _corsify_actual_response(jsonify({"error": str(e)}), 500)
+
+# Функции для исправления CORS (чтобы браузер не блокировал запросы)
+def _build_cors_prelight_response():
+    response = make_response()
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "*")
+    response.headers.add("Access-Control-Allow-Methods", "*")
+    return response
+
+def _corsify_actual_response(response):
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response
