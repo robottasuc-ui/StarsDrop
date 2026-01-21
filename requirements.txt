@@ -41,5 +41,6 @@ gunicorn
 flask
 flask-cors
 aiocryptopay
+requests
 
 
