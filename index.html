@@ -356,7 +356,7 @@
 
         // --- КОНФИГУРАЦИЯ ---
         const BACKEND_URL = 'https://stars-drop.vercel.app';
-        const PACKS = [1, 3, 5, 10, 15, 20, 30, 50, 100, 200, 300, 500];
+        const PACKS = [0.1, 1, 3, 5, 10, 15, 20, 30, 50, 100, 200, 300, 500];
         let lockDown = false;
 
         // --- ИНИЦИАЛИЗАЦИЯ ЮЗЕРА ---
@@ -375,7 +375,7 @@
             btn.className = 'payment-node';
             btn.innerHTML = `
                 <span class="text-[9px] font-black text-gray-600 uppercase">Pack</span>
-                <span class="text-lg font-black text-white">${amt} TON</span>
+                <span class="text-lg font-black text-white">${amt} TRX</span>
             `;
             btn.onclick = () => processPayment(amt);
             tonBox.appendChild(btn);
