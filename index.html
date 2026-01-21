@@ -31,7 +31,6 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* КАНВАС ЗВЕЗДНОГО НЕБА */
         #stars-canvas {
             position: fixed;
             top: 0; left: 0;
@@ -40,7 +39,6 @@
             pointer-events: none;
         }
 
-        /* ГЛАВНЫЙ ГРАДИЕНТНЫЙ ФОН */
         .main-wrapper { 
             background: radial-gradient(circle at 50% -20%, rgba(139, 92, 246, 0.15) 0%, rgba(5, 2, 8, 1) 80%); 
             min-height: 100vh;
@@ -57,7 +55,6 @@
             padding: 24px 20px 140px 20px;
         }
 
-        /* ФИКС ЗАГОЛОВКА - ТЕПЕРЬ НЕ ОБРЕЖЕТСЯ */
         .hero-title-container {
             width: 100%;
             text-align: center;
@@ -66,7 +63,6 @@
         }
 
         .hero-title {
-            /* Адаптивный размер: минимум 32px, максимум 56px */
             font-size: clamp(2rem, 12vw, 3.5rem);
             font-weight: 900;
             text-transform: uppercase;
@@ -79,7 +75,6 @@
             filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.3));
         }
 
-        /* ЭКРАН ОЖИДАНИЯ (ГЕНЕРАЦИЯ) */
         #global-loader {
             position: fixed;
             inset: 0;
@@ -103,7 +98,6 @@
 
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* КАРТОЧКИ И КНОПКИ */
         .glass-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -132,7 +126,6 @@
             border-color: var(--accent-purple);
         }
 
-        /* МОДАЛКИ */
         .modal-base {
             position: fixed;
             inset: 0;
@@ -175,7 +168,6 @@
             border-radius: 14px;
         }
 
-        /* БАЛАНСЫ */
         .balance-chip {
             padding: 8px 14px;
             border-radius: 16px;
@@ -186,7 +178,6 @@
             font-weight: 700;
         }
 
-        /* НИЖНЯЯ ПАНЕЛЬ */
         .dock-bar {
             position: fixed;
             bottom: 0; left: 0; right: 0;
@@ -268,35 +259,28 @@
                 <span class="text-sm font-black uppercase tracking-[0.3em] text-white">Запустить Систему</span>
             </button>
 
-            <div class="grid grid-cols-3 gap-4 mb-8">
-                <div class="glass-card p-5 flex flex-col items-center gap-4">
-                    <span class="text-[9px] font-bold uppercase text-gray-500">Cases</span>
-                    <div class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center">
-                        <img src="case.png" class="w-5 h-5 opacity-40">
-                    </div>
-                </div>
-                <div class="glass-card p-5 flex flex-col items-center gap-4 border-purple-500/30 bg-purple-500/5">
-                    <span class="text-[9px] font-bold uppercase text-purple-400">Spin</span>
-                    <div class="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center">
-                        <img src="spin.png" class="w-5 h-5">
-                    </div>
-                </div>
-                <div class="glass-card p-5 flex flex-col items-center gap-4">
-                    <span class="text-[9px] font-bold uppercase text-gray-500">Mines</span>
-                    <div class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center">
-                        <img src="mini.png" class="w-5 h-5 opacity-40">
-                    </div>
-                </div>
-            </div>
+<div class="grid grid-cols-3 gap-3 px-4 w-full mt-6">
+    
+    <div onclick="openCases()" class="flex flex-col items-center justify-center bg-white/5 border border-white/10 rounded-2xl py-10 px-2 active:scale-95 transition-all cursor-pointer">
+        <span class="text-[11px] font-black text-gray-400 uppercase mb-4 tracking-tighter">Cases</span>
+        <img src="case.png" class="w-14 h-14 object-contain shadow-lg">
+    </div>
 
-            <div class="p-6 bg-white/5 border border-white/5 rounded-3xl">
-                <div class="flex items-center gap-2 mb-3">
-                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                    <span class="text-[10px] font-black uppercase text-green-500">Server Stable</span>
-                </div>
-                <p class="text-[11px] text-gray-400 leading-relaxed font-medium">
-                    Платформа StarsDrop работает на базе смарт-контрактов. Ваши данные защищены, а выплаты автоматизированы.
-                </p>
+    <div onclick="location.href='wheel.html'" class="flex flex-col items-center justify-center bg-purple-600/10 border border-purple-500/40 rounded-2xl py-10 px-2 active:scale-95 transition-all cursor-pointer shadow-[0_0_20px_rgba(147,51,234,0.1)]">
+        <span class="text-[11px] font-black text-purple-400 uppercase mb-4 tracking-tighter">Spin</span>
+        <img src="spin.png" class="w-14 h-14 object-contain">
+    </div>
+
+    <div onclick="openMines()" class="flex flex-col items-center justify-center bg-white/5 border border-white/10 rounded-2xl py-10 px-2 active:scale-95 transition-all cursor-pointer">
+        <span class="text-[11px] font-black text-gray-400 uppercase mb-4 tracking-tighter">Mines</span>
+        <img src="mini.png" class="w-14 h-14 object-contain">
+    </div>
+
+</div>
+
+            <div class="px-4 mt-8">
+    <p class="text-xs text-gray-500">Платформа StarsDrop работает на базе смарт-контрактов. Ваши данные защищены, а выплаты автоматизированы.</p>
+</div>
             </div>
 
         </div>
@@ -310,7 +294,7 @@
                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011-1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
                 <span>Главная</span>
             </div>
-            <div class="dock-btn">
+            <div onclick="window.location.href='profile.html'" class="dock-btn cursor-pointer">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                 <span>Профиль</span>
             </div>
@@ -324,8 +308,7 @@
                 <div id="tab-btn-stars" onclick="setTab('stars')" class="tab-trigger">Gift Stars</div>
             </div>
 
-            <div id="pane-ton" class="grid grid-cols-2 gap-3">
-                </div>
+            <div id="pane-ton" class="grid grid-cols-2 gap-3"></div>
 
             <div id="pane-stars" class="hidden">
                 <div class="bg-purple-900/10 border border-purple-500/20 p-6 rounded-3xl mb-6">
@@ -350,170 +333,116 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.enableClosingConfirmation();
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.enableClosingConfirmation();
 
-        // --- КОНФИГУРАЦИЯ ---
-        // Добавляем /api в конец, чтобы запросы шли в Python
-        const BACKEND_URL = 'https://stars-drop.vercel.app/api'; 
-        const PACKS = [1, 3, 5, 10, 15, 20, 30, 50, 100, 200, 300, 500];
-        let lockDown = false;
+    const BACKEND_URL = 'https://stars-drop.vercel.app/api'; 
+    const user = tg.initDataUnsafe?.user;
 
-        // --- ИНИЦИАЛИЗАЦИЯ ЮЗЕРА ---
-        const user = tg.initDataUnsafe?.user;
-        if (user) {
-            document.getElementById('display-name').innerText = (user.username || user.first_name).toUpperCase();
-            document.getElementById('display-id').innerText = `ID: ${user.id}`;
-            document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=1d1a29&color=fff`;
-            syncData();
-        }
+    // --- ФУНКЦИЯ ОБНОВЛЕНИЯ ИНТЕРФЕЙСА ---
+    async function syncData() {
+        const starEl = document.getElementById('bal-stars');
+        const tonEl = document.getElementById('bal-ton');
 
-        // --- ГЕНЕРАЦИЯ КНОПОК TON ---
-        const tonBox = document.getElementById('pane-ton');
-        PACKS.forEach(amt => {
-            const btn = document.createElement('div');
-            btn.className = 'payment-node';
-            btn.innerHTML = `
-                <span class="text-[9px] font-black text-gray-600 uppercase">Pack</span>
-                <span class="text-lg font-black text-white">${amt} TON</span>
-            `;
-            btn.onclick = () => processPayment(amt);
-            tonBox.appendChild(btn);
-        });
+        // 1. Сначала берем то, что сохранено локально (после продаж в рулетке)
+        let localStars = parseInt(localStorage.getItem('stars_balance')) || 0;
+        starEl.innerText = localStars;
 
-        // --- ЛОГИКА ОПЛАТЫ ---
-        async function processPayment(amount) {
-            if (lockDown) return;
-            
-            lockDown = true;
-            tg.HapticFeedback.impactOccurred('heavy');
-            const loader = document.getElementById('global-loader');
-            loader.style.display = 'flex';
+        if (!user) return;
 
-            try {
-                const response = await fetch(`${BACKEND_URL}/create_pay`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        user_id: user?.id || 0,
-                        amount: amount
-                    })
-                });
-
-                if (!response.ok) throw new Error('Backend Error');
-                
-                const data = await response.json();
-                
-                if (data.pay_url) {
-                    tg.openTelegramLink(data.pay_url);
-                    // Закрываем лоадер через небольшую паузу
-                    setTimeout(() => {
-                        loader.style.display = 'none';
-                        lockDown = false;
-                        closeVault();
-                    }, 2000);
-                } else {
-                    throw new Error('No URL');
-                }
-
-            } catch (err) {
-                console.error(err);
-                tg.showPopup({
-                    title: 'Ошибка связи',
-                    message: 'Не удалось связаться с сервером CryptoBot. Попробуйте еще раз через минуту.',
-                    buttons: [{type: 'ok', text: 'Понял'}]
-                });
-                loader.style.display = 'none';
-                lockDown = false;
-            }
-        }
-
-        // --- РАБОТА С ИНТЕРФЕЙСОМ ---
-        function openVault(tab) {
-            document.getElementById('vault-modal').style.display = 'flex';
-            setTab(tab);
-            tg.HapticFeedback.impactOccurred('light');
-        }
-
-        function closeVault() {
-            document.getElementById('vault-modal').style.display = 'none';
-        }
-
-        function setTab(type) {
-            const isTon = type === 'ton';
-            document.getElementById('tab-btn-ton').classList.toggle('active', isTon);
-            document.getElementById('tab-btn-stars').classList.toggle('active', !isTon);
-            document.getElementById('pane-ton').classList.toggle('hidden', !isTon);
-            document.getElementById('pane-stars').classList.toggle('hidden', isTon);
-        }
-
-        function verifyGift() {
-            tg.HapticFeedback.notificationOccurred('success');
-            tg.showPopup({
-                title: 'Заявка создана',
-                message: 'Администратор проверит ваш подарок. Stars будут начислены в течение 10-15 минут.',
-                buttons: [{type: 'ok', text: 'Ожидаю'}]
-            });
-            
-            fetch(`${BACKEND_URL}/notify_gift`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    user_id: user?.id, 
-                    username: user?.username 
-                })
-            });
-            closeVault();
-        }
-
-        async function syncData() {
-            try {
-                const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}`);
+        // 2. Спрашиваем сервер, есть ли там еще звезды
+        try {
+            const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}`);
+            if (res.ok) {
                 const data = await res.json();
-                document.getElementById('bal-ton').innerText = data.balance.toFixed(2);
-                document.getElementById('bal-stars').innerText = data.stars;
-            } catch (e) {
-                console.log('Balance sync failed');
+                const serverStars = parseInt(data.stars) || 0;
+                
+                // Итоговый баланс = Локальные (продажи) + Серверные
+                starEl.innerText = serverStars + localStars;
+                tonEl.innerText = (data.balance || 0).toFixed(2);
             }
+        } catch (e) {
+            // Если сервер лежит, просто оставляем локальные звезды
+            starEl.innerText = localStars;
         }
+    }
 
-        // --- BACKGROUND ANIMATION ---
-        const canvas = document.getElementById('stars-canvas');
-        const ctx = canvas.getContext('2d');
-        let stars = [];
-
-        function initStars() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            stars = [];
-            for(let i=0; i<150; i++) {
-                stars.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    size: Math.random() * 1.5 + 0.1,
-                    vel: Math.random() * 0.5 + 0.1
-                });
-            }
+    // --- ИСПРАВЛЕНИЕ: ЖИВОЕ ОБНОВЛЕНИЕ ПРИ ПРОДАЖЕ ---
+    // Эта функция будет следить за изменениями в localStorage из других окон (рулетки)
+    window.addEventListener('storage', (event) => {
+        if (event.key === 'stars_balance') {
+            console.log("Баланс изменен в другом окне (рулетка)");
+            syncData(); // Сразу перерисовываем баланс на главной
         }
+    });
 
-        function render() {
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            stars.forEach(s => {
-                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.4 + 0.4})`;
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
-                ctx.fill();
-                s.y += s.vel;
-                if(s.y > canvas.height) s.y = -5;
-            });
-            requestAnimationFrame(render);
-        }
+    // Дополнительный "таймер-предохранитель" (обновляет баланс раз в секунду)
+    setInterval(syncData, 1000);
 
-        window.addEventListener('resize', initStars);
-        initStars();
-        render();
+    // --- ФУНКЦИЯ ПРОДАЖИ (для вызова из wheel.html) ---
+    // Если твоя рулетка вызывает какую-то функцию, она должна делать это так:
+    function sellItem(price) {
+        let current = parseInt(localStorage.getItem('stars_balance')) || 0;
+        localStorage.setItem('stars_balance', current + price);
+        syncData();
+        tg.HapticFeedback.notificationOccurred('success');
+    }
 
-    </script>
+    // Инициализация при запуске
+    if (user) {
+        document.getElementById('display-name').innerText = (user.username || user.first_name).toUpperCase();
+        document.getElementById('display-id').innerText = `ID: ${user.id}`;
+        document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=1d1a29&color=fff`;
+        syncData();
+    }
+
+    // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
+    function openVault(tab) {
+        document.getElementById('vault-modal').style.display = 'flex';
+        setTab(tab);
+        tg.HapticFeedback.impactOccurred('light');
+    }
+
+    function closeVault() {
+        document.getElementById('vault-modal').style.display = 'none';
+    }
+
+    function setTab(type) {
+        const isTon = type === 'ton';
+        document.getElementById('tab-btn-ton').classList.toggle('active', isTon);
+        document.getElementById('tab-btn-stars').classList.toggle('active', !isTon);
+        document.getElementById('pane-ton').classList.toggle('hidden', !isTon);
+        document.getElementById('pane-stars').classList.toggle('hidden', isTon);
+    }
+
+    // Оплата подарком (просто бонус)
+    function verifyGift() {
+        let current = parseInt(localStorage.getItem('stars_balance')) || 0;
+        localStorage.setItem('stars_balance', current + 100);
+        syncData();
+        closeVault();
+        tg.showPopup({ message: "Заявка принята, +100 звезд начислено!" });
+    }
+
+    // Отрисовка звездного фона
+    const canvas = document.getElementById('stars-canvas');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+    function initStars() {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        stars = [];
+        for(let i=0; i<100; i++) stars.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, size:Math.random()*1.5, vel:Math.random()*0.5});
+    }
+    function render() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        stars.forEach(s => {
+            ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); ctx.fill();
+            s.y += s.vel; if(s.y > canvas.height) s.y = -5;
+        });
+        requestAnimationFrame(render);
+    }
+    initStars(); render();
+</script>
 </body>
 </html>
