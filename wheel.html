@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Wheel - StarDrop</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        
+        body { background: #0a0514; color: white; font-family: 'Inter', sans-serif; overflow: hidden; margin: 0; }
+        
+        .bg-glow { 
+            position: fixed; inset: 0; 
+            background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.12) 0%, transparent 75%); 
+            z-index: 1; pointer-events: none; 
+        }
+
+        .back-button {
+            position: absolute; top: 20px; left: 20px; z-index: 100;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 45px; height: 45px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .back-button:active { transform: scale(0.9); background: rgba(255, 255, 255, 0.1); }
+
+        .content { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+        .wheel-outer {
+            position: relative; width: 100%;
+            background: linear-gradient(90deg, #0a0514 0%, transparent 30%, transparent 70%, #0a0514 100%);
+            padding: 20px 0;
+        }
+
+        .wheel-container { 
+            position: relative; width: 100%; height: 140px; 
+            overflow: hidden; background: rgba(255, 255, 255, 0.02); 
+            border-top: 1px solid rgba(139, 92, 246, 0.3); 
+            border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+            display: flex; align-items: center;
+        }
+
+        .pointer { 
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%); 
+            width: 3px; height: 100%; background: #ff4d4d; z-index: 50; 
+            box-shadow: 0 0 15px rgba(255, 77, 77, 0.6); 
+        }
+
+        .wheel-line { 
+            display: flex; align-items: center; height: 100%;
+            transition: transform 7s cubic-bezier(0.1, 0, 0, 1); 
+            will-change: transform; 
+        }
+
+        .item { 
+            min-width: 110px; height: 110px; margin: 0 10px; 
+            background: rgba(255,255,255,0.04); border-radius: 20px; 
+            display: flex; align-items: center; justify-content: center; 
+            border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); 
+        }
+
+        .item img { width: 70px; height: 70px; object-fit: contain; }
+
+        #win-modal { 
+            display: none; position: fixed; inset: 0; z-index: 9999; 
+            background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(15px); 
+            align-items: center; justify-content: center; 
+        }
+
+        .modal-content { 
+            background: #1a0b2e; border: 1px solid #9333ea; 
+            border-radius: 30px; width: 90%; max-width: 320px; padding: 40px 20px; text-align: center; 
+        }
+
+        .status-text {
+            font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+            color: #a78bfa; margin-top: 12px; font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-glow"></div>
+
+    <div class="back-button" onclick="goToMain()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </div>
+
+    <div class="content">
+        <h1 class="text-3xl font-black italic uppercase tracking-widest mb-10">LUCKY <span class="text-purple-500">SPIN</span></h1>
+
+        <div class="wheel-outer">
+            <div class="wheel-container">
+                <div class="pointer"></div>
+                <div id="wheel" class="wheel-line"></div>
+            </div>
+        </div>
+
+        <div class="w-full px-10 mt-12 text-center">
+            <button id="spin-btn" class="w-full bg-purple-600 py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 disabled:opacity-50 disabled:grayscale transition-all">ПРОВЕРКА...</button>
+            <div id="timer-display" class="status-text"></div>
+        </div>
+    </div>
+
+    <div id="win-modal">
+        <div class="modal-content">
+            <img id="won-item-img" src="img/star.png" class="w-24 h-24 mx-auto mb-4">
+            <h2 class="text-2xl font-black mb-2 uppercase">ВЫИГРЫШ!</h2>
+            <p id="won-item-name" class="text-purple-400 font-bold mb-8 uppercase text-sm"></p>
+            <div class="flex flex-col gap-3">
+                <button id="sell-btn" class="w-full bg-purple-600 py-4 rounded-xl font-bold uppercase">Продать за 1 ⭐</button>
+                <button id="keep-btn" class="w-full bg-white/10 py-4 rounded-xl font-bold uppercase">В инвентарь</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        const wheel = document.getElementById('wheel');
+        const spinBtn = document.getElementById('spin-btn');
+        const timerDisplay = document.getElementById('timer-display');
+        const winModal = document.getElementById('win-modal');
+        
+        const SPIN_COST = 100;
+        const COOLDOWN = 24 * 60 * 60 * 1000;
+        const itemsList = [
+            { n: 'star.png', name: '1 Звезда' },
+            { n: 'box.png', name: 'Кейс' },
+            { n: 'dog.png', name: 'Собака' },
+            { n: 'kot.png', name: 'Кот' },
+            { n: 'bear.png', name: 'Мишка' },
+            { n: 'gyba.png', name: 'Губа (0.01%)' }
+        ];
+
+        let winningItem = null;
+
+        function goToMain() { window.location.href = 'index.html'; }
+
+        function updateStatus() {
+            const lastSpin = localStorage.getItem('last_free_spin');
+            const now = Date.now();
+            const stars = parseInt(localStorage.getItem('stars_balance')) || 0;
+
+            if (!lastSpin || (now - lastSpin) >= COOLDOWN) {
+                spinBtn.innerText = "БЕСПЛАТНО";
+                spinBtn.disabled = false;
+                timerDisplay.innerText = "Ежедневный бонус готов!";
+                return "free";
+            } else {
+                const remaining = COOLDOWN - (now - lastSpin);
+                const h = Math.floor(remaining / 3600000);
+                const m = Math.floor((remaining % 3600000) / 60000);
+                spinBtn.innerText = `КРУТИТЬ (${SPIN_COST} ⭐)`;
+                timerDisplay.innerText = `Бесплатно через ${h}ч ${m}м`;
+                
+                if (stars < SPIN_COST) {
+                    spinBtn.disabled = true;
+                    spinBtn.classList.add('bg-gray-700');
+                } else {
+                    spinBtn.disabled = false;
+                    spinBtn.classList.remove('bg-gray-700');
+                }
+                return "paid";
+            }
+        }
+
+        function initWheel() {
+            wheel.innerHTML = '';
+            wheel.style.transition = 'none';
+            wheel.style.transform = 'translateX(0)';
+            
+            // Определяем приз заранее
+            const lastSpin = localStorage.getItem('last_free_spin');
+            // Если прокрут первый — даем Губу (gyba.png), иначе рандом
+            if (!lastSpin) {
+                winningItem = itemsList[5]; // Губа
+            } else {
+                winningItem = itemsList[Math.floor(Math.random() * (itemsList.length - 1))];
+            }
+
+            // Генерируем 80 элементов
+            for (let i = 0; i < 80; i++) {
+                const item = (i === 70) ? winningItem : itemsList[Math.floor(Math.random() * itemsList.length)];
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.innerHTML = `<img src="img/${item.n}" onerror="this.src='star.png'">`;
+                wheel.appendChild(div);
+            }
+        }
+
+        spinBtn.addEventListener('click', () => {
+            const mode = updateStatus();
+            const stars = parseInt(localStorage.getItem('stars_balance')) || 0;
+
+            if (mode === "paid" && stars < SPIN_COST) return;
+
+            if (mode === "paid") {
+                localStorage.setItem('stars_balance', (stars - SPIN_COST).toString());
+            } else {
+                localStorage.setItem('last_free_spin', Date.now().toString());
+            }
+
+            spinBtn.disabled = true;
+            tg.HapticFeedback.impactOccurred('heavy');
+            
+            const itemWidth = 130; 
+            const offset = (70 * itemWidth) - (window.innerWidth / 2) + (itemWidth / 2);
+
+            wheel.style.transition = 'transform 7s cubic-bezier(0.1, 0, 0, 1)';
+            wheel.style.transform = `translateX(-${offset}px)`;
+
+            setTimeout(() => { 
+                document.getElementById('won-item-img').src = `img/${winningItem.n}`;
+                document.getElementById('won-item-name').innerText = winningItem.name;
+                winModal.style.display = 'flex'; 
+                tg.HapticFeedback.notificationOccurred('success');
+            }, 7100);
+        });
+
+        document.getElementById('sell-btn').onclick = () => {
+            let s = parseInt(localStorage.getItem('stars_balance')) || 0;
+            localStorage.setItem('stars_balance', (s + 1).toString());
+            goToMain();
+        };
+
+        document.getElementById('keep-btn').onclick = () => {
+            let inv = JSON.parse(localStorage.getItem('user_inventory')) || [];
+            inv.push({ name: winningItem.name, img: `img/${winningItem.n}` });
+            localStorage.setItem('user_inventory', JSON.stringify(inv));
+            goToMain();
+        };
+
+        initWheel();
+        updateStatus();
+        setInterval(updateStatus, 10000);
+    </script>
+</body>
+</html>
