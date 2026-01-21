@@ -1,5 +1,4 @@
 flask
 flask-cors
 requests
-vercel-kv
-pydantic
+redis
