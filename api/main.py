@@ -25,19 +25,22 @@ def create_pay():
     payload = {
         "asset": "TON",
         "amount": str(amount),
-        "description": f"Пополнение баланса StarsDrop для {uid}"
+        "description": f"Пополнение для {uid}"
     }
     
     try:
-        r = requests.post(url, json=payload, headers=headers).json()
-        if r['ok']:
+        r = requests.post(url, json=payload, headers=headers)
+        res_data = r.json()
+        if res_data.get('ok'):
             return jsonify({
-                "pay_url": r['result']['pay_url'],
-                "invoice_id": r['result']['invoice_id']
+                "pay_url": res_data['result']['pay_url'],
+                "invoice_id": res_data['result']['invoice_id']
             })
-    except:
-        pass
-    return jsonify({"error": "API Error"}), 500
+        else:
+            # Если Криптобот вернул ошибку (например, неверный токен)
+            return jsonify({"error": res_data.get('error')}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # 2. Проверка оплаты
 @app.route('/check_pay/<invoice_id>', methods=['GET'])
