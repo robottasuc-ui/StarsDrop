@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>StarsDrop - Profile Premium</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,6 +20,11 @@
             font-family: 'Inter', sans-serif; 
             margin: 0; 
             overflow-x: hidden; 
+            /* ФИКС: Запрет системных жестов зума */
+            touch-action: pan-y;
+            -webkit-user-select: none;
+            user-select: none;
+            overscroll-behavior-y: none;
         }
 
         #stars-canvas { 
@@ -30,7 +35,6 @@
             pointer-events: none; 
         }
 
-        /* Зеленый градиент из примера */
         .main-wrapper { 
             position: relative; 
             z-index: 1; 
@@ -65,7 +69,6 @@
             box-shadow: 0 0 15px rgba(163, 230, 53, 0.2);
         }
 
-        /* Кнопки */
         .btn-green {
             background: var(--accent-green);
             color: black;
@@ -76,7 +79,6 @@
         }
         .btn-green:active { transform: scale(0.95); opacity: 0.8; }
 
-        /* Тулбар */
         .dock-bar { 
             position: fixed; bottom: 0; left: 0; right: 0; 
             background: rgba(5, 10, 3, 0.95); 
@@ -89,7 +91,6 @@
         .dock-btn.active { color: var(--accent-green); filter: drop-shadow(0 0 5px var(--accent-green)); }
         .dock-btn span { font-size: 10px; font-weight: 800; text-transform: uppercase; }
 
-        /* Реферальная секция */
         .ref-box {
             background: rgba(163, 230, 53, 0.1);
             border-radius: 20px;
@@ -169,7 +170,15 @@
         const tg = window.Telegram.WebApp;
         let selectedIndex = null;
 
-        // Инициализация юзера
+        // Фикс запрета зума
+        document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) e.preventDefault();
+            lastTouchEnd = now;
+        }, false);
+
         if (tg.initDataUnsafe?.user) {
             const u = tg.initDataUnsafe.user;
             document.getElementById('user-name').innerText = (u.username || u.first_name).toUpperCase();
@@ -182,7 +191,7 @@
             const link = document.getElementById('ref-link').innerText;
             navigator.clipboard.writeText(link);
             tg.HapticFeedback.notificationOccurred('success');
-            tg.showScanQrPopup({ text: "Ссылка скопирована!" }); // Маленький лайфхак для уведомления
+            tg.showScanQrPopup({ text: "Ссылка скопирована!" });
             setTimeout(() => tg.closeScanQrPopup(), 1000);
         }
 
@@ -190,9 +199,7 @@
             const grid = document.getElementById('inventory-grid');
             const items = JSON.parse(localStorage.getItem('user_inventory')) || [];
             grid.innerHTML = '';
-            
             document.getElementById('item-count').innerText = `${items.length} / 6`;
-
             for (let i = 0; i < 6; i++) {
                 const slot = document.createElement('div');
                 slot.className = 'inventory-slot';
@@ -218,7 +225,6 @@
             let items = JSON.parse(localStorage.getItem('user_inventory')) || [];
             items.splice(selectedIndex, 1);
             localStorage.setItem('user_inventory', JSON.stringify(items));
-            // Здесь должна быть логика начисления баланса через твой API
             closeModal(); loadInventory();
             tg.HapticFeedback.notificationOccurred('success');
         }
@@ -231,7 +237,6 @@
             closeModal();
         }
 
-        // Анимация фона (Зеленые частицы)
         const canvas = document.getElementById('stars-canvas');
         const ctx = canvas.getContext('2d');
         let stars = [];
@@ -253,7 +258,6 @@
             });
             requestAnimationFrame(draw);
         }
-        
         initStars(); draw(); loadInventory();
         window.addEventListener('resize', initStars);
     </script>
