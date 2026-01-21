@@ -7,7 +7,7 @@ from vercel_kv import KV
 app = Flask(__name__)
 CORS(app)
 
-# ФИКС: Принудительно связываем твои переменные STORAGE с тем, что ждет библиотека
+# ФИКС: Если Vercel добавил префикс STORAGE, перенаправляем их в стандартные ключи
 if os.getenv("STORAGE_KV_URL"):
     os.environ["KV_URL"] = os.getenv("STORAGE_KV_URL")
     os.environ["KV_REST_API_URL"] = os.getenv("STORAGE_KV_REST_API_URL")
@@ -16,7 +16,6 @@ if os.getenv("STORAGE_KV_URL"):
 
 kv = KV()
 
-# Твой токен CryptoPay
 CRYPTO_PAY_TOKEN = '519389:AAnFdMg1D8ywsfVEd0aA02B8872Zzz61ATO'
 
 @app.route('/')
