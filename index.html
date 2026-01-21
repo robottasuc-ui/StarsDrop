@@ -23,6 +23,7 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* ДВИЖОК ЗВЕЗД НА ФОНЕ */
         #stars-canvas {
             position: fixed;
             top: 0; left: 0;
@@ -62,6 +63,7 @@
         }
         .game-card:active { transform: scale(0.95); background: rgba(139, 92, 246, 0.1); }
 
+        /* МОДАЛКИ */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; display: none; align-items: flex-end; backdrop-filter: blur(15px); }
         .modal-content { 
             background: #0d0812; width: 100%; 
@@ -224,40 +226,32 @@
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="flex mb-8 bg-black/50 rounded-2xl p-1.5 border border-white/5">
                 <div id="tab-ton" onclick="switchTab('ton')" class="tab-btn active uppercase tracking-widest">CryptoBot</div>
-                <div id="tab-stars" onclick="switchTab('stars')" class="tab-btn uppercase tracking-widest">Stars</div>
+                <div id="tab-stars" onclick="switchTab('stars')" class="tab-btn uppercase tracking-widest">Stars Gift</div>
             </div>
 
             <div id="content-ton" class="grid grid-cols-2 gap-4">
-                <div onclick="payTon(1)" class="payment-option">
-                    <span class="text-[10px] text-gray-500 font-black mb-1 uppercase">Lite</span>
-                    <span class="text-white font-black text-xl">1.0 TON</span>
                 </div>
-                <div onclick="payTon(5)" class="payment-option border-purple-500/40">
-                    <span class="text-[10px] text-purple-400 font-black mb-1 uppercase">Pro</span>
-                    <span class="text-white font-black text-xl">5.0 TON</span>
-                </div>
-            </div>
 
             <div id="content-stars" class="hidden">
                 <div class="gift-info-card mb-6">
-                    <h4 class="text-center font-black text-xs uppercase mb-4 tracking-tighter">Инструкция по оплате</h4>
+                    <h4 class="text-center font-black text-xs uppercase mb-4 tracking-tighter text-yellow-400">Инструкция по подаркам</h4>
                     <div class="space-y-4">
                         <div class="flex items-start">
                             <div class="step-num">1</div>
-                            <p class="text-[11px] text-gray-300">Подарите любой подарок за звёзды на аккаунт владельца.</p>
+                            <p class="text-[11px] text-gray-300">Нажми кнопку ниже и отправь **любой подарок** за звёзды владельцу.</p>
                         </div>
                         <div class="flex items-start">
                             <div class="step-num">2</div>
-                            <p class="text-[11px] text-gray-300">Перейдите в бота и нажмите кнопку ниже, подтверждая оплату.</p>
+                            <p class="text-[11px] text-gray-300">После отправки вернись в приложение и нажми **"Я оплатил"**.</p>
                         </div>
                     </div>
                 </div>
 
-                <a href="http://t.me/StarsDropOfficial" target="_blank" class="block w-full text-center bg-yellow-500 py-5 rounded-2xl font-black text-black text-[12px] uppercase tracking-widest mb-4 active:scale-95 transition-all">
-                    Подарить подарок
+                <a href="https://t.me/твой_юзернейм" target="_blank" onclick="tg.HapticFeedback.impactOccurred('heavy')" class="block w-full text-center bg-yellow-500 py-5 rounded-2xl font-black text-black text-[12px] uppercase tracking-widest mb-4 active:scale-95 transition-all">
+                    Отправить подарок
                 </a>
                 
-                <button onclick="confirmPayment()" class="w-full bg-white/5 py-5 rounded-2xl font-black text-[11px] text-gray-300 border border-white/10 uppercase tracking-widest active:scale-95">
+                <button onclick="confirmGiftPayment()" class="w-full bg-white/5 py-5 rounded-2xl font-black text-[11px] text-gray-300 border border-white/10 uppercase tracking-widest active:scale-95">
                     Я оплатил
                 </button>
             </div>
@@ -271,75 +265,111 @@
         tg.expand();
         tg.enableClosingConfirmation();
         
-        const API_URL = 'https://perilous-unfasciated-nikita.ngrok-free.dev';
+        // --- КОНФИГУРАЦИЯ ---
+        const BACKEND_URL = 'https://starsdrop-3bqn.onrender.com'; // ССЫЛКА НА PYTHON
+        const tonAmounts = [1, 3, 5, 10, 15, 20, 30, 50, 100, 200, 350, 400];
+        
         const logEl = document.getElementById('console-log');
-
         function addLog(msg) {
             logEl.innerHTML += `<br>> ${msg}`;
             logEl.scrollTop = logEl.scrollHeight;
             console.log(msg);
         }
 
-        // --- ДВИЖОК ЗВЕЗД ---
-        const canvas = document.getElementById('stars-canvas');
-        const ctx = canvas.getContext('2d');
-        let stars = [];
+        // --- ГЕНЕРАЦИЯ КНОПОК TON ---
+        const tonContainer = document.getElementById('content-ton');
+        tonAmounts.forEach(amount => {
+            const el = document.createElement('div');
+            el.className = 'payment-option';
+            el.innerHTML = `
+                <span class="text-[10px] text-gray-500 font-black mb-1 uppercase">Pack</span>
+                <span class="text-white font-black text-xl">${amount} TON</span>
+            `;
+            el.onclick = () => payWithCryptoBot(amount);
+            tonContainer.appendChild(el);
+        });
 
-        function initStars() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            stars = [];
-            const count = Math.floor((canvas.width * canvas.height) / 1500);
-            for(let i=0; i<count; i++) {
-                stars.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    size: Math.random() * 1.6 + 0.2,
-                    speed: Math.random() * 0.8 + 0.2,
-                    opacity: Math.random()
+        // --- ЛОГИКА CRYPTO BOT (API) ---
+        async function payWithCryptoBot(amount) {
+            const user_id = tg.initDataUnsafe?.user?.id;
+            addLog(`Создание счета: ${amount} TON...`);
+            tg.HapticFeedback.impactOccurred('light');
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/create_pay`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: user_id, amount: amount })
                 });
+                const data = await response.json();
+                
+                if (data.pay_url) {
+                    tg.openTelegramLink(data.pay_url);
+                    startPolling(data.invoice_id);
+                } else {
+                    addLog('Ошибка API CryptoBot');
+                }
+            } catch (e) {
+                addLog('Сервер недоступен');
             }
-            addLog(`Stars initialized: ${stars.length}`);
         }
 
-        function drawStars() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            stars.forEach(s => {
-                ctx.fillStyle = `rgba(255, 255, 255, ${s.opacity})`;
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-                ctx.fill();
-                s.y += s.speed;
-                if(s.y > canvas.height) s.y = -5;
+        function startPolling(invoiceId) {
+            const interval = setInterval(async () => {
+                try {
+                    const res = await fetch(`${BACKEND_URL}/check_pay/${invoiceId}`);
+                    const status = await res.json();
+                    if (status.paid) {
+                        clearInterval(interval);
+                        tg.showPopup({ title: 'Успех!', message: `Зачислено ${status.amount} TON`, buttons: [{type: 'ok'}] });
+                        tg.HapticFeedback.notificationOccurred('success');
+                        updateBalance();
+                    }
+                } catch (e) {}
+            }, 5000);
+        }
+
+        // --- ЛОГИКА ПОДАРКОВ (РУЧНАЯ) ---
+        function confirmGiftPayment() {
+            tg.HapticFeedback.notificationOccurred('warning');
+            tg.showPopup({
+                title: 'Заявка принята',
+                message: 'Мы проверяем наличие подарка. Баланс будет начислен через 5-10 минут после ручной проверки админом.',
+                buttons: [{type: 'ok', text: 'Понял'}]
             });
-            requestAnimationFrame(drawStars);
+            
+            // Уведомляем админа через бэк
+            fetch(`${BACKEND_URL}/notify_gift`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ user_id: tg.initDataUnsafe?.user?.id, username: tg.initDataUnsafe?.user?.username })
+            });
+            
+            closeModals();
         }
 
-        window.addEventListener('resize', initStars);
-        initStars();
-        drawStars();
-
-        // --- ПОЛЬЗОВАТЕЛЬ ---
+        // --- ПОЛЬЗОВАТЕЛЬ И БАЛАНС ---
         const user = tg.initDataUnsafe?.user;
         if (user) {
             document.getElementById('user-name').innerText = (user.username || user.first_name).toUpperCase();
             document.getElementById('user-id').innerText = `ID: ${user.id}`;
             document.getElementById('user-pic').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=1d1a29&color=fff`;
-            addLog(`User: ${user.id}`);
+            updateBalance();
         }
 
-        const tonConnectUI = new TONConnectUI.TonConnectUI({
-            manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/manifest.json'
-        });
-
-        // --- ФУНКЦИИ ---
-        function openPayModal(tab) {
-            document.getElementById('pay-modal').style.display = 'flex';
-            switchTab(tab);
+        async function updateBalance() {
+            if (!user) return;
+            try {
+                const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}`);
+                const data = await res.json();
+                document.getElementById('ton-balance').innerText = data.balance.toFixed(2);
+                document.getElementById('stars-balance').innerText = data.stars;
+            } catch (e) { addLog('Баланс не синхронизирован'); }
         }
 
+        // --- ИНТЕРФЕЙСНЫЕ ФУНКЦИИ ---
+        function openPayModal(tab) { document.getElementById('pay-modal').style.display = 'flex'; switchTab(tab); }
         function closeModals() { document.getElementById('pay-modal').style.display = 'none'; }
-
         function switchTab(type) {
             const isTon = type === 'ton';
             document.getElementById('tab-ton').classList.toggle('active', isTon);
@@ -347,53 +377,33 @@
             document.getElementById('content-ton').classList.toggle('hidden', !isTon);
             document.getElementById('content-stars').classList.toggle('hidden', isTon);
         }
-
-        function confirmPayment() {
-            addLog('Requesting payment verification...');
-            tg.showPopup({
-                title: 'Проверка оплаты',
-                message: 'Ваша заявка принята. Ожидайте начисления в течение нескольких минут.',
-                buttons: [{type: 'ok', text: 'Понял'}]
-            });
-        }
-
-        async function payTon(amount) {
-            if (!tonConnectUI.connected) {
-                await tonConnectUI.openModal();
-                return;
-            }
-            addLog(`TON Tx: ${amount}`);
-            const tx = {
-                validUntil: Math.floor(Date.now() / 1000) + 300,
-                messages: [{
-                    address: "UQD3Ova8MrxhXHacmHgQVcT-TTLF8pZYKBo67egsBCl6M8Yx",
-                    amount: (amount * 1000000000).toString(),
-                    payload: btoa(user.id.toString())
-                }]
-            };
-            try {
-                await tonConnectUI.sendTransaction(tx);
-                addLog('Tx success');
-            } catch (e) { addLog(`Error: ${e.message}`); }
-        }
-
-        async function updateBalance() {
-            if (!user) return;
-            try {
-                const res = await fetch(`${API_URL}/get_balance/${user.id}`);
-                const data = await res.json();
-                document.getElementById('ton-balance').innerText = data.balance.toFixed(2);
-                document.getElementById('stars-balance').innerText = data.stars;
-            } catch (e) { addLog('Sync error'); }
-        }
-
-        setInterval(updateBalance, 20000);
-        updateBalance();
-
         function toggleLogs() {
             const l = document.getElementById('console-log');
             l.style.display = l.style.display === 'block' ? 'none' : 'block';
         }
+
+        // --- АНИМИРОВАННЫЙ ФОН (ЗВЕЗДЫ) ---
+        const canvas = document.getElementById('stars-canvas');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+        function initStars() {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            stars = [];
+            for(let i=0; i<150; i++) {
+                stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*1.5+0.2, sp: Math.random()*0.8+0.2});
+            }
+        }
+        function drawStars() {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            stars.forEach(s => {
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random()*0.5 + 0.5})`;
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill();
+                s.y += s.sp; if(s.y > canvas.height) s.y = -5;
+            });
+            requestAnimationFrame(drawStars);
+        }
+        window.addEventListener('resize', initStars);
+        initStars(); drawStars();
     </script>
 </body>
 </html>
