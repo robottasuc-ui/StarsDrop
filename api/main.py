@@ -71,10 +71,3 @@ def notify_gift():
 def get_balance(user_id):
     # Заглушка, тут должен быть запрос к БД
     return jsonify({"balance": 0.00, "stars": 0})
-
-if __name__ == '__main__':
-    # На хостинге порт берется из переменной окружения
-    import os
-    port = int(os.environ.get("PORT", 5000))
-
-    app.run(host='0.0.0.0', port=port)
