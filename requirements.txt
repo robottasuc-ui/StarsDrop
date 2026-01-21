@@ -38,4 +38,8 @@ uvicorn==0.40.0
 Werkzeug==3.1.5
 yarl==1.22.0
 gunicorn
+flask
+flask-cors
+aiocryptopay
+
 
