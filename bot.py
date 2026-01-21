@@ -1,8 +1,12 @@
+import os
 import json
 from aiogram import Bot, Dispatcher, executor, types
 
-# 1. Вставь сюда свой токен от @BotFather
-API_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'
+# Вместо токена пишем это (он будет браться из настроек сервера)
+API_TOKEN = os.getenv('8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I')
+
+# Твой ID оставляем как есть
+ADMIN_ID = 8015661230
 
 # 2. Твой ID уже указан верно
 ADMIN_ID = 8015661230  
