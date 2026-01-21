@@ -2,3 +2,5 @@ flask
 flask-cors
 requests
 redis
+aiogram==2.25.1
+
