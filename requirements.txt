@@ -1,5 +1,5 @@
-flask==3.0.0
-flask-cors==4.0.0
-requests==2.31.0
-vercel-kv==0.1.0
-pydantic==2.5.2
+flask
+flask-cors
+requests
+vercel-kv
+pydantic
