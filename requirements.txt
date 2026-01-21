@@ -3,4 +3,3 @@ flask-cors
 requests
 vercel-kv
 pydantic
-email-validator
