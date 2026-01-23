@@ -245,28 +245,30 @@
     </div>
 
     <div id="vault-modal" class="modal-base" onclick="closeVault()">
-        <div class="modal-sheet" onclick="event.stopPropagation()">
-            <div class="w-12 h-1 bg-white/10 mx-auto mb-6 rounded-full"></div>
-            
-            <div class="flex p-1 bg-black/40 rounded-2xl border border-white/5 mb-6">
-                <div id="tab-btn-ton" onclick="setTab('ton')" class="tab-trigger active">TON</div>
-                <div id="tab-btn-stars" onclick="setTab('stars')" class="tab-trigger">STARS</div>
+    <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="w-12 h-1 bg-white/10 mx-auto mb-6 rounded-full"></div>
+        
+        <div class="flex p-1 bg-black/40 rounded-2xl border border-white/5 mb-6">
+            <div id="tab-btn-ton" onclick="setTab('ton')" class="tab-trigger active">TON</div>
+            <div id="tab-btn-stars" onclick="setTab('stars')" class="tab-trigger">STARS</div>
+        </div>
+
+        <div id="pane-ton" class="grid grid-cols-2 gap-3 max-h-[45vh] overflow-y-auto pr-1">
             </div>
 
-            <div id="pane-ton" class="grid grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto pr-1">
-                </div>
+        <div id="pane-stars" class="hidden text-center py-6">
+            <p class="text-xs text-gray-400 mb-4 px-10">Введите любое количество звёзд</p>
+            <div class="px-6 mb-6">
+                <input type="number" id="stars-input" placeholder="Напр. 50" 
+                       class="w-full bg-white/5 border border-white/10 py-4 px-4 rounded-2xl text-center text-xl font-black text-white outline-none focus:border-yellow-500/50 transition-all">
+            </div>
+            <button onclick="verifyGift()" class="w-full bg-yellow-500 text-black font-black py-4 rounded-2xl uppercase text-[12px] shadow-lg shadow-yellow-500/20 active:scale-95 transition-all">
+                Оплатить звёздами
+            </button>
+        </div>
 
-            <div id="pane-stars" class="hidden text-center py-6">
-    <p class="text-xs text-gray-400 mb-4 px-10">Введите любое количество звёзд</p>
-    
-    <div class="px-6 mb-6">
-        <input type="number" id="stars-input" placeholder="Напр. 50" 
-               class="w-full bg-white/5 border border-white/10 py-4 px-4 rounded-2xl text-center text-xl font-black text-white outline-none focus:border-yellow-500/50 transition-all">
+        <button onclick="closeVault()" class="w-full mt-6 py-4 text-gray-600 font-black uppercase text-[10px] tracking-widest">Вернуться назад</button>
     </div>
-
-    <button onclick="verifyGift()" class="w-full bg-yellow-500 text-black font-black py-4 rounded-2xl uppercase text-[12px] shadow-lg shadow-yellow-500/20 active:scale-95 transition-all">
-        Оплатить звёздами
-    </button>
 </div>
 
     <button onclick="verifyGift()" class="w-full bg-yellow-500 text-black font-black py-4 rounded-2xl uppercase text-[12px] shadow-lg shadow-yellow-500/20 active:scale-95 transition-all">
