@@ -284,7 +284,7 @@
             syncData();
         }
 
-        // Рендер TON паков (Как в старом коде)
+        // Рендер TON паков
         const tonBox = document.getElementById('pane-ton');
         PACKS.forEach(amt => {
             const btn = document.createElement('div');
@@ -297,7 +297,7 @@
             tonBox.appendChild(btn);
         });
 
-        // Функция оплаты (Как в старом коде)
+        // Функция оплаты TON
         async function processPayment(amount) {
             if (lockDown) return;
             lockDown = true;
@@ -316,7 +316,7 @@
             lockDown = false;
         }
 
-        // Модалка и табы (Логика из старого кода)
+        // Модалка и табы
         function openVault(tab) { 
             document.getElementById('vault-modal').style.display = 'flex'; 
             setTab(tab); 
@@ -342,11 +342,38 @@
             } catch (e) {}
         }
 
-        function verifyGift() {
-            tg.showAlert('Функция оплаты звездами временно в разработке');
+        // --- ИСПРАВЛЕННАЯ ФУНКЦИЯ ОПЛАТЫ ЗВЕЗДАМИ ---
+        async function verifyGift() {
+            if (lockDown) return;
+            const amount = 1; // Можно сделать выбор через Prompt или Input
+            lockDown = true;
+            tg.HapticFeedback.impactOccurred('heavy');
+            
+            try {
+                const res = await fetch(`${BACKEND_URL}/create_stars_pay`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({user_id: user?.id, amount: amount})
+                });
+                const data = await res.json();
+                
+                if (data.pay_url) {
+                    tg.openInvoice(data.pay_url, function(status) {
+                        if (status === 'paid') {
+                            tg.showAlert('Оплата прошла! Баланс обновится в течение минуты.');
+                            setTimeout(syncData, 3000);
+                        }
+                    });
+                } else {
+                    tg.showAlert('Бэкенд не вернул ссылку на оплату');
+                }
+            } catch (e) {
+                tg.showAlert('Ошибка сети или сервера');
+            }
+            lockDown = false;
         }
 
-        // Анимация фона (Зеленые звезды)
+        // Анимация фона
         const canvas = document.getElementById('stars-canvas');
         const ctx = canvas.getContext('2d');
         let stars = [];
