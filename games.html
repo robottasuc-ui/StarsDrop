@@ -53,7 +53,7 @@
 
     <div id="pause-modal" class="screen-overlay">
         <h2 class="text-3xl font-black text-white mb-10 uppercase italic">Пауза</h2>
-        <div class="flex flex-col gap-4 w-full px-12 max-w-sm">
+        <div class="flex flex-col gap-4 w-full px-12 max-sm">
             <button onclick="togglePause()" class="btn-game btn-active">Продолжить</button>
             <button onclick="surrender()" id="claim-btn" class="btn-game bg-white/10 text-white">Забрать приз</button>
         </div>
@@ -63,150 +63,154 @@
         <img src="bomb.png" class="w-24 h-24 mb-6 animate-bounce">
         <h2 class="text-4xl font-black text-white mb-2 uppercase italic">БА-БАХ!</h2>
         <p class="text-gray-400 mb-10 text-center px-10 text-sm">Вы взорвались! Звезды потеряны.</p>
-        <div class="flex flex-col gap-4 w-full px-12 max-w-sm">
+        <div class="flex flex-col gap-4 w-full px-12 max-sm">
             <button onclick="startGame()" class="btn-game btn-active py-5">Заново</button>
             <button onclick="window.location.href='index.html'" class="btn-game btn-red py-5">В меню</button>
         </div>
     </div>
 
     <script>
-        <script>
-    const tg = window.Telegram.WebApp;
-    const gameArea = document.getElementById('game-area');
-    const BACKEND_URL = 'https://stars-drop.vercel.app/api'; 
-    const IMGS = ['bear.png', 'box.png', 'cvetok.png', 'dog.png', 'gyba.png', 'koktel.png', 'kot.png', 'lolipop.png', 'zmei.png'];
-    
-    let score = 0, stars = 0, active = false, isPaused = false;
-    const deadLine = 80;
+        const tg = window.Telegram.WebApp;
+        const gameArea = document.getElementById('game-area');
+        const BACKEND_URL = 'https://stars-drop.vercel.app/api'; 
+        const IMGS = ['bear.png', 'box.png', 'cvetok.png', 'dog.png', 'gyba.png', 'koktel.png', 'kot.png', 'lolipop.png', 'zmei.png'];
+        
+        let score = 0, stars = 0, active = false, isPaused = false;
+        const deadLine = 80;
 
-    function startGame() {
-        document.getElementById('menu-screen').style.display = 'none';
-        document.getElementById('death-modal').style.display = 'none';
-        document.getElementById('pause-modal').style.display = 'none';
-        document.getElementById('game-screen').style.display = 'block';
-        gameArea.innerHTML = '';
-        score = 0; stars = 0; active = true; isPaused = false;
-        updateHUD();
-        spawnLoop();
-        tg.HapticFeedback.impactOccurred('medium');
-    }
-
-    function togglePause() {
-        if(!active) return;
-        isPaused = !isPaused;
-        document.getElementById('pause-modal').style.display = isPaused ? 'flex' : 'none';
-    }
-
-    function spawnLoop() {
-        if (!active) return;
-        if (!isPaused) {
-            const count = Math.random() < 0.4 ? 2 : 1;
-            for(let i=0; i < count; i++) {
-                setTimeout(() => createItem(), i * 350);
-            }
+        function startGame() {
+            document.getElementById('menu-screen').style.display = 'none';
+            document.getElementById('death-modal').style.display = 'none';
+            document.getElementById('pause-modal').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            gameArea.innerHTML = '';
+            score = 0; stars = 0; active = true; isPaused = false;
+            updateHUD();
+            spawnLoop();
+            tg.HapticFeedback.impactOccurred('medium');
         }
-        let delay = Math.max(450, 1000 - (score * 5));
-        setTimeout(spawnLoop, delay);
-    }
 
-    function createItem() {
-        if (!active || isPaused) return;
-        const item = document.createElement('img');
-        const rand = Math.random();
-        
-        let type = 'gift';
-        if (rand < 0.09) type = 'star';    
-        else if (rand < 0.20) type = 'bomb'; 
-        
-        if(type === 'star') item.src = 'star.png';
-        else if(type === 'bomb') item.src = 'bomb.png';
-        else item.src = `img/${IMGS[Math.floor(Math.random()*IMGS.length)]}`;
-        
-        item.className = 'drop-item';
-        item.style.left = Math.random() * (window.innerWidth - 80) + 'px';
-        item.style.top = '-100px';
-        gameArea.appendChild(item);
+        function togglePause() {
+            if(!active) return;
+            isPaused = !isPaused;
+            document.getElementById('pause-modal').style.display = isPaused ? 'flex' : 'none';
+        }
 
-        let speed = 4.5 + (score / 15);
-        let posY = -100;
-
-        const fall = setInterval(() => {
-            if (!active) { clearInterval(fall); item.remove(); return; }
+        function spawnLoop() {
+            if (!active) return;
             if (!isPaused) {
-                posY += speed;
-                item.style.top = posY + 'px';
-                if (posY > window.innerHeight - deadLine) {
-                    item.style.opacity = '0.2';
-                    item.style.pointerEvents = 'none';
+                const count = Math.random() < 0.4 ? 2 : 1;
+                for(let i=0; i < count; i++) {
+                    setTimeout(() => createItem(), i * 350);
                 }
-                if (posY > window.innerHeight) {
+            }
+            let delay = Math.max(450, 1000 - (score * 5));
+            setTimeout(spawnLoop, delay);
+        }
+
+        function createItem() {
+            if (!active || isPaused) return;
+            const item = document.createElement('img');
+            const rand = Math.random();
+            
+            let type = 'gift';
+            if (rand < 0.09) type = 'star';    
+            else if (rand < 0.20) type = 'bomb'; 
+            
+            if(type === 'star') item.src = 'star.png';
+            else if(type === 'bomb') item.src = 'bomb.png';
+            else item.src = `img/${IMGS[Math.floor(Math.random()*IMGS.length)]}`;
+            
+            item.className = 'drop-item';
+            item.style.left = Math.random() * (window.innerWidth - 80) + 'px';
+            item.style.top = '-100px';
+            gameArea.appendChild(item);
+
+            let speed = 4.5 + (score / 15);
+            let posY = -100;
+
+            const fall = setInterval(() => {
+                if (!active) { clearInterval(fall); item.remove(); return; }
+                if (!isPaused) {
+                    posY += speed;
+                    item.style.top = posY + 'px';
+                    if (posY > window.innerHeight - deadLine) {
+                        item.style.opacity = '0.2';
+                        item.style.pointerEvents = 'none';
+                    }
+                    if (posY > window.innerHeight) {
+                        clearInterval(fall);
+                        item.remove();
+                    }
+                }
+            }, 16);
+
+            item.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                if (isPaused) return;
+                
+                if (type === 'bomb') {
+                    active = false;
+                    tg.HapticFeedback.notificationOccurred('error');
+                    document.getElementById('death-modal').style.display = 'flex';
+                } else {
+                    if (type === 'star') { 
+                        stars++; 
+                        tg.HapticFeedback.notificationOccurred('success');
+                        // Локальное сохранение на случай сбоя
+                        localStorage.setItem('pending_stars', stars);
+                    }
+                    else { score++; tg.HapticFeedback.impactOccurred('light'); }
+                    updateHUD();
                     clearInterval(fall);
                     item.remove();
                 }
-            }
-        }, 16);
-
-        item.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            if (isPaused) return;
-            
-            if (type === 'bomb') {
-                active = false;
-                tg.HapticFeedback.notificationOccurred('error');
-                document.getElementById('death-modal').style.display = 'flex';
-            } else {
-                if (type === 'star') { 
-                    stars++; 
-                    tg.HapticFeedback.notificationOccurred('success');
-                } else { 
-                    score++; 
-                    tg.HapticFeedback.impactOccurred('light'); 
-                }
-                updateHUD();
-                clearInterval(fall);
-                item.remove();
-            }
-        });
-    }
-
-    function updateHUD() {
-        document.getElementById('score').innerText = score;
-        document.getElementById('stars').innerText = stars;
-    }
-
-    // --- ИСПРАВЛЕННАЯ ФУНКЦИЯ ЗАВЕРШЕНИЯ ---
-    async function surrender() {
-        active = false;
-        const uid = tg.initDataUnsafe?.user?.id;
-        
-        // 1. Сохраняем локально (для мгновенного отображения в index.html)
-        const currentLocalStars = parseInt(localStorage.getItem('fake_stars') || '0');
-        localStorage.setItem('fake_stars', currentLocalStars + stars);
-
-        // 2. Имитируем запрос на бэкенд
-        try {
-            await fetch(`${BACKEND_URL}/update_balance`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: uid,
-                    stars: stars,
-                    points: score,
-                    status: "paid", // Пытаемся пробить фильтр оплаты
-                    transaction_id: "WIN_" + Date.now()
-                })
             });
-        } catch (e) {
-            console.log("Silent error");
         }
 
-        // 3. Улетаем на главную с параметрами
-        tg.HapticFeedback.notificationOccurred('success');
-        window.location.href = `index.html?win_stars=${stars}&force=true`;
-    }
+        function updateHUD() {
+            document.getElementById('score').innerText = score;
+            document.getElementById('stars').innerText = stars;
+        }
 
-    tg.expand();
-</script>
+        async function surrender() {
+            if(stars === 0 && score === 0) { window.location.href = 'index.html'; return; }
+            
+            active = false;
+            const btn = document.getElementById('claim-btn');
+            btn.innerText = "ЗАЧИСЛЕНИЕ...";
+            btn.disabled = true;
+
+            const uid = tg.initDataUnsafe?.user?.id;
+            
+            try {
+                // Отправляем запрос
+                const response = await fetch(`${BACKEND_URL}/update_balance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: uid,
+                        stars: stars,
+                        points: score
+                    })
+                });
+
+                if(response.ok) {
+                    // Если всё ок — очищаем локальный запас
+                    localStorage.removeItem('pending_stars');
+                    tg.HapticFeedback.notificationOccurred('success');
+                    window.location.href = `index.html?win_stars=${stars}`;
+                } else {
+                    throw new Error('Server error');
+                }
+            } catch (e) {
+                // Если ошибка — редиректим с параметром, index.html подхватит
+                console.log('Sync fail, using fallback redirect');
+                window.location.href = `index.html?win_stars=${stars}`;
+            }
+        }
+
+        tg.expand();
     </script>
 </body>
 </html>
