@@ -1,19 +1,20 @@
 import os
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+import json
 import requests
 import redis
-import json
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
-# Разрешаем CORS для связи фронта с бэком
+# Разрешаем CORS, чтобы фронтенд мог достучаться до бэкенда
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-# --- НАСТРОЙКИ ---
+# --- НАСТРОЙКИ (Всё в одном месте) ---
 REDIS_URL = "redis://default:9x1pwcq9Vp94gWovLw1qMQQZ5euiZy5w@redis-13357.crce220.us-east-1-4.ec2.cloud.redislabs.com:13357"
 CRYPTO_PAY_TOKEN = '519389:AAnFdMg1D8ywsfVEd0aA02B8872Zzz61ATO'
 BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'
-BASE_API_URL = "https://pay.cryptobots.run/api"
+# Используем официальный домен API CryptoBot
+BASE_CRYPTO_URL = "https://pay.crypt.bot/api"
 
 # Подключение к Redis
 try:
@@ -25,7 +26,7 @@ except Exception as e:
     r_db = None
     db_connected = False
 
-# --- ОБЩИЕ МЕТОДЫ ---
+# --- ПОЛУЧЕНИЕ БАЛАНСА ---
 @app.route('/api/get_balance/<user_id>', methods=['GET'])
 def get_balance(user_id):
     if not r_db:
@@ -37,7 +38,7 @@ def get_balance(user_id):
     except Exception as e:
         return jsonify({"balance": 0.0, "stars": 0, "error": str(e)}), 200
 
-# --- ЛОГИКА CRYPTO BOT (TON) ---
+# --- ЛОГИКА TON (CRYPTO BOT) ---
 @app.route('/api/create_pay', methods=['POST'])
 def create_pay():
     data = request.json
@@ -47,28 +48,32 @@ def create_pay():
     payload = {
         "asset": "TON",
         "amount": str(amount),
-        "payload": uid,
-        "description": "Пополнение TON в StarsDrop",
+        "payload": uid, # Передаем ID юзера здесь, чтобы поймать его в вебхуке
+        "description": "Пополнение TON",
         "allow_comments": False
     }
     headers = {"Crypto-Pay-API-Token": CRYPTO_PAY_TOKEN}
     
     try:
-        r = requests.post(f"{BASE_API_URL}/createInvoice", json=payload, headers=headers).json()
+        r = requests.post(f"{BASE_CRYPTO_URL}/createInvoice", json=payload, headers=headers).json()
         if r.get('ok'):
-            return jsonify(r['result']), 200
-        return jsonify({"error": "crypto_bot_err"}), 400
+            res = r['result']
+            # Мапим ссылку для фронтенда (на фронте ищем pay_url)
+            res['pay_url'] = res.get('bot_invoice_url')
+            return jsonify(res), 200
+        return jsonify({"error": "crypto_bot_err", "details": r}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/crypto-webhook', methods=['POST', 'GET'])
+@app.route('/api/crypto-webhook', methods=['POST'])
 def crypto_webhook():
-    if request.method == 'GET':
-        return "Crypto Webhook is active!", 200
-    data = request.json
-    if data and data.get('status') == 'paid':
-        user_id = data.get('payload')
-        amount = float(data.get('amount'))
+    update = request.json
+    # В CryptoBot тип события о зачислении: 'invoice_paid'
+    if update and update.get('update_type') == 'invoice_paid':
+        payload_data = update.get('payload', {})
+        user_id = payload_data.get('payload') # Извлекаем UID
+        amount = float(payload_data.get('amount'))
+        
         if r_db and user_id:
             raw_data = r_db.get(f"user:{user_id}")
             user_data = json.loads(raw_data) if raw_data else {"balance": 0.0, "stars": 0}
@@ -76,7 +81,7 @@ def crypto_webhook():
             r_db.set(f"user:{user_id}", json.dumps(user_data))
     return "OK", 200
 
-# --- ЛОГИКА TELEGRAM STARS (ИНВОЙС) ---
+# --- ЛОГИКА TELEGRAM STARS ---
 @app.route('/api/create_stars_pay', methods=['POST'])
 def create_stars_pay():
     data = request.json
@@ -88,6 +93,7 @@ def create_stars_pay():
         "title": "Пополнение звёзд",
         "description": f"Пополнение баланса на {amount} звёзд",
         "payload": uid,
+        "provider_token": "", # Для Stars всегда пусто
         "currency": "XTR",
         "prices": [{"label": "Stars", "amount": amount}]
     }
@@ -96,26 +102,25 @@ def create_stars_pay():
         r = requests.post(url, json=payload).json()
         if r.get('ok'):
             return jsonify({"pay_url": r['result']}), 200
-        return jsonify({"error": "stars_err", "details": r}), 400
+        return jsonify({"error": "stars_err"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# --- ЛОГИКА ПРИЕМА ОПЛАТЫ STARS (ВЕБХУК) ---
 @app.route('/api/telegram-webhook', methods=['POST'])
 def telegram_webhook():
     update = request.json
     
-    # Подтверждаем намерение оплаты (Pre-checkout)
+    # 1. Pre-checkout (обязательный ответ Телеге перед оплатой)
     if "pre_checkout_query" in update:
         query_id = update["pre_checkout_query"]["id"]
         requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/answerPreCheckoutQuery", 
                       json={"pre_checkout_query_id": query_id, "ok": True})
         
-    # Если оплата успешно завершена
+    # 2. Successful Payment (зачисление в базу)
     if "message" in update and "successful_payment" in update["message"]:
         payment = update["message"]["successful_payment"]
-        user_id = update["message"]["from"]["id"]
-        # В XTR сумма передается напрямую (1 звезда = 1 единица)
+        # Берем ID юзера из сообщения или из payload инвойса
+        user_id = str(payment.get('invoice_payload')) or str(update["message"]["from"]["id"])
         stars_amount = int(payment["total_amount"])
         
         if r_db:
@@ -126,7 +131,6 @@ def telegram_webhook():
             
     return "OK", 200
 
-# --- СЛУЖЕБНОЕ ---
 @app.route('/api/health')
 def health():
     return jsonify({"status": "ok", "db": db_connected}), 200
