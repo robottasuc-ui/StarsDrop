@@ -250,56 +250,82 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.enableClosingConfirmation();
+        <script>
+    const tg = window.Telegram.WebApp;
+    const BACKEND_URL = 'https://stars-drop.vercel.app/api'; 
+    const user = tg.initDataUnsafe?.user;
+    let isProcessing = false;
 
-        const BACKEND_URL = 'https://stars-drop.vercel.app/api'; 
-        const PACKS = [1, 3, 5, 10, 20, 50, 100, 250];
-        let isProcessing = false;
-
-        const user = tg.initDataUnsafe?.user;
-        if (user) {
-            document.getElementById('display-name').innerText = (user.username || user.first_name).toUpperCase();
-            document.getElementById('display-id').innerText = `ID: ${user.id}`;
-            document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?background=166534&color=fff&name=${user.first_name}`;
-            syncData();
-        }
-
-        // --- ЛОГИКА ГАРАНТИРОВАННОГО ЗАЧИСЛЕНИЯ ---
+    // --- 1. СИЛОВОЙ ПЕРЕХВАТ ВЫИГРЫША ---
+    window.addEventListener('load', async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const winStars = urlParams.get('win_stars');
         
-        // 1. Используем navigateTo вместо прямой смены location
-        function navigateTo(url) {
-            tg.HapticFeedback.impactOccurred('medium');
-            window.location.href = url;
-        }
-
-        // 2. Слушаем возвращение пользователя на вкладку (когда вышел из игры)
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                // Юзер вернулся — ждем полсекунды и обновляем баланс 3 раза для верности
-                setTimeout(syncData, 500);
-                setTimeout(syncData, 2000);
-                setTimeout(syncData, 5000);
-            }
-        });
-
-        async function syncData() {
-            if (!user) return;
+        if (winStars && winStars !== "0" && !window.alreadyProcessed) {
+            window.alreadyProcessed = true;
+            const starsCount = parseInt(winStars);
+            
             try {
-                const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}?t=${Date.now()}`);
-                if (!res.ok) throw new Error();
-                const data = await res.json();
+                // Прямой запрос на начисление
+                await fetch(`${BACKEND_URL}/update_balance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: user?.id,
+                        stars: starsCount,
+                        points: 0
+                    })
+                });
                 
-                // Простое обновление без сложной анимации, чтобы не лагало
-                document.getElementById('bal-ton').innerText = data.balance.toFixed(2);
-                document.getElementById('bal-stars').innerText = data.stars;
-            } catch (e) { console.error("Sync error"); }
+                tg.HapticFeedback.notificationOccurred('success');
+                // Очищаем URL, чтобы не было дублей при перезагрузке
+                window.history.replaceState({}, document.title, window.location.pathname);
+                // Обновляем цифры на экране
+                setTimeout(syncData, 500);
+            } catch (e) {
+                console.error("Ошибка авто-зачисления");
+            }
         }
+    });
 
-        // --- ОСТАЛЬНАЯ ТВОЯ ЛОГИКА (БЕЗ ИЗМЕНЕНИЙ СТИЛЯ) ---
+    // --- 2. ИНИЦИАЛИЗАЦИЯ ИНТЕРФЕЙСА ---
+    tg.expand();
+    tg.enableClosingConfirmation();
 
-        const tonBox = document.getElementById('pane-ton');
+    if (user) {
+        document.getElementById('display-name').innerText = (user.username || user.first_name).toUpperCase();
+        document.getElementById('display-id').innerText = `ID: ${user.id}`;
+        document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?background=166534&color=fff&name=${user.first_name}`;
+        syncData();
+    }
+
+    function navigateTo(url) {
+        tg.HapticFeedback.impactOccurred('medium');
+        window.location.href = url;
+    }
+
+    async function syncData() {
+        if (!user) return;
+        try {
+            const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}?t=${Date.now()}`);
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+            document.getElementById('bal-ton').innerText = data.balance.toFixed(2);
+            document.getElementById('bal-stars').innerText = data.stars;
+        } catch (e) { console.error("Sync error"); }
+    }
+
+    // Обновление при возвращении во вкладку
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') syncData();
+    });
+
+    // --- 3. МАГАЗИН И ПЛАТЕЖИ ---
+    const PACKS = [1, 3, 5, 10, 20, 50, 100, 250];
+    const tonBox = document.getElementById('pane-ton');
+    
+    if (tonBox) {
+        tonBox.innerHTML = ''; // Очистка перед рендером
         PACKS.forEach(amt => {
             const btn = document.createElement('div');
             btn.className = 'bg-white/5 border border-white/10 p-6 rounded-3xl text-center active:scale-95 transition-all cursor-pointer';
@@ -307,56 +333,59 @@
             btn.onclick = () => processPayment(amt);
             tonBox.appendChild(btn);
         });
+    }
 
-        async function processPayment(amount) {
-            if (isProcessing) return;
-            isProcessing = true;
-            try {
-                const res = await fetch(`${BACKEND_URL}/create_pay`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({user_id: user?.id, amount})
+    async function processPayment(amount) {
+        if (isProcessing) return;
+        isProcessing = true;
+        try {
+            const res = await fetch(`${BACKEND_URL}/create_pay`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({user_id: user?.id, amount})
+            });
+            const data = await res.json();
+            if (data.pay_url) tg.openTelegramLink(data.pay_url);
+        } catch (e) { tg.showAlert('Ошибка платежа'); }
+        isProcessing = false;
+    }
+
+    async function verifyGift() {
+        const val = document.getElementById('stars-input').value;
+        if (!val || val < 1) return tg.showAlert('Укажите сумму');
+        isProcessing = true;
+        try {
+            const res = await fetch(`${BACKEND_URL}/create_stars_pay`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ user_id: user?.id, amount: val })
+            });
+            const data = await res.json();
+            if (data.pay_url) {
+                tg.openInvoice(data.pay_url, (status) => {
+                    if (status === 'paid') { syncData(); closeVault(); }
                 });
-                const data = await res.json();
-                if (data.pay_url) tg.openTelegramLink(data.pay_url);
-            } catch (e) { tg.showAlert('Ошибка'); }
-            isProcessing = false;
-        }
+            }
+        } catch (e) { tg.showAlert('Ошибка звезд'); }
+        isProcessing = false;
+    }
 
-        async function verifyGift() {
-            const val = document.getElementById('stars-input').value;
-            if (!val || val < 1) return tg.showAlert('Укажите сумму');
-            isProcessing = true;
-            try {
-                const res = await fetch(`${BACKEND_URL}/create_stars_pay`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: user?.id, amount: val })
-                });
-                const data = await res.json();
-                if (data.pay_url) {
-                    tg.openInvoice(data.pay_url, (status) => {
-                        if (status === 'paid') { syncData(); closeVault(); }
-                    });
-                }
-            } catch (e) { tg.showAlert('Ошибка'); }
-            isProcessing = false;
-        }
+    // --- 4. МОДАЛКИ И АНИМАЦИЯ ---
+    function openVault(tab) {
+        document.getElementById('vault-modal').style.display = 'flex';
+        setTab(tab);
+    }
+    function closeVault() { document.getElementById('vault-modal').style.display = 'none'; }
+    function setTab(type) {
+        const isTon = type === 'ton';
+        document.getElementById('tab-btn-ton').classList.toggle('active', isTon);
+        document.getElementById('tab-btn-stars').classList.toggle('active', !isTon);
+        document.getElementById('pane-ton').classList.toggle('hidden', !isTon);
+        document.getElementById('pane-stars').classList.toggle('hidden', isTon);
+    }
 
-        function openVault(tab) {
-            document.getElementById('vault-modal').style.display = 'flex';
-            setTab(tab);
-        }
-        function closeVault() { document.getElementById('vault-modal').style.display = 'none'; }
-        function setTab(type) {
-            const isTon = type === 'ton';
-            document.getElementById('tab-btn-ton').classList.toggle('active', isTon);
-            document.getElementById('tab-btn-stars').classList.toggle('active', !isTon);
-            document.getElementById('pane-ton').classList.toggle('hidden', !isTon);
-            document.getElementById('pane-stars').classList.toggle('hidden', isTon);
-        }
-
-        const canvas = document.getElementById('stars-canvas');
+    const canvas = document.getElementById('stars-canvas');
+    if (canvas) {
         const ctx = canvas.getContext('2d');
         let starsArr = [];
         function initStars() {
@@ -378,7 +407,15 @@
         }
         initStars(); animateStars();
         window.addEventListener('resize', initStars);
-        window.onload = () => { setTimeout(() => { document.getElementById('global-loader').style.display = 'none'; }, 1000); };
+    }
+
+    window.onload = () => { 
+        setTimeout(() => { 
+            const loader = document.getElementById('global-loader');
+            if(loader) loader.style.display = 'none'; 
+        }, 1000); 
+    };
+</script>
     </script>
 </body>
 </html>
