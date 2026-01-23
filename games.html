@@ -2,214 +2,123 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>StarsDrop Games</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>StarsDrop Games - In Development</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { background: #0a1205; color: white; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; touch-action: none; }
-        #game-screen { display: none; position: fixed; inset: 0; background: radial-gradient(circle at 50% 50%, #1a4d1a 0%, #050a02 100%); z-index: 100; }
-        .grid-bg { position: absolute; inset: 0; background-image: linear-gradient(rgba(163, 230, 53, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(163, 230, 53, 0.1) 1px, transparent 1px); background-size: 50px 50px; perspective: 600px; transform: rotateX(60deg); transform-origin: top; animation: moveGrid 1.2s linear infinite; }
-        @keyframes moveGrid { from { background-position: 0 0; } to { background-position: 0 50px; } }
-        .dead-zone { position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(to top, rgba(220, 38, 38, 0.3), transparent); border-top: 2px dashed rgba(220, 38, 38, 0.5); z-index: 110; pointer-events: none; }
-        .drop-item { position: absolute; width: 70px; height: 70px; z-index: 150; touch-action: none; filter: drop-shadow(0 0 12px rgba(163, 230, 53, 0.4)); }
-        .pause-btn { position: absolute; top: 50px; right: 20px; z-index: 250; background: rgba(0,0,0,0.6); padding: 12px; border-radius: 16px; pointer-events: auto; }
-        .screen-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(15px); }
-        .btn-game { width: 100%; max-width: 320px; padding: 22px; border-radius: 24px; display: flex; align-items: center; justify-content: center; font-weight: 900; text-transform: uppercase; transition: all 0.2s; border: none; }
-        .btn-active { background: #a3e635; color: black; box-shadow: 0 10px 25px rgba(163, 230, 53, 0.3); }
-        .btn-red { background: #dc2626; color: white; box-shadow: 0 10px 25px rgba(220, 38, 38, 0.3); }
+        
+        body { 
+            background-color: #0a1205; 
+            color: white; 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .bg-glow {
+            position: absolute;
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(163, 230, 53, 0.15) 0%, transparent 70%);
+            filter: blur(40px);
+            z-index: 0;
+            animation: pulse 4s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        .content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loader-dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .dot {
+            width: 8px; height: 8px;
+            background: #a3e635;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        .btn-back {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 32px;
+            border-radius: 20px;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+            margin-top: 2rem;
+            transition: 0.3s;
+        }
+
+        .btn-back:active {
+            transform: scale(0.95);
+            background: rgba(163, 230, 53, 0.1);
+        }
     </style>
 </head>
 <body>
 
-    <div id="menu-screen" class="p-8 flex flex-col items-center justify-center h-screen gap-5">
-        <h1 class="text-4xl font-black italic uppercase tracking-tighter mb-4">Mini <span class="text-green-500">Games</span></h1>
-        <button onclick="startGame()" class="btn-game btn-active active:scale-95 space-x-3">
-            <span>Ловля подарков</span>
-            <img src="star.png" class="w-8 h-8">
-        </button>
-        <button onclick="window.location.href='index.html'" class="mt-4 px-10 py-4 rounded-2xl bg-white/5 border border-white/10 text-gray-500 font-bold uppercase text-xs tracking-widest active:scale-95">Назад</button>
-    </div>
+    <div class="bg-glow"></div>
 
-    <div id="game-screen">
-        <div class="grid-bg"></div>
-        <div class="dead-zone"></div>
-        <div class="absolute top-12 left-5 z-[200] flex gap-2">
-            <div class="bg-black/60 border border-green-500/30 px-4 py-2 rounded-xl text-center min-w-[80px]">
-                <div class="text-[8px] text-green-400 font-bold uppercase">Points</div>
-                <div id="score" class="text-xl font-black">0</div>
-            </div>
-            <div class="bg-black/60 border border-yellow-500/30 px-4 py-2 rounded-xl text-center min-w-[80px]">
-                <div class="text-[8px] text-yellow-500 font-bold uppercase">Stars</div>
-                <div id="stars" class="text-xl font-black text-yellow-400">0</div>
+    <div class="content">
+        <div class="flex justify-center mb-6">
+            <div class="relative">
+                <img src="mini.png" alt="Games" class="w-24 h-24 opacity-20 grayscale">
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                    </svg>
+                </div>
             </div>
         </div>
-        <button class="pause-btn" onclick="togglePause()">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+
+        <h1 class="text-3xl font-black uppercase italic tracking-tighter mb-2">
+            Игры  в  <span class="text-green-500">разработке</span>
+        </h1>
+        
+        <p class="text-gray-500 text-sm font-medium mb-8">
+            Настраиваем алгоритмы удачи
+            <span class="loader-dots">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </span>
+        </p>
+
+        <button onclick="window.location.href='index.html'" class="btn-back">
+            Вернуться назад
         </button>
-        <div id="game-area" class="relative w-full h-full"></div>
-    </div>
-
-    <div id="pause-modal" class="screen-overlay">
-        <h2 class="text-3xl font-black text-white mb-10 uppercase italic">Пауза</h2>
-        <div class="flex flex-col gap-4 w-full px-12 max-sm">
-            <button onclick="togglePause()" class="btn-game btn-active">Продолжить</button>
-            <button onclick="surrender()" id="claim-btn" class="btn-game bg-white/10 text-white">Забрать приз</button>
-        </div>
-    </div>
-
-    <div id="death-modal" class="screen-overlay" style="background: rgba(0,0,0,0.98);">
-        <img src="bomb.png" class="w-24 h-24 mb-6 animate-bounce">
-        <h2 class="text-4xl font-black text-white mb-2 uppercase italic">БА-БАХ!</h2>
-        <p class="text-gray-400 mb-10 text-center px-10 text-sm">Вы взорвались! Звезды потеряны.</p>
-        <div class="flex flex-col gap-4 w-full px-12 max-sm">
-            <button onclick="startGame()" class="btn-game btn-active py-5">Заново</button>
-            <button onclick="window.location.href='index.html'" class="btn-game btn-red py-5">В меню</button>
-        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        const gameArea = document.getElementById('game-area');
-        // ПРОВЕРЬ ЭТУ ССЫЛКУ! Она должна быть 1 в 1 как в index.html
-        const BACKEND_URL = 'https://stars-drop.vercel.app/api'; 
-        const IMGS = ['bear.png', 'box.png', 'cvetok.png', 'dog.png', 'gyba.png', 'koktel.png', 'kot.png', 'lolipop.png', 'zmei.png'];
-        
-        let score = 0, stars = 0, active = false, isPaused = false;
-        const deadLine = 80;
-
-        function startGame() {
-            document.getElementById('menu-screen').style.display = 'none';
-            document.getElementById('death-modal').style.display = 'none';
-            document.getElementById('pause-modal').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'block';
-            gameArea.innerHTML = '';
-            score = 0; stars = 0; active = true; isPaused = false;
-            updateHUD();
-            spawnLoop();
-            tg.HapticFeedback.impactOccurred('medium');
-        }
-
-        function togglePause() {
-            if(!active) return;
-            isPaused = !isPaused;
-            document.getElementById('pause-modal').style.display = isPaused ? 'flex' : 'none';
-        }
-
-        function spawnLoop() {
-            if (!active) return;
-            if (!isPaused) {
-                const count = Math.random() < 0.4 ? 2 : 1;
-                for(let i=0; i < count; i++) {
-                    setTimeout(() => createItem(), i * 350);
-                }
-            }
-            let delay = Math.max(450, 1000 - (score * 5));
-            setTimeout(spawnLoop, delay);
-        }
-
-        function createItem() {
-            if (!active || isPaused) return;
-            const item = document.createElement('img');
-            const rand = Math.random();
-            
-            let type = 'gift';
-            if (rand < 0.12) type = 'star'; // Чуть увеличил шанс выпадения звезд
-            else if (rand < 0.22) type = 'bomb'; 
-            
-            if(type === 'star') item.src = 'star.png';
-            else if(type === 'bomb') item.src = 'bomb.png';
-            else item.src = `img/${IMGS[Math.floor(Math.random()*IMGS.length)]}`;
-            
-            item.className = 'drop-item';
-            item.style.left = Math.random() * (window.innerWidth - 80) + 'px';
-            item.style.top = '-100px';
-            gameArea.appendChild(item);
-
-            let speed = 4.5 + (score / 15);
-            let posY = -100;
-
-            const fall = setInterval(() => {
-                if (!active) { clearInterval(fall); item.remove(); return; }
-                if (!isPaused) {
-                    posY += speed;
-                    item.style.top = posY + 'px';
-                    if (posY > window.innerHeight - deadLine) {
-                        item.style.opacity = '0.2';
-                        item.style.pointerEvents = 'none';
-                    }
-                    if (posY > window.innerHeight) {
-                        clearInterval(fall);
-                        item.remove();
-                    }
-                }
-            }, 16);
-
-            item.addEventListener('pointerdown', (e) => {
-                e.preventDefault();
-                if (isPaused) return;
-                
-                if (type === 'bomb') {
-                    active = false;
-                    tg.HapticFeedback.notificationOccurred('error');
-                    document.getElementById('death-modal').style.display = 'flex';
-                } else {
-                    if (type === 'star') { 
-                        stars++; 
-                        tg.HapticFeedback.notificationOccurred('success');
-                        // Сразу пишем в память, чтобы не потерять
-                        localStorage.setItem('temp_win', stars);
-                    }
-                    else { score++; tg.HapticFeedback.impactOccurred('light'); }
-                    updateHUD();
-                    clearInterval(fall);
-                    item.remove();
-                }
-            });
-        }
-
-        function updateHUD() {
-            document.getElementById('score').innerText = score;
-            document.getElementById('stars').innerText = stars;
-        }
-
-        async function surrender() {
-            const uid = tg.initDataUnsafe?.user?.id;
-            if(!uid) { window.location.href = 'index.html'; return; }
-
-            active = false;
-            const btn = document.getElementById('claim-btn');
-            btn.innerText = "СОХРАНЕНИЕ...";
-            btn.disabled = true;
-            
-            // Метод 1: Прямой запрос к серверу
-            try {
-                await fetch(`${BACKEND_URL}/update_balance`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: uid,
-                        stars: parseInt(stars),
-                        points: parseInt(score)
-                    })
-                });
-                console.log("Server updated");
-            } catch (e) {
-                console.log("Server sync failed, using fallback");
-            }
-
-            // Метод 2: Локальное сохранение для главной
-            localStorage.setItem('fake_stars', (parseInt(localStorage.getItem('fake_stars') || 0) + stars));
-            
-            // Метод 3: Переход с параметром (САМЫЙ НАДЕЖНЫЙ)
-            tg.HapticFeedback.notificationOccurred('success');
-            setTimeout(() => {
-                window.location.href = `index.html?win_stars=${stars}`;
-            }, 200);
-        }
-
         tg.expand();
+        tg.HapticFeedback.impactOccurred('medium');
     </script>
 </body>
 </html>
