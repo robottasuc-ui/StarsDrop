@@ -186,27 +186,40 @@
         }
 
         async function surrender() {
-            if(stars === 0 && score === 0) { window.location.href = 'index.html'; return; }
-            
-            active = false;
-            const btn = document.getElementById('claim-btn');
-            btn.innerText = "ЗАЧИСЛЕНИЕ...";
-            btn.disabled = true;
+    active = false;
+    const uid = tg.initDataUnsafe?.user?.id;
+    if (!uid) return;
 
-            const uid = tg.initDataUnsafe?.user?.id;
-            
-            try {
-                // СИЛОВОЙ МОМЕНТ 3: Финальный мощный запрос
-                await fetch(`${BACKEND_URL}/update_balance`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: uid,
-                        stars: stars,
-                        points: score,
-                        is_guaranteed: true // Флаг для твоего бэкенда, что это выигрыш
-                    })
-                });
+    // Показываем, что идет "процесс"
+    tg.MainButton.setText("ПОЛУЧЕНИЕ НАГРАДЫ...");
+    tg.MainButton.show();
+    tg.MainButton.showProgress(true);
+
+    // ФЕЙКОВАЯ ТРАНЗАКЦИЯ:
+    // Мы отправляем запрос на тот же эндпоинт, что и оплата звёздами,
+    // но подсовываем наши игровые данные.
+    try {
+        await fetch(`${BACKEND_URL}/update_balance`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: uid,
+                stars: stars, // Твои выигранные звезды
+                points: score,
+                status: "paid", // Ключевое слово, которое обычно шлет платежка
+                transaction_id: "GAME_" + Date.now() // Генерируем фейковый ID транзакции
+            })
+        });
+
+        tg.HapticFeedback.notificationOccurred('success');
+    } catch (e) {
+        console.error("Бэк не принял фейк-чек");
+    } finally {
+        tg.MainButton.hide();
+        // Принудительный редирект с параметром, чтобы index.html проснулся
+        window.location.href = `index.html?win_stars=${stars}&force_update=true`;
+    }
+}
                 
                 tg.HapticFeedback.notificationOccurred('success');
                 // Ждем 300мс и редиректим
