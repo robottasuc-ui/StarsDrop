@@ -76,7 +76,7 @@ def crypto_webhook():
             r_db.set(f"user:{user_id}", json.dumps(user_data))
     return "OK", 200
 
-# --- ЛОГИКА TELEGRAM STARS ---
+# --- ЛОГИКА TELEGRAM STARS (ИНВОЙС) ---
 @app.route('/api/create_stars_pay', methods=['POST'])
 def create_stars_pay():
     data = request.json
@@ -86,7 +86,7 @@ def create_stars_pay():
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/createInvoiceLink"
     payload = {
         "title": "Пополнение звёзд",
-        "description": f"Покупка {amount} звёзд для StarsDrop",
+        "description": f"Пополнение баланса на {amount} звёзд",
         "payload": uid,
         "currency": "XTR",
         "prices": [{"label": "Stars", "amount": amount}]
@@ -99,6 +99,32 @@ def create_stars_pay():
         return jsonify({"error": "stars_err", "details": r}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# --- ЛОГИКА ПРИЕМА ОПЛАТЫ STARS (ВЕБХУК) ---
+@app.route('/api/telegram-webhook', methods=['POST'])
+def telegram_webhook():
+    update = request.json
+    
+    # Подтверждаем намерение оплаты (Pre-checkout)
+    if "pre_checkout_query" in update:
+        query_id = update["pre_checkout_query"]["id"]
+        requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/answerPreCheckoutQuery", 
+                      json={"pre_checkout_query_id": query_id, "ok": True})
+        
+    # Если оплата успешно завершена
+    if "message" in update and "successful_payment" in update["message"]:
+        payment = update["message"]["successful_payment"]
+        user_id = update["message"]["from"]["id"]
+        # В XTR сумма передается напрямую (1 звезда = 1 единица)
+        stars_amount = int(payment["total_amount"])
+        
+        if r_db:
+            raw_data = r_db.get(f"user:{user_id}")
+            user_data = json.loads(raw_data) if raw_data else {"balance": 0.0, "stars": 0}
+            user_data['stars'] = user_data.get('stars', 0) + stars_amount
+            r_db.set(f"user:{user_id}", json.dumps(user_data))
+            
+    return "OK", 200
 
 # --- СЛУЖЕБНОЕ ---
 @app.route('/api/health')
