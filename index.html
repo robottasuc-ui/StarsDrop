@@ -61,7 +61,6 @@
             50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
         }
 
-        /* --- БАЛАНС --- */
         .balance-container-v2 {
             display: flex; flex-direction: column; gap: 6px;
             background: rgba(0, 0, 0, 0.3);
@@ -98,19 +97,10 @@
         }
         .btn-base:active { transform: scale(0.95); }
 
-        .btn-cases {
-            background: linear-gradient(135deg, #052e16 0%, #000000 100%);
-            border-left: 4px solid var(--deep-green);
-        }
-        .btn-wheel {
-            background: linear-gradient(135deg, var(--accent-green) 0%, #ffffff 250%);
-        }
-        .btn-games {
-            background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
-            border-left: 4px solid #059669;
-        }
+        .btn-cases { background: linear-gradient(135deg, #052e16 0%, #000000 100%); border-left: 4px solid var(--deep-green); }
+        .btn-wheel { background: linear-gradient(135deg, var(--accent-green) 0%, #ffffff 250%); }
+        .btn-games { background: linear-gradient(135deg, #064e3b 0%, #022c22 100%); border-left: 4px solid #059669; }
 
-        /* --- НОВАЯ МОДАЛКА ИЗ СТАРОГО КОДА --- */
         .modal-base {
             position: fixed; inset: 0;
             background: rgba(0,0,0,0.85);
@@ -133,7 +123,6 @@
         }
         .tab-trigger.active { color: white; background: rgba(163, 230, 53, 0.1); border-radius: 14px; }
 
-        /* --- ТУЛБАР --- */
         .dock-bar {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: rgba(5, 10, 3, 0.95);
@@ -152,6 +141,8 @@
         }
         .loader-ring { width: 50px; height: 50px; border: 3px solid #1a2e05; border-left-color: var(--accent-green); border-radius: 50%; animation: rotate 1s linear infinite; }
         @keyframes rotate { to { transform: rotate(360deg); } }
+        
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body>
@@ -164,7 +155,6 @@
 
     <div class="main-wrapper">
         <div class="p-6 pb-32">
-            
             <div class="flex justify-between items-start">
                 <div class="flex items-center gap-3">
                     <div class="relative">
@@ -208,7 +198,6 @@
                         <span class="text-[10px] text-gray-500 font-bold italic">Скоро</span>
                     </div>
                 </div>
-
                 <div onclick="window.location.href='wheel.html'" class="btn-base btn-wheel">
                     <img src="spin.png" class="w-7 h-7">
                     <div class="flex flex-col">
@@ -217,7 +206,6 @@
                     </div>
                     <div class="ml-auto w-3 h-3 bg-green-600 rounded-full animate-ping"></div>
                 </div>
-
                 <div class="btn-base btn-games opacity-70">
                     <img src="mini.png" class="w-7 h-7">
                     <div class="flex flex-col">
@@ -247,18 +235,20 @@
     <div id="vault-modal" class="modal-base" onclick="closeVault()">
         <div class="modal-sheet" onclick="event.stopPropagation()">
             <div class="w-12 h-1 bg-white/10 mx-auto mb-6 rounded-full"></div>
-            
             <div class="flex p-1 bg-black/40 rounded-2xl border border-white/5 mb-6">
                 <div id="tab-btn-ton" onclick="setTab('ton')" class="tab-trigger active">TON</div>
                 <div id="tab-btn-stars" onclick="setTab('stars')" class="tab-trigger">STARS</div>
             </div>
 
-            <div id="pane-ton" class="grid grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto pr-1">
-                </div>
+            <div id="pane-ton" class="grid grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto pr-1"></div>
 
             <div id="pane-stars" class="hidden text-center py-6">
-                 <p class="text-xs text-gray-400 mb-6 px-10">Купите Stars через официальный шлюз Telegram</p>
-                 <button onclick="verifyGift()" class="w-full bg-yellow-500 text-black font-black py-4 rounded-2xl uppercase text-[12px] shadow-lg shadow-yellow-500/20 active:scale-95 transition-all">Оплатить звездами</button>
+                 <p class="text-xs text-gray-400 mb-4 px-10">Введите количество звёзд для пополнения</p>
+                 <div class="px-6 mb-6">
+                    <input type="number" id="stars-input" placeholder="0" 
+                           class="w-full bg-white/5 border border-white/10 py-4 px-4 rounded-2xl text-center text-xl font-black text-white outline-none focus:border-yellow-500/50 transition-all">
+                 </div>
+                 <button onclick="verifyGift()" class="w-full bg-yellow-500 text-black font-black py-4 rounded-2xl uppercase text-[12px] shadow-lg shadow-yellow-500/20 active:scale-95 transition-all">Оплатить звёздами</button>
             </div>
 
             <button onclick="closeVault()" class="w-full mt-6 py-4 text-gray-600 font-black uppercase text-[10px] tracking-widest">Вернуться назад</button>
@@ -284,20 +274,15 @@
             syncData();
         }
 
-        // Рендер TON паков
         const tonBox = document.getElementById('pane-ton');
         PACKS.forEach(amt => {
             const btn = document.createElement('div');
             btn.className = 'bg-white/5 border border-white/10 p-5 rounded-2xl text-center active:scale-95 transition-all hover:border-green-500/30 cursor-pointer';
-            btn.innerHTML = `
-                <div class="text-[9px] text-gray-500 font-bold uppercase mb-1">Pack</div>
-                <div class="font-black text-white text-lg">${amt} TON</div>
-            `;
+            btn.innerHTML = `<div class="text-[9px] text-gray-500 font-bold uppercase mb-1">Pack</div><div class="font-black text-white text-lg">${amt} TON</div>`;
             btn.onclick = () => processPayment(amt);
             tonBox.appendChild(btn);
         });
 
-        // Функция оплаты TON
         async function processPayment(amount) {
             if (lockDown) return;
             lockDown = true;
@@ -310,20 +295,12 @@
                 });
                 const data = await res.json();
                 if (data.pay_url) tg.openTelegramLink(data.pay_url);
-            } catch (e) { 
-                tg.showAlert('Ошибка подключения к шлюзу'); 
-            }
+            } catch (e) { tg.showAlert('Ошибка подключения'); }
             lockDown = false;
         }
 
-        // Модалка и табы
-        function openVault(tab) { 
-            document.getElementById('vault-modal').style.display = 'flex'; 
-            setTab(tab); 
-        }
-        function closeVault() { 
-            document.getElementById('vault-modal').style.display = 'none'; 
-        }
+        function openVault(tab) { document.getElementById('vault-modal').style.display = 'flex'; setTab(tab); }
+        function closeVault() { document.getElementById('vault-modal').style.display = 'none'; }
         function setTab(type) {
             const isTon = type === 'ton';
             tg.HapticFeedback.impactOccurred('light');
@@ -342,10 +319,16 @@
             } catch (e) {}
         }
 
-        // --- ИСПРАВЛЕННАЯ ФУНКЦИЯ ОПЛАТЫ ЗВЕЗДАМИ ---
         async function verifyGift() {
             if (lockDown) return;
-            const amount = 1; // Можно сделать выбор через Prompt или Input
+            const inputField = document.getElementById('stars-input');
+            const amount = parseInt(inputField.value);
+
+            if (!amount || amount < 1) {
+                tg.showAlert('Введите количество звёзд');
+                return;
+            }
+
             lockDown = true;
             tg.HapticFeedback.impactOccurred('heavy');
             
@@ -356,24 +339,19 @@
                     body: JSON.stringify({user_id: user?.id, amount: amount})
                 });
                 const data = await res.json();
-                
                 if (data.pay_url) {
                     tg.openInvoice(data.pay_url, function(status) {
                         if (status === 'paid') {
-                            tg.showAlert('Оплата прошла! Баланс обновится в течение минуты.');
-                            setTimeout(syncData, 3000);
+                            tg.showAlert('Оплата принята!');
+                            inputField.value = '';
+                            setTimeout(syncData, 2000);
                         }
                     });
-                } else {
-                    tg.showAlert('Бэкенд не вернул ссылку на оплату');
                 }
-            } catch (e) {
-                tg.showAlert('Ошибка сети или сервера');
-            }
+            } catch (e) { tg.showAlert('Ошибка сервера'); }
             lockDown = false;
         }
 
-        // Анимация фона
         const canvas = document.getElementById('stars-canvas');
         const ctx = canvas.getContext('2d');
         let stars = [];
@@ -381,38 +359,20 @@
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             stars = [];
             for(let i=0; i<70; i++) {
-                stars.push({
-                    x: Math.random()*canvas.width, 
-                    y: Math.random()*canvas.height, 
-                    s: Math.random()*1.5, 
-                    v: Math.random()*0.4 + 0.1,
-                    o: Math.random()
-                });
+                stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*1.5, v: Math.random()*0.4 + 0.1, o: Math.random()});
             }
         }
         function render() {
             ctx.clearRect(0,0,canvas.width,canvas.height);
             stars.forEach(s => {
-                ctx.beginPath();
-                ctx.globalAlpha = s.o;
-                ctx.fillStyle = "#a3e635";
-                ctx.arc(s.x, s.y, s.s, 0, Math.PI*2);
-                ctx.fill();
-                s.y += s.v; 
-                if(s.y > canvas.height) s.y = -10;
+                ctx.beginPath(); ctx.globalAlpha = s.o; ctx.fillStyle = "#a3e635"; ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill();
+                s.y += s.v; if(s.y > canvas.height) s.y = -10;
             });
             requestAnimationFrame(render);
         }
-        
         window.addEventListener('resize', initStars);
-        initStars(); 
-        render();
-
-        window.onload = () => {
-            setTimeout(() => {
-                document.getElementById('global-loader').style.display = 'none';
-            }, 800);
-        };
+        initStars(); render();
+        window.onload = () => { setTimeout(() => { document.getElementById('global-loader').style.display = 'none'; }, 800); };
     </script>
 </body>
 </html>
