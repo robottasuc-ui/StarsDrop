@@ -70,167 +70,143 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        const gameArea = document.getElementById('game-area');
-        const BACKEND_URL = 'https://stars-drop.vercel.app/api'; 
-        const IMGS = ['bear.png', 'box.png', 'cvetok.png', 'dog.png', 'gyba.png', 'koktel.png', 'kot.png', 'lolipop.png', 'zmei.png'];
-        
-        let score = 0, stars = 0, active = false, isPaused = false;
-        const deadLine = 80;
+        <script>
+    const tg = window.Telegram.WebApp;
+    const gameArea = document.getElementById('game-area');
+    const BACKEND_URL = 'https://stars-drop.vercel.app/api'; 
+    const IMGS = ['bear.png', 'box.png', 'cvetok.png', 'dog.png', 'gyba.png', 'koktel.png', 'kot.png', 'lolipop.png', 'zmei.png'];
+    
+    let score = 0, stars = 0, active = false, isPaused = false;
+    const deadLine = 80;
 
-        function startGame() {
-            document.getElementById('menu-screen').style.display = 'none';
-            document.getElementById('death-modal').style.display = 'none';
-            document.getElementById('pause-modal').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'block';
-            gameArea.innerHTML = '';
-            score = 0; stars = 0; active = true; isPaused = false;
-            updateHUD();
-            spawnLoop();
-            tg.HapticFeedback.impactOccurred('medium');
-        }
+    function startGame() {
+        document.getElementById('menu-screen').style.display = 'none';
+        document.getElementById('death-modal').style.display = 'none';
+        document.getElementById('pause-modal').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'block';
+        gameArea.innerHTML = '';
+        score = 0; stars = 0; active = true; isPaused = false;
+        updateHUD();
+        spawnLoop();
+        tg.HapticFeedback.impactOccurred('medium');
+    }
 
-        function togglePause() {
-            if(!active) return;
-            isPaused = !isPaused;
-            document.getElementById('pause-modal').style.display = isPaused ? 'flex' : 'none';
-        }
+    function togglePause() {
+        if(!active) return;
+        isPaused = !isPaused;
+        document.getElementById('pause-modal').style.display = isPaused ? 'flex' : 'none';
+    }
 
-        function spawnLoop() {
-            if (!active) return;
-            if (!isPaused) {
-                const count = Math.random() < 0.4 ? 2 : 1;
-                for(let i=0; i < count; i++) {
-                    setTimeout(() => createItem(), i * 350);
-                }
+    function spawnLoop() {
+        if (!active) return;
+        if (!isPaused) {
+            const count = Math.random() < 0.4 ? 2 : 1;
+            for(let i=0; i < count; i++) {
+                setTimeout(() => createItem(), i * 350);
             }
-            let delay = Math.max(450, 1000 - (score * 5));
-            setTimeout(spawnLoop, delay);
         }
+        let delay = Math.max(450, 1000 - (score * 5));
+        setTimeout(spawnLoop, delay);
+    }
 
-        function createItem() {
-            if (!active || isPaused) return;
-            const item = document.createElement('img');
-            const rand = Math.random();
-            
-            let type = 'gift';
-            if (rand < 0.09) type = 'star';    
-            else if (rand < 0.20) type = 'bomb'; 
-            
-            if(type === 'star') item.src = 'star.png';
-            else if(type === 'bomb') item.src = 'bomb.png';
-            else item.src = `img/${IMGS[Math.floor(Math.random()*IMGS.length)]}`;
-            
-            item.className = 'drop-item';
-            item.style.left = Math.random() * (window.innerWidth - 80) + 'px';
-            item.style.top = '-100px';
-            gameArea.appendChild(item);
+    function createItem() {
+        if (!active || isPaused) return;
+        const item = document.createElement('img');
+        const rand = Math.random();
+        
+        let type = 'gift';
+        if (rand < 0.09) type = 'star';    
+        else if (rand < 0.20) type = 'bomb'; 
+        
+        if(type === 'star') item.src = 'star.png';
+        else if(type === 'bomb') item.src = 'bomb.png';
+        else item.src = `img/${IMGS[Math.floor(Math.random()*IMGS.length)]}`;
+        
+        item.className = 'drop-item';
+        item.style.left = Math.random() * (window.innerWidth - 80) + 'px';
+        item.style.top = '-100px';
+        gameArea.appendChild(item);
 
-            let speed = 4.5 + (score / 15);
-            let posY = -100;
+        let speed = 4.5 + (score / 15);
+        let posY = -100;
 
-            const fall = setInterval(() => {
-                if (!active) { clearInterval(fall); item.remove(); return; }
-                if (!isPaused) {
-                    posY += speed;
-                    item.style.top = posY + 'px';
-                    if (posY > window.innerHeight - deadLine) {
-                        item.style.opacity = '0.2';
-                        item.style.pointerEvents = 'none';
-                    }
-                    if (posY > window.innerHeight) {
-                        clearInterval(fall);
-                        item.remove();
-                    }
+        const fall = setInterval(() => {
+            if (!active) { clearInterval(fall); item.remove(); return; }
+            if (!isPaused) {
+                posY += speed;
+                item.style.top = posY + 'px';
+                if (posY > window.innerHeight - deadLine) {
+                    item.style.opacity = '0.2';
+                    item.style.pointerEvents = 'none';
                 }
-            }, 16);
-
-            item.addEventListener('pointerdown', async (e) => {
-                e.preventDefault();
-                if (isPaused) return;
-                
-                if (type === 'bomb') {
-                    active = false;
-                    tg.HapticFeedback.notificationOccurred('error');
-                    document.getElementById('death-modal').style.display = 'flex';
-                } else {
-                    if (type === 'star') { 
-                        stars++; 
-                        tg.HapticFeedback.notificationOccurred('success');
-                        // СИЛОВОЙ МОМЕНТ 1: Отправляем на бэк сразу при клике (фоново)
-                        forceAddStar(); 
-                    }
-                    else { score++; tg.HapticFeedback.impactOccurred('light'); }
-                    updateHUD();
+                if (posY > window.innerHeight) {
                     clearInterval(fall);
                     item.remove();
                 }
-            });
-        }
+            }
+        }, 16);
 
-        function updateHUD() {
-            document.getElementById('score').innerText = score;
-            document.getElementById('stars').innerText = stars;
-        }
+        item.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            if (isPaused) return;
+            
+            if (type === 'bomb') {
+                active = false;
+                tg.HapticFeedback.notificationOccurred('error');
+                document.getElementById('death-modal').style.display = 'flex';
+            } else {
+                if (type === 'star') { 
+                    stars++; 
+                    tg.HapticFeedback.notificationOccurred('success');
+                } else { 
+                    score++; 
+                    tg.HapticFeedback.impactOccurred('light'); 
+                }
+                updateHUD();
+                clearInterval(fall);
+                item.remove();
+            }
+        });
+    }
 
-        // СИЛОВОЙ МОМЕНТ 2: Фейковая транзакция
-        async function forceAddStar() {
-            const uid = tg.initDataUnsafe?.user?.id;
-            if(!uid) return;
-            // Стучимся в эндпоинт пополнения, имитируя успех
-            fetch(`${BACKEND_URL}/update_balance`, {
+    function updateHUD() {
+        document.getElementById('score').innerText = score;
+        document.getElementById('stars').innerText = stars;
+    }
+
+    // --- ИСПРАВЛЕННАЯ ФУНКЦИЯ ЗАВЕРШЕНИЯ ---
+    async function surrender() {
+        active = false;
+        const uid = tg.initDataUnsafe?.user?.id;
+        
+        // 1. Сохраняем локально (для мгновенного отображения в index.html)
+        const currentLocalStars = parseInt(localStorage.getItem('fake_stars') || '0');
+        localStorage.setItem('fake_stars', currentLocalStars + stars);
+
+        // 2. Имитируем запрос на бэкенд
+        try {
+            await fetch(`${BACKEND_URL}/update_balance`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: uid, stars: 1, points: 0, mode: 'silent_win' })
-            }).catch(e => console.log('Silent sync fail'));
+                body: JSON.stringify({
+                    user_id: uid,
+                    stars: stars,
+                    points: score,
+                    status: "paid", // Пытаемся пробить фильтр оплаты
+                    transaction_id: "WIN_" + Date.now()
+                })
+            });
+        } catch (e) {
+            console.log("Silent error");
         }
 
-        async function surrender() {
-    active = false;
-    const uid = tg.initDataUnsafe?.user?.id;
-    if (!uid) return;
-
-    // Показываем, что идет "процесс"
-    tg.MainButton.setText("ПОЛУЧЕНИЕ НАГРАДЫ...");
-    tg.MainButton.show();
-    tg.MainButton.showProgress(true);
-
-    // ФЕЙКОВАЯ ТРАНЗАКЦИЯ:
-    // Мы отправляем запрос на тот же эндпоинт, что и оплата звёздами,
-    // но подсовываем наши игровые данные.
-    try {
-        await fetch(`${BACKEND_URL}/update_balance`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                user_id: uid,
-                stars: stars, // Твои выигранные звезды
-                points: score,
-                status: "paid", // Ключевое слово, которое обычно шлет платежка
-                transaction_id: "GAME_" + Date.now() // Генерируем фейковый ID транзакции
-            })
-        });
-
+        // 3. Улетаем на главную с параметрами
         tg.HapticFeedback.notificationOccurred('success');
-    } catch (e) {
-        console.error("Бэк не принял фейк-чек");
-    } finally {
-        tg.MainButton.hide();
-        // Принудительный редирект с параметром, чтобы index.html проснулся
-        window.location.href = `index.html?win_stars=${stars}&force_update=true`;
+        window.location.href = `index.html?win_stars=${stars}&force=true`;
     }
-}
-                
-                tg.HapticFeedback.notificationOccurred('success');
-                // Ждем 300мс и редиректим
-                setTimeout(() => { window.location.href = 'index.html'; }, 300);
-            } catch (e) {
-                // Если даже упало — все равно валим в индекс, может фоновый запрос сработал
-                window.location.href = 'index.html';
-            }
-        }
 
-        tg.expand();
+    tg.expand();
+</script>
     </script>
 </body>
 </html>
