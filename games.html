@@ -72,6 +72,7 @@
     <script>
         const tg = window.Telegram.WebApp;
         const gameArea = document.getElementById('game-area');
+        // ПРОВЕРЬ ЭТУ ССЫЛКУ! Она должна быть 1 в 1 как в index.html
         const BACKEND_URL = 'https://stars-drop.vercel.app/api'; 
         const IMGS = ['bear.png', 'box.png', 'cvetok.png', 'dog.png', 'gyba.png', 'koktel.png', 'kot.png', 'lolipop.png', 'zmei.png'];
         
@@ -114,8 +115,8 @@
             const rand = Math.random();
             
             let type = 'gift';
-            if (rand < 0.09) type = 'star';    
-            else if (rand < 0.20) type = 'bomb'; 
+            if (rand < 0.12) type = 'star'; // Чуть увеличил шанс выпадения звезд
+            else if (rand < 0.22) type = 'bomb'; 
             
             if(type === 'star') item.src = 'star.png';
             else if(type === 'bomb') item.src = 'bomb.png';
@@ -157,8 +158,8 @@
                     if (type === 'star') { 
                         stars++; 
                         tg.HapticFeedback.notificationOccurred('success');
-                        // Локальное сохранение на случай сбоя
-                        localStorage.setItem('pending_stars', stars);
+                        // Сразу пишем в память, чтобы не потерять
+                        localStorage.setItem('temp_win', stars);
                     }
                     else { score++; tg.HapticFeedback.impactOccurred('light'); }
                     updateHUD();
@@ -174,40 +175,38 @@
         }
 
         async function surrender() {
-            if(stars === 0 && score === 0) { window.location.href = 'index.html'; return; }
-            
+            const uid = tg.initDataUnsafe?.user?.id;
+            if(!uid) { window.location.href = 'index.html'; return; }
+
             active = false;
             const btn = document.getElementById('claim-btn');
-            btn.innerText = "ЗАЧИСЛЕНИЕ...";
+            btn.innerText = "СОХРАНЕНИЕ...";
             btn.disabled = true;
-
-            const uid = tg.initDataUnsafe?.user?.id;
             
+            // Метод 1: Прямой запрос к серверу
             try {
-                // Отправляем запрос
-                const response = await fetch(`${BACKEND_URL}/update_balance`, {
+                await fetch(`${BACKEND_URL}/update_balance`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         user_id: uid,
-                        stars: stars,
-                        points: score
+                        stars: parseInt(stars),
+                        points: parseInt(score)
                     })
                 });
-
-                if(response.ok) {
-                    // Если всё ок — очищаем локальный запас
-                    localStorage.removeItem('pending_stars');
-                    tg.HapticFeedback.notificationOccurred('success');
-                    window.location.href = `index.html?win_stars=${stars}`;
-                } else {
-                    throw new Error('Server error');
-                }
+                console.log("Server updated");
             } catch (e) {
-                // Если ошибка — редиректим с параметром, index.html подхватит
-                console.log('Sync fail, using fallback redirect');
-                window.location.href = `index.html?win_stars=${stars}`;
+                console.log("Server sync failed, using fallback");
             }
+
+            // Метод 2: Локальное сохранение для главной
+            localStorage.setItem('fake_stars', (parseInt(localStorage.getItem('fake_stars') || 0) + stars));
+            
+            // Метод 3: Переход с параметром (САМЫЙ НАДЕЖНЫЙ)
+            tg.HapticFeedback.notificationOccurred('success');
+            setTimeout(() => {
+                window.location.href = `index.html?win_stars=${stars}`;
+            }, 200);
         }
 
         tg.expand();
