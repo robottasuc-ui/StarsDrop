@@ -8,126 +8,62 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        
-        body { 
-            background: #0a1205; 
-            color: white; 
-            font-family: 'Inter', sans-serif; 
-            margin: 0; 
-            overflow: hidden; 
-        }
+        body { background: #0a1205; color: white; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; touch-action: none; }
 
-        /* Игровой экран (по умолчанию скрыт) */
         #game-screen {
-            display: none;
-            position: fixed;
-            inset: 0;
+            display: none; position: fixed; inset: 0;
             background: radial-gradient(circle at 50% 50%, #1a4d1a 0%, #050a02 100%);
             z-index: 100;
         }
 
         .grid-bg {
-            position: absolute;
-            inset: 0;
+            position: absolute; inset: 0;
             background-image: linear-gradient(rgba(163, 230, 53, 0.1) 1px, transparent 1px),
                               linear-gradient(90deg, rgba(163, 230, 53, 0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-            perspective: 600px;
-            transform: rotateX(60deg);
-            transform-origin: top;
+            background-size: 50px 50px; perspective: 600px;
+            transform: rotateX(60deg); transform-origin: top;
             animation: moveGrid 1.2s linear infinite;
         }
         @keyframes moveGrid { from { background-position: 0 0; } to { background-position: 0 50px; } }
 
+        /* Мертвая зона (ниже) */
         .dead-zone {
-            position: absolute;
-            bottom: 0; left: 0; right: 0;
-            height: 140px;
-            background: linear-gradient(to top, rgba(220, 38, 38, 0.25), transparent);
-            border-top: 2px dashed rgba(220, 38, 38, 0.4);
-            z-index: 110;
-            pointer-events: none;
+            position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
+            background: linear-gradient(to top, rgba(220, 38, 38, 0.3), transparent);
+            border-top: 2px dashed rgba(220, 38, 38, 0.5); z-index: 110; pointer-events: none;
         }
 
         .drop-item {
-            position: absolute;
-            width: 70px; height: 70px;
-            z-index: 150;
-            touch-action: none;
-            filter: drop-shadow(0 0 12px rgba(163, 230, 53, 0.7));
-        }
-
-        .btn-game {
-            width: 100%;
-            max-width: 320px;
-            padding: 24px;
-            border-radius: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-weight: 900;
-            text-transform: uppercase;
-            transition: all 0.2s;
-        }
-
-        .btn-active {
-            background: #a3e635;
-            color: black;
-            box-shadow: 0 10px 25px rgba(163, 230, 53, 0.3);
-        }
-
-        .btn-disabled {
-            background: #1a1a1a;
-            color: #444;
-            border: 1px solid #222;
-            cursor: not-allowed;
+            position: absolute; width: 70px; height: 70px;
+            z-index: 150; touch-action: none;
+            filter: drop-shadow(0 0 12px rgba(163, 230, 53, 0.4));
         }
 
         .pause-btn {
-            position: absolute;
-            top: 50px; right: 20px;
-            z-index: 250;
-            background: rgba(0,0,0,0.5);
-            padding: 12px;
-            border-radius: 16px;
+            position: absolute; top: 50px; right: 20px; z-index: 250;
+            background: rgba(0,0,0,0.6); padding: 12px; border-radius: 16px; pointer-events: auto;
         }
 
-        #pause-modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.9);
-            z-index: 1000;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+        .screen-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+            z-index: 1000; flex-direction: column; align-items: center; justify-content: center;
             backdrop-filter: blur(15px);
         }
+
+        .btn-game { width: 100%; max-width: 320px; padding: 22px; border-radius: 24px; display: flex; align-items: center; justify-content: center; font-weight: 900; text-transform: uppercase; transition: all 0.2s; border: none; }
+        .btn-active { background: #a3e635; color: black; box-shadow: 0 10px 25px rgba(163, 230, 53, 0.3); }
+        .btn-red { background: #dc2626; color: white; box-shadow: 0 10px 25px rgba(220, 38, 38, 0.3); }
     </style>
 </head>
 <body>
 
     <div id="menu-screen" class="p-8 flex flex-col items-center justify-center h-screen gap-5">
-        <h1 class="text-4xl font-black italic uppercase tracking-tighter mb-4">
-            Mini <span class="text-green-500">Games</span>
-        </h1>
-
-        <button onclick="startGame()" class="btn-game btn-active active:scale-95">
+        <h1 class="text-4xl font-black italic uppercase tracking-tighter mb-4">Mini <span class="text-green-500">Games</span></h1>
+        <button onclick="startGame()" class="btn-game btn-active active:scale-95 space-x-3">
             <span>Ловля подарков</span>
             <img src="star.png" class="w-8 h-8">
         </button>
-
-        <div class="btn-game btn-disabled">
-            <div class="flex flex-col items-start">
-                <span>Block Blast</span>
-                <span class="text-[10px] opacity-50">В разработке</span>
-            </div>
-            <img src="ton.png" class="w-8 h-8 opacity-20">
-        </div>
-
-        <button onclick="window.location.href='index.html'" class="mt-4 px-10 py-4 rounded-2xl bg-white/5 border border-white/10 text-gray-500 font-bold uppercase text-xs tracking-widest active:scale-95 transition-all">
-            Назад в меню
-        </button>
+        <button onclick="window.location.href='index.html'" class="mt-4 px-10 py-4 rounded-2xl bg-white/5 border border-white/10 text-gray-500 font-bold uppercase text-xs tracking-widest active:scale-95">Назад</button>
     </div>
 
     <div id="game-screen">
@@ -145,18 +81,28 @@
             </div>
         </div>
 
-        <div class="pause-btn" onclick="togglePause()">
+        <button class="pause-btn" onclick="togglePause()">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-        </div>
+        </button>
 
         <div id="game-area" class="relative w-full h-full"></div>
     </div>
 
-    <div id="pause-modal">
+    <div id="pause-modal" class="screen-overlay">
         <h2 class="text-3xl font-black text-white mb-10 uppercase italic">Пауза</h2>
         <div class="flex flex-col gap-4 w-full px-12 max-w-sm">
-            <button onclick="togglePause()" class="bg-white text-black font-black py-5 rounded-2xl uppercase">Продолжить</button>
-            <button onclick="surrender()" class="bg-red-600 text-white font-black py-5 rounded-2xl uppercase">Забрать приз</button>
+            <button onclick="togglePause()" class="btn-game btn-active">Продолжить</button>
+            <button onclick="surrender()" class="btn-game bg-white/10 text-white">Забрать приз</button>
+        </div>
+    </div>
+
+    <div id="death-modal" class="screen-overlay" style="background: rgba(0,0,0,0.98);">
+        <img src="bomb.png" class="w-24 h-24 mb-6 animate-bounce">
+        <h2 class="text-4xl font-black text-white mb-2 uppercase italic">БА-БАХ!</h2>
+        <p class="text-gray-400 mb-10 text-center px-10 text-sm">Вы взорвались! Все очки и звезды этого раунда сгорели.</p>
+        <div class="flex flex-col gap-4 w-full px-12 max-w-sm">
+            <button onclick="startGame()" class="btn-game btn-active py-5">Заново</button>
+            <button onclick="window.location.href='index.html'" class="btn-game btn-red py-5">В меню</button>
         </div>
     </div>
 
@@ -166,15 +112,15 @@
         const BACKEND_URL = 'https://stars-drop.vercel.app/api'; 
         const IMGS = ['bear.png', 'box.png', 'cvetok.png', 'dog.png', 'gyba.png', 'koktel.png', 'kot.png', 'lolipop.png', 'zmei.png'];
         
-        let score = 0;
-        let stars = 0;
-        let active = false;
-        let isPaused = false;
-        const deadZoneLine = 140;
+        let score = 0, stars = 0, active = false, isPaused = false;
+        const deadLine = 80;
 
         function startGame() {
             document.getElementById('menu-screen').style.display = 'none';
+            document.getElementById('death-modal').style.display = 'none';
+            document.getElementById('pause-modal').style.display = 'none';
             document.getElementById('game-screen').style.display = 'block';
+            gameArea.innerHTML = '';
             score = 0; stars = 0; active = true; isPaused = false;
             updateHUD();
             spawnLoop();
@@ -187,11 +133,84 @@
             document.getElementById('pause-modal').style.display = isPaused ? 'flex' : 'none';
         }
 
+        function spawnLoop() {
+            if (!active) return;
+            if (!isPaused) {
+                const count = Math.random() < 0.4 ? 2 : 1;
+                for(let i=0; i < count; i++) {
+                    setTimeout(() => createItem(), i * 350);
+                }
+            }
+            let delay = Math.max(450, 1000 - (score * 5));
+            setTimeout(spawnLoop, delay);
+        }
+
+        function createItem() {
+            if (!active || isPaused) return;
+            const item = document.createElement('img');
+            const rand = Math.random();
+            
+            let type = 'gift';
+            if (rand < 0.07) type = 'star';    
+            else if (rand < 0.18) type = 'bomb'; 
+            
+            if(type === 'star') item.src = 'star.png';
+            else if(type === 'bomb') item.src = 'bomb.png';
+            else item.src = `img/${IMGS[Math.floor(Math.random()*IMGS.length)]}`;
+            
+            item.className = 'drop-item';
+            item.style.left = Math.random() * (window.innerWidth - 80) + 'px';
+            item.style.top = '-100px';
+            gameArea.appendChild(item);
+
+            let speed = 4.2 + (score / 18);
+            let posY = -100;
+
+            const fall = setInterval(() => {
+                if (!active) { clearInterval(fall); item.remove(); return; }
+                if (!isPaused) {
+                    posY += speed;
+                    item.style.top = posY + 'px';
+
+                    // Мертвая зона: делаем тусклым и отключаем клик
+                    if (posY > window.innerHeight - deadLine) {
+                        item.style.opacity = '0.2';
+                        item.style.pointerEvents = 'none';
+                    }
+
+                    if (posY > window.innerHeight) {
+                        clearInterval(fall);
+                        item.remove();
+                    }
+                }
+            }, 16);
+
+            item.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                if (isPaused) return;
+                
+                if (type === 'bomb') {
+                    active = false;
+                    tg.HapticFeedback.notificationOccurred('error');
+                    document.getElementById('death-modal').style.display = 'flex';
+                } else {
+                    if (type === 'star') { stars++; tg.HapticFeedback.notificationOccurred('success'); }
+                    else { score++; tg.HapticFeedback.impactOccurred('light'); }
+                    updateHUD();
+                    clearInterval(fall);
+                    item.remove();
+                }
+            });
+        }
+
+        function updateHUD() {
+            document.getElementById('score').innerText = score;
+            document.getElementById('stars').innerText = stars;
+        }
+
         async function surrender() {
             active = false;
-            isPaused = false;
             document.getElementById('pause-modal').style.display = 'none';
-            
             tg.MainButton.setText("СОХРАНЕНИЕ...");
             tg.MainButton.show();
             tg.MainButton.showProgress(true);
@@ -207,63 +226,11 @@
                     })
                 });
                 tg.HapticFeedback.notificationOccurred('success');
-            } catch (e) {
-                console.error(e);
-            } finally {
+            } catch (e) { console.error(e); } 
+            finally {
                 tg.MainButton.hide();
                 window.location.href = 'index.html'; 
             }
-        }
-
-        function spawnLoop() {
-            if (!active) return;
-            if (!isPaused) createItem();
-            let delay = Math.max(300, 900 - (score * 7));
-            setTimeout(spawnLoop, delay);
-        }
-
-        function createItem() {
-            const item = document.createElement('img');
-            const isStar = Math.random() < 0.15; 
-            item.src = isStar ? 'star.png' : `img/${IMGS[Math.floor(Math.random()*IMGS.length)]}`;
-            item.className = 'drop-item';
-            item.style.left = Math.random() * (window.innerWidth - 80) + 'px';
-            item.style.top = '-100px';
-            gameArea.appendChild(item);
-
-            let currentSpeed = 4 + (Math.floor(score / 5) * 1.2);
-            let posY = -100;
-
-            const fall = setInterval(() => {
-                if (!active) { clearInterval(fall); item.remove(); return; }
-                if (isPaused) return; 
-                posY += currentSpeed;
-                item.style.top = posY + 'px';
-
-                if (posY > (window.innerHeight - deadZoneLine)) {
-                    item.style.opacity = '0.3';
-                }
-                if (posY > window.innerHeight) {
-                    clearInterval(fall);
-                    item.remove();
-                }
-            }, 16);
-
-            item.addEventListener('pointerdown', (e) => {
-                e.preventDefault();
-                if (posY < (window.innerHeight - deadZoneLine)) {
-                    if (isStar) { stars++; tg.HapticFeedback.notificationOccurred('success'); }
-                    else { score++; tg.HapticFeedback.impactOccurred('light'); }
-                    updateHUD();
-                    clearInterval(fall);
-                    item.remove();
-                }
-            });
-        }
-
-        function updateHUD() {
-            document.getElementById('score').innerText = score;
-            document.getElementById('stars').innerText = stars;
         }
 
         tg.expand();
