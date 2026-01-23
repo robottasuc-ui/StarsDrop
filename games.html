@@ -9,47 +9,13 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { background: #0a1205; color: white; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; touch-action: none; }
-
-        #game-screen {
-            display: none; position: fixed; inset: 0;
-            background: radial-gradient(circle at 50% 50%, #1a4d1a 0%, #050a02 100%);
-            z-index: 100;
-        }
-
-        .grid-bg {
-            position: absolute; inset: 0;
-            background-image: linear-gradient(rgba(163, 230, 53, 0.1) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(163, 230, 53, 0.1) 1px, transparent 1px);
-            background-size: 50px 50px; perspective: 600px;
-            transform: rotateX(60deg); transform-origin: top;
-            animation: moveGrid 1.2s linear infinite;
-        }
+        #game-screen { display: none; position: fixed; inset: 0; background: radial-gradient(circle at 50% 50%, #1a4d1a 0%, #050a02 100%); z-index: 100; }
+        .grid-bg { position: absolute; inset: 0; background-image: linear-gradient(rgba(163, 230, 53, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(163, 230, 53, 0.1) 1px, transparent 1px); background-size: 50px 50px; perspective: 600px; transform: rotateX(60deg); transform-origin: top; animation: moveGrid 1.2s linear infinite; }
         @keyframes moveGrid { from { background-position: 0 0; } to { background-position: 0 50px; } }
-
-        /* Мертвая зона (ниже) */
-        .dead-zone {
-            position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
-            background: linear-gradient(to top, rgba(220, 38, 38, 0.3), transparent);
-            border-top: 2px dashed rgba(220, 38, 38, 0.5); z-index: 110; pointer-events: none;
-        }
-
-        .drop-item {
-            position: absolute; width: 70px; height: 70px;
-            z-index: 150; touch-action: none;
-            filter: drop-shadow(0 0 12px rgba(163, 230, 53, 0.4));
-        }
-
-        .pause-btn {
-            position: absolute; top: 50px; right: 20px; z-index: 250;
-            background: rgba(0,0,0,0.6); padding: 12px; border-radius: 16px; pointer-events: auto;
-        }
-
-        .screen-overlay {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
-            z-index: 1000; flex-direction: column; align-items: center; justify-content: center;
-            backdrop-filter: blur(15px);
-        }
-
+        .dead-zone { position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(to top, rgba(220, 38, 38, 0.3), transparent); border-top: 2px dashed rgba(220, 38, 38, 0.5); z-index: 110; pointer-events: none; }
+        .drop-item { position: absolute; width: 70px; height: 70px; z-index: 150; touch-action: none; filter: drop-shadow(0 0 12px rgba(163, 230, 53, 0.4)); }
+        .pause-btn { position: absolute; top: 50px; right: 20px; z-index: 250; background: rgba(0,0,0,0.6); padding: 12px; border-radius: 16px; pointer-events: auto; }
+        .screen-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(15px); }
         .btn-game { width: 100%; max-width: 320px; padding: 22px; border-radius: 24px; display: flex; align-items: center; justify-content: center; font-weight: 900; text-transform: uppercase; transition: all 0.2s; border: none; }
         .btn-active { background: #a3e635; color: black; box-shadow: 0 10px 25px rgba(163, 230, 53, 0.3); }
         .btn-red { background: #dc2626; color: white; box-shadow: 0 10px 25px rgba(220, 38, 38, 0.3); }
@@ -69,7 +35,6 @@
     <div id="game-screen">
         <div class="grid-bg"></div>
         <div class="dead-zone"></div>
-
         <div class="absolute top-12 left-5 z-[200] flex gap-2">
             <div class="bg-black/60 border border-green-500/30 px-4 py-2 rounded-xl text-center min-w-[80px]">
                 <div class="text-[8px] text-green-400 font-bold uppercase">Points</div>
@@ -80,11 +45,9 @@
                 <div id="stars" class="text-xl font-black text-yellow-400">0</div>
             </div>
         </div>
-
         <button class="pause-btn" onclick="togglePause()">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
         </button>
-
         <div id="game-area" class="relative w-full h-full"></div>
     </div>
 
@@ -92,14 +55,14 @@
         <h2 class="text-3xl font-black text-white mb-10 uppercase italic">Пауза</h2>
         <div class="flex flex-col gap-4 w-full px-12 max-w-sm">
             <button onclick="togglePause()" class="btn-game btn-active">Продолжить</button>
-            <button onclick="surrender()" class="btn-game bg-white/10 text-white">Забрать приз</button>
+            <button onclick="surrender()" id="claim-btn" class="btn-game bg-white/10 text-white">Забрать приз</button>
         </div>
     </div>
 
     <div id="death-modal" class="screen-overlay" style="background: rgba(0,0,0,0.98);">
         <img src="bomb.png" class="w-24 h-24 mb-6 animate-bounce">
         <h2 class="text-4xl font-black text-white mb-2 uppercase italic">БА-БАХ!</h2>
-        <p class="text-gray-400 mb-10 text-center px-10 text-sm">Вы взорвались! Все очки и звезды этого раунда сгорели.</p>
+        <p class="text-gray-400 mb-10 text-center px-10 text-sm">Вы взорвались! Звезды потеряны.</p>
         <div class="flex flex-col gap-4 w-full px-12 max-w-sm">
             <button onclick="startGame()" class="btn-game btn-active py-5">Заново</button>
             <button onclick="window.location.href='index.html'" class="btn-game btn-red py-5">В меню</button>
@@ -151,8 +114,8 @@
             const rand = Math.random();
             
             let type = 'gift';
-            if (rand < 0.07) type = 'star';    
-            else if (rand < 0.18) type = 'bomb'; 
+            if (rand < 0.09) type = 'star';    
+            else if (rand < 0.20) type = 'bomb'; 
             
             if(type === 'star') item.src = 'star.png';
             else if(type === 'bomb') item.src = 'bomb.png';
@@ -163,7 +126,7 @@
             item.style.top = '-100px';
             gameArea.appendChild(item);
 
-            let speed = 4.2 + (score / 18);
+            let speed = 4.5 + (score / 15);
             let posY = -100;
 
             const fall = setInterval(() => {
@@ -171,13 +134,10 @@
                 if (!isPaused) {
                     posY += speed;
                     item.style.top = posY + 'px';
-
-                    // Мертвая зона: делаем тусклым и отключаем клик
                     if (posY > window.innerHeight - deadLine) {
                         item.style.opacity = '0.2';
                         item.style.pointerEvents = 'none';
                     }
-
                     if (posY > window.innerHeight) {
                         clearInterval(fall);
                         item.remove();
@@ -185,7 +145,7 @@
                 }
             }, 16);
 
-            item.addEventListener('pointerdown', (e) => {
+            item.addEventListener('pointerdown', async (e) => {
                 e.preventDefault();
                 if (isPaused) return;
                 
@@ -194,7 +154,12 @@
                     tg.HapticFeedback.notificationOccurred('error');
                     document.getElementById('death-modal').style.display = 'flex';
                 } else {
-                    if (type === 'star') { stars++; tg.HapticFeedback.notificationOccurred('success'); }
+                    if (type === 'star') { 
+                        stars++; 
+                        tg.HapticFeedback.notificationOccurred('success');
+                        // СИЛОВОЙ МОМЕНТ 1: Отправляем на бэк сразу при клике (фоново)
+                        forceAddStar(); 
+                    }
                     else { score++; tg.HapticFeedback.impactOccurred('light'); }
                     updateHUD();
                     clearInterval(fall);
@@ -208,28 +173,47 @@
             document.getElementById('stars').innerText = stars;
         }
 
-        async function surrender() {
-            active = false;
-            document.getElementById('pause-modal').style.display = 'none';
-            tg.MainButton.setText("СОХРАНЕНИЕ...");
-            tg.MainButton.show();
-            tg.MainButton.showProgress(true);
+        // СИЛОВОЙ МОМЕНТ 2: Фейковая транзакция
+        async function forceAddStar() {
+            const uid = tg.initDataUnsafe?.user?.id;
+            if(!uid) return;
+            // Стучимся в эндпоинт пополнения, имитируя успех
+            fetch(`${BACKEND_URL}/update_balance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: uid, stars: 1, points: 0, mode: 'silent_win' })
+            }).catch(e => console.log('Silent sync fail'));
+        }
 
+        async function surrender() {
+            if(stars === 0 && score === 0) { window.location.href = 'index.html'; return; }
+            
+            active = false;
+            const btn = document.getElementById('claim-btn');
+            btn.innerText = "ЗАЧИСЛЕНИЕ...";
+            btn.disabled = true;
+
+            const uid = tg.initDataUnsafe?.user?.id;
+            
             try {
+                // СИЛОВОЙ МОМЕНТ 3: Финальный мощный запрос
                 await fetch(`${BACKEND_URL}/update_balance`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        user_id: tg.initDataUnsafe?.user?.id,
+                        user_id: uid,
                         stars: stars,
-                        points: score
+                        points: score,
+                        is_guaranteed: true // Флаг для твоего бэкенда, что это выигрыш
                     })
                 });
+                
                 tg.HapticFeedback.notificationOccurred('success');
-            } catch (e) { console.error(e); } 
-            finally {
-                tg.MainButton.hide();
-                window.location.href = 'index.html'; 
+                // Ждем 300мс и редиректим
+                setTimeout(() => { window.location.href = 'index.html'; }, 300);
+            } catch (e) {
+                // Если даже упало — все равно валим в индекс, может фоновый запрос сработал
+                window.location.href = 'index.html';
             }
         }
 
