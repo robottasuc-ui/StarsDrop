@@ -3,346 +3,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>StarDrop Premium Edition</title>
+    <title>StarsDrop - Cases</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Inter:wght@400;700;900&display=swap');
-        
-        :root {
-            --bg-main: #080a08;
-            --neon-green: #00ff41;
-            --ton-blue: #0088cc;
-        }
-
-        body {
-            background-color: var(--bg-main);
-            color: white;
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            user-select: none;
-            overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .orbitron { font-family: 'Orbitron', sans-serif; }
-
-        .icon-outline {
-            filter: drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000);
-        }
-
-        /* --- LiveDrop --- */
-        .live-header { display: flex; align-items: center; padding: 20px 20px 10px; gap: 12px; }
-        .live-label {
-            font-family: 'Orbitron', sans-serif; font-size: 13px; color: var(--neon-green);
-            text-transform: uppercase; letter-spacing: 4px; text-shadow: 0 0 15px rgba(0, 255, 65, 0.4);
-        }
-        .live-dot { width: 8px; height: 8px; background: var(--neon-green); border-radius: 50%; box-shadow: 0 0 10px var(--neon-green); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-        #live-drop-wrapper {
-            width: 100%; height: 110px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.02), transparent);
-            border-bottom: 1px solid rgba(255,255,255,0.05); overflow: hidden; position: relative;
-        }
-        .live-rail { display: flex; position: absolute; left: 0; top: 0; height: 100%; gap: 15px; padding: 15px; will-change: transform; }
-        .drop-item {
-            min-width: 90px; height: 80px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .drop-item img { width: 40px; height: 40px; object-fit: contain; }
-
-        /* --- Roulette --- */
-        .roulette-container {
-            position: relative; width: 100%; height: 180px; 
-            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(20,20,20,0.1) 50%, rgba(0,0,0,0.8) 100%);
-            margin: 20px 0; overflow: hidden; border-top: 1px solid rgba(0,255,65,0.1); border-bottom: 1px solid rgba(0,255,65,0.1);
-            box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
-        }
-
-        .roulette-container::before, .roulette-container::after {
-            content: ''; position: absolute; top: 0; width: 100px; height: 100%; z-index: 10; pointer-events: none;
-        }
-        .roulette-container::before { left: 0; background: linear-gradient(to right, var(--bg-main), transparent); }
-        .roulette-container::after { right: 0; background: linear-gradient(to left, var(--bg-main), transparent); }
-
-        .center-line {
-            position: absolute; left: 50%; width: 3px; height: 100%; background: var(--neon-green);
-            z-index: 50; transform: translateX(-50%); box-shadow: 0 0 25px var(--neon-green), 0 0 10px white;
-        }
-        .roulette-rail { display: flex; position: absolute; left: 0; align-items: center; height: 100%; will-change: transform; }
-        .roulette-item { min-width: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0.2; filter: grayscale(0.8); }
-        .roulette-item img { width: 95px; height: 95px; object-fit: contain; }
-        
-        .roulette-item.win-glow { 
-            opacity: 1 !important; filter: grayscale(0) drop-shadow(0 0 30px var(--neon-green)); transform: scale(1.15); 
-        }
-
-        .case-card {
-            background: linear-gradient(145deg, #121612, #0a0c0a);
-            border-radius: 35px; border: 1px solid rgba(255,255,255,0.03);
-            transition: 0.3s;
-        }
-
-        #case-modal { backdrop-filter: blur(25px); background: rgba(8, 10, 8, 0.9); }
-        .cnt-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); transition: 0.2s; color: white; }
-        .cnt-btn.active { background: var(--neon-green); color: black; font-weight: 900; box-shadow: 0 0 20px rgba(0,255,65,0.5); }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;900&display=swap');
+        body { background: #0a1205; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .case-glow { box-shadow: 0 0 30px rgba(163, 230, 53, 0.15); border: 1px solid rgba(163, 230, 53, 0.2); }
+        .win-anim { animation: winScale 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes winScale { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .back-btn { position: fixed; top: 20px; left: 20px; z-index: 100; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 12px; border: 1px solid rgba(163,230,53,0.3); }
     </style>
 </head>
-<body>
+<body class="p-4">
 
-    <header class="p-6 flex justify-between items-center sticky top-0 z-[100] bg-[#080a08]/90 backdrop-blur-xl border-b border-white/5">
-        <div class="orbitron text-2xl font-black italic">STAR<span class="text-green-500">DROP</span></div>
-        <div class="flex flex-col items-end gap-1">
-            <div class="flex items-center gap-2 bg-white/5 px-4 py-1.5 rounded-2xl border border-white/10">
-                <img src="img/star.png" class="w-4 icon-outline"> <b id="header-stars">0</b>
-            </div>
-            <div class="flex items-center gap-2 bg-white/5 px-4 py-1.5 rounded-2xl border border-white/10">
-                <img src="img/ton.png" class="w-4 icon-outline"> <b id="header-ton" class="text-[#0088cc]">0.00</b>
-            </div>
-        </div>
-    </header>
-
-    <div class="live-header">
-        <div class="live-dot"></div>
-        <div class="live-label">Live Drop</div>
-    </div>
-    <div id="live-drop-wrapper">
-        <div id="live-drop-rail" class="live-rail"></div>
+    <div class="back-btn" onclick="location.href='index.html'">
+        <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"></path>
+        </svg>
     </div>
 
-    <div class="grid grid-cols-2 gap-5 p-5" id="main-grid"></div>
-
-    <div id="case-modal" class="fixed inset-0 z-[200] hidden flex-col p-6 overflow-y-auto">
-        <div class="flex justify-between items-center mb-6">
-            <button onclick="closeModal()" class="text-gray-500 font-bold text-xs uppercase tracking-widest">← Закрыть</button>
-            <div class="orbitron text-[10px] text-green-500 uppercase">System Ready</div>
+    <div class="flex justify-end gap-3 mb-8 mt-2">
+        <div class="bg-black/40 px-4 py-2 rounded-full border border-green-500/30 flex items-center gap-2">
+            <span id="bal-ton" class="font-black text-blue-400">0.00</span>
+            <img src="ton.png" class="w-5 h-5">
         </div>
-
-        <div id="view-preview" class="fade-in">
-            <div class="flex flex-col items-center mb-8">
-                <img id="m-img" src="" class="w-56 h-56 object-contain">
-                <h1 id="m-title" class="orbitron text-2xl font-black mt-4 uppercase text-center"></h1>
-            </div>
-
-            <div class="flex flex-col items-center gap-6 mb-8">
-                <div class="flex gap-2">
-                    <button onclick="setMul(1)" class="cnt-btn active w-12 h-12 rounded-xl font-black">1</button>
-                    <button onclick="setMul(2)" class="cnt-btn w-12 h-12 rounded-xl font-black">2</button>
-                    <button onclick="setMul(3)" class="cnt-btn w-12 h-12 rounded-xl font-black">3</button>
-                    <button onclick="setMul(4)" class="cnt-btn w-12 h-12 rounded-xl font-black">4</button>
-                    <button onclick="setMul(5)" class="cnt-btn w-12 h-12 rounded-xl font-black">5</button>
-                </div>
-                <div class="grid grid-cols-2 gap-4 w-full">
-                    <button onclick="startRoll('stars')" class="bg-green-500 text-black py-4 rounded-3xl font-black">
-                        <span class="flex justify-center items-center gap-2"><img src="img/star.png" class="w-4 icon-outline"> <span id="p-stars">0</span></span>
-                    </button>
-                    <button onclick="startRoll('ton')" class="bg-[#0088cc] text-white py-4 rounded-3xl font-black">
-                        <span class="flex justify-center items-center gap-2"><img src="img/ton.png" class="w-4 icon-outline"> <span id="p-ton">0</span></span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="text-center text-[10px] font-bold opacity-30 uppercase tracking-widest mb-4">Содержимое кейса</div>
-            <div id="loot-display" class="grid grid-cols-3 gap-2 pb-10"></div>
+        <div class="bg-black/40 px-4 py-2 rounded-full border border-yellow-500/30 flex items-center gap-2">
+            <span id="bal-stars" class="font-black text-yellow-400">0</span>
+            <img src="star.png" class="w-5 h-5">
         </div>
+    </div>
 
-        <div id="view-roulette" class="hidden flex-col items-center justify-center min-h-[50vh]">
-            <div id="roulette-rows" class="w-full"></div>
-        </div>
+    <div class="text-center mb-10">
+        <h1 class="text-3xl font-black italic uppercase tracking-tighter">Кейс <span class="text-green-500">Ultimate</span></h1>
+        <p class="text-gray-500 text-xs font-bold mt-1">ЦЕНА: 100 STARS</p>
+    </div>
 
-        <div id="view-win" class="hidden flex-col items-center gap-6 mt-6">
-            <div id="win-grid" class="flex flex-wrap justify-center gap-4"></div>
-            <div class="w-full space-y-3 pt-6">
-                <button onclick="closeModal()" class="w-full bg-white text-black py-5 rounded-3xl font-black uppercase">Забрать</button>
-                <button id="sell-btn" class="w-full bg-white/5 border border-white/10 text-green-500 py-5 rounded-3xl font-black uppercase">
-                    Продать за ⭐ <span id="sell-price">0</span>
-                </button>
+    <div class="relative w-full h-40 bg-black/50 rounded-3xl border-2 border-green-500/20 overflow-hidden mb-10">
+        <div id="roulette-line" class="absolute top-0 left-1/2 w-1 h-full bg-green-500 z-10 shadow-[0_0_15px_#a3e635]"></div>
+        <div id="case-container" class="flex items-center h-full transition-transform duration-[5s] cubic-bezier(0.15, 0, 0.15, 1)">
             </div>
+    </div>
+
+    <button id="open-btn" onclick="startOpening()" class="w-full bg-green-500 hover:bg-green-400 text-black font-black py-5 rounded-2xl shadow-[0_10px_20px_rgba(163,230,53,0.3)] transition-all active:scale-95 uppercase">
+        Открыть кейс
+    </button>
+
+    <div class="mt-12">
+        <h2 class="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-4 text-center">Возможное содержимое</h2>
+        <div id="drop-list" class="grid grid-cols-3 gap-3">
+            </div>
+    </div>
+
+    <div id="win-modal" class="fixed inset-0 bg-black/90 z-[200] hidden flex-col items-center justify-center p-6 text-center">
+        <div class="win-anim">
+            <div class="text-green-500 font-black text-sm uppercase tracking-widest mb-2">Вы выбили</div>
+            <img id="win-img" src="" class="w-48 h-48 object-contain mb-4 drop-shadow-[0_0_30px_rgba(163,230,53,0.5)]">
+            <div id="win-name" class="text-3xl font-black uppercase mb-8">ITEM NAME</div>
+            <button onclick="collectWin()" class="bg-white text-black font-black px-12 py-4 rounded-xl uppercase tracking-tighter active:scale-90 transition-all">Забрать в профиль</button>
         </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-const BACKEND_URL = 'https://stars-drop.vercel.app/api'; 
-const user = tg.initDataUnsafe?.user;
+        const BACKEND_URL = 'https://stars-drop.vercel.app/api';
+        const user = tg.initDataUnsafe?.user;
 
-// Функция для получения актуального баланса с сервера
-async function syncBalance() {
-    if (!user) return;
-    
-    // Берем "фейковые" звезды из локального хранилища (если ты их там хранишь)
-    const fakeStars = parseInt(localStorage.getItem('fake_stars') || '0');
-    
-    try {
-        const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}?t=${Date.now()}`);
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        
-        // Обновляем визуальные элементы баланса на странице кейсов
-        // Убедись, что у тебя в HTML есть элементы с такими ID
-        const starsEl = document.getElementById('bal-stars');
-        const tonEl = document.getElementById('bal-ton');
-        
-        if (starsEl) starsEl.innerText = data.stars + fakeStars;
-        if (tonEl) tonEl.innerText = data.balance.toFixed(2);
-        
-        // Сохраняем для логики открытия кейсов
-        window.currentStars = data.stars + fakeStars;
-        
-    } catch (e) {
-        console.error("Ошибка синхронизации баланса");
-        // Если сервер упал, берем из локалки (подстраховка)
-        const localStars = parseInt(localStorage.getItem('user_stars') || '0');
-        if (document.getElementById('bal-stars')) {
-            document.getElementById('bal-stars').innerText = localStars;
-        }
-    }
-}
-
-// Запускаем синхронизацию при загрузке страницы
-window.addEventListener('DOMContentLoaded', syncBalance);
-
-        const ITEMS = {
-            1: { name: "Rocket", img: "raketa.png", price: 15, weight: 200 },
-            2: { name: "Sword", img: "metch.png", price: 500, weight: 40 },
-            3: { name: "Helmet", img: "helmet.png", price: 14000, weight: 0 }, // БАЙТ
-            4: { name: "Cat", img: "kot.png", price: 12500, weight: 2 },
-            5: { name: "Bear", img: "bear.png", price: 3500, weight: 10 },
-            6: { name: "Egg", img: "yayko.png", price: 550, weight: 35 },
-            7: { name: "Cigar", img: "ciga.png", price: 3500, weight: 10 },
-            9: { name: "Pop", img: "lolipop.png", price: 400, weight: 80 },
-            10: { name: "Car", img: "car.png", price: 5000, weight: 5 }
-        };
-
-        const CASES = [
-            { name: "Шкатулка Удачи", stars: 100, ton: 1, img: "case2.png", loot: [1,9,1,9,1,6,1,9,1,2,1,9,1,1,9] },
-            { name: "Ящик Магии", stars: 300, ton: 2.99, img: "case3.png", loot: [1,9,6,2,1,9,6,2,5,1,9,6,2,1,9] },
-            { name: "Разлом", stars: 500, ton: 5.5, img: "case4.png", loot: [6,2,5,7,6,2,5,7,10,1,1,1,9,6,2] },
-            { name: "Пиратский", stars: 1200, ton: 9.99, img: "case5.png", loot: [5,7,10,5,7,10,4,1,1,1,1,1,6,2,9] },
-            { name: "Адская Печать", stars: 2000, ton: 13, img: "case7.png", loot: [10,4,5,7,10,4,5,7,10,4,1,1,6,2,9] },
-            { name: "Хранилище", stars: 4999, ton: 35, img: "case8.png", loot: [10,3,4,5,7,6,2,9,1,10,3,4,5,7,1] }
+        // Нормальный список предметов с шансами и ценами
+        const ITEMS = [
+            { id: 1, name: "Rocket", img: "rocket.png", price: 15, rarity: 0.5 },
+            { id: 2, name: "Lolipop", img: "spin.png", price: 400, rarity: 0.2 },
+            { id: 3, name: "Mystic Egg", img: "hero.png", price: 550, rarity: 0.15 },
+            { id: 4, name: "Laser Sword", img: "mini.png", price: 1200, rarity: 0.1 },
+            { id: 5, name: "Cyber Bear", img: "case.png", price: 3500, rarity: 0.05 }
         ];
 
-        let balance = { stars: 25000, ton: 45.0 };
-        let mul = 1, activeCase = null;
+        let isRolling = false;
+        let wonItem = null;
 
-        function render() {
-            document.getElementById('main-grid').innerHTML = CASES.map((c, i) => `
-                <div class="case-card p-6 flex flex-col items-center" onclick="openCase(${i})">
-                    <img src="img/${c.img}" class="w-24 h-24 mb-4 object-contain">
-                    <div class="orbitron text-[10px] text-green-500 font-black mb-2">${c.name}</div>
-                    <div class="text-[11px] font-bold opacity-40">⭐ ${c.stars} / ${c.ton}T</div>
+        // 1. Синхронизация баланса
+        async function syncBalance() {
+            const localStars = localStorage.getItem('user_stars') || 0;
+            const localTon = localStorage.getItem('user_ton') || "0.00";
+            document.getElementById('bal-stars').innerText = localStars;
+            document.getElementById('bal-ton').innerText = localTon;
+
+            if (user?.id) {
+                try {
+                    const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}`);
+                    const data = await res.json();
+                    document.getElementById('bal-stars').innerText = data.stars;
+                    document.getElementById('bal-ton').innerText = data.balance.toFixed(2);
+                    localStorage.setItem('user_stars', data.stars);
+                } catch(e) {}
+            }
+        }
+
+        // 2. Отрисовка дропа снизу (без тупых повторов)
+        function renderDropList() {
+            const list = document.getElementById('drop-list');
+            list.innerHTML = ITEMS.map(item => `
+                <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col items-center">
+                    <img src="${item.img}" class="w-10 h-10 mb-2 object-contain">
+                    <div class="text-[10px] font-black uppercase">${item.name}</div>
+                    <div class="text-[8px] text-green-500 font-bold">${item.price} ⭐</div>
                 </div>
             `).join('');
-            document.getElementById('header-stars').innerText = balance.stars.toLocaleString();
-            document.getElementById('header-ton').innerText = balance.ton.toFixed(2);
         }
 
-        function openCase(i) {
-            activeCase = CASES[i]; setMul(1);
-            document.getElementById('case-modal').style.display = 'flex';
-            document.getElementById('view-preview').style.display = 'block';
-            document.getElementById('view-roulette').style.display = 'none';
-            document.getElementById('view-win').style.display = 'none';
-            document.getElementById('m-img').src = `img/${activeCase.img}`;
-            document.getElementById('m-title').innerText = activeCase.name;
-            document.getElementById('loot-display').innerHTML = activeCase.loot.map(id => `
-                <div class="bg-white/5 border border-white/5 rounded-2xl p-2 flex flex-col items-center">
-                    <img src="img/${ITEMS[id].img}" class="w-10 h-10 mb-1 object-contain">
-                    <div class="text-[7px] font-black uppercase text-gray-500 text-center">${ITEMS[id].name}</div>
-                    <div class="text-[8px] text-green-500">⭐ ${ITEMS[id].price}</div>
-                </div>`).join('');
-        }
+        // 3. Логика открытия
+        function startOpening() {
+            if (isRolling) return;
+            const currentStars = parseInt(localStorage.getItem('user_stars') || 0);
+            if (currentStars < 100) return tg.showAlert("Недостаточно звезд! Пополни баланс на главной.");
 
-        function setMul(n) {
-            mul = n;
-            document.querySelectorAll('.cnt-btn').forEach((b, i) => b.classList.toggle('active', i === n-1));
-            document.getElementById('p-stars').innerText = activeCase.stars * n;
-            document.getElementById('p-ton').innerText = (activeCase.ton * n).toFixed(2);
-        }
-
-        function getWin() {
-            const pool = activeCase.loot.map(id => ({...ITEMS[id], id}));
-            const totalWeight = pool.reduce((s, it) => s + it.weight, 0);
-            let rnd = Math.random() * totalWeight;
-            for(let it of pool) {
-                if(rnd < it.weight) return it;
-                rnd -= it.weight;
-            }
-            return pool[0];
-        }
-
-        function startRoll(type) {
-            const cost = type === 'stars' ? activeCase.stars * mul : activeCase.ton * mul;
-            if(balance[type] < cost) return alert("Недостаточно средств");
-            balance[type] -= cost; render();
-            document.getElementById('view-preview').style.display = 'none';
-            document.getElementById('view-roulette').style.display = 'flex';
-            document.getElementById('roulette-rows').innerHTML = '';
-            const winners = [];
-            for(let i=0; i<mul; i++) {
-                const win = getWin(); winners.push(win); createRow(i, win);
-            }
-            setTimeout(() => { showWin(winners); }, 8500);
-        }
-
-        function createRow(idx, win) {
-            const row = document.createElement('div');
-            row.className = 'roulette-container mb-4';
-            row.innerHTML = `<div class="center-line"></div><div class="roulette-rail" id="rail-${idx}"></div>`;
-            document.getElementById('roulette-rows').appendChild(row);
-            const rail = document.getElementById(`rail-${idx}`);
-            const poolIds = activeCase.loot.filter(id => ITEMS[id].weight > 0);
+            isRolling = true;
+            tg.HapticFeedback.impactOccurred('heavy');
+            
+            const container = document.getElementById('case-container');
+            container.style.transition = 'none';
+            container.style.transform = 'translateX(0)';
+            
+            // Генерируем 50 предметов для прокрутки
             let html = '';
-            for(let i=0; i<85; i++) {
-                const id = (i === 80) ? win.id : poolIds[Math.floor(Math.random()*poolIds.length)];
-                html += `<div class="roulette-item ${i===80?'win-target':''}"><img src="img/${ITEMS[id].img}"></div>`;
+            for(let i=0; i<50; i++) {
+                const item = ITEMS[Math.floor(Math.random() * ITEMS.length)];
+                html += `<div class="min-w-[120px] flex flex-col items-center justify-center">
+                            <img src="${item.img}" class="w-20 h-20 object-contain">
+                         </div>`;
             }
-            rail.innerHTML = html;
+            container.innerHTML = html;
+
+            // Выбираем победителя по шансам
+            wonItem = getWeightedRandom();
+
+            // Вставляем победителя на 45-ю позицию
+            const winIndex = 44;
+            const items = container.children;
+            items[winIndex].innerHTML = `<img src="${wonItem.img}" class="w-20 h-20 object-contain">`;
+
             setTimeout(() => {
-                rail.style.transition = 'transform 8s cubic-bezier(0.1, 0, 0.05, 1)';
-                rail.style.transform = `translateX(-${(80 * 140) - (window.innerWidth / 2) + 70}px)`;
-                setTimeout(() => rail.querySelectorAll('.win-target').forEach(el => el.classList.add('win-glow')), 8000);
-            }, 100);
+                container.style.transition = 'transform 5s cubic-bezier(0.15, 0, 0.15, 1)';
+                const shift = (winIndex * 120) - (window.innerWidth / 2) + 60;
+                container.style.transform = `translateX(-${shift}px)`;
+            }, 50);
+
+            setTimeout(() => {
+                showWin(wonItem);
+                isRolling = false;
+            }, 5200);
         }
 
-        function showWin(winners) {
-            document.getElementById('view-roulette').style.display = 'none';
-            document.getElementById('view-win').style.display = 'flex';
-            let total = 0;
-            document.getElementById('win-grid').innerHTML = winners.map(w => {
-                total += w.price; addLiveItem(false, w); 
-                return `<div class="bg-white/5 p-4 rounded-[30px] border border-white/10 flex flex-col items-center min-w-[100px]">
-                    <img src="img/${w.img}" class="w-16 h-16">
-                    <div class="orbitron text-[8px] text-green-500 mt-2">${w.name}</div>
-                </div>`;
-            }).join('');
-            document.getElementById('sell-price').innerText = total.toLocaleString();
-            document.getElementById('sell-btn').onclick = () => { balance.stars += total; render(); closeModal(); };
-        }
-
-        function initLive() {
-            const rail = document.getElementById('live-drop-rail');
-            for(let i=0; i<20; i++) addLiveItem(true);
-            let x = -1000;
-            function run() {
-                x += 0.3; if(x >= 0) { x = -105; addLiveItem(); rail.removeChild(rail.lastChild); }
-                rail.style.transform = `translateX(${x}px)`; requestAnimationFrame(run);
+        function getWeightedRandom() {
+            const rand = Math.random();
+            let cumulative = 0;
+            for (const item of ITEMS) {
+                cumulative += item.rarity;
+                if (rand < cumulative) return item;
             }
-            run();
+            return ITEMS[0];
         }
 
-        function addLiveItem(first=false, it = null) {
-            const rail = document.getElementById('live-drop-rail');
-            const item = it || ITEMS[Object.keys(ITEMS)[Math.floor(Math.random()*Object.keys(ITEMS).length)]];
-            const div = document.createElement('div');
-            div.className = 'drop-item';
-            div.innerHTML = `<img src="img/${item.img}"><div style="color:${it?'#00ff41':'#555'};font-size:7px;font-weight:900;margin-top:5px;">${it?'YOU':'DROP'}</div>`;
-            first ? rail.appendChild(div) : rail.prepend(div);
+        function showWin(item) {
+            document.getElementById('win-img').src = item.img;
+            document.getElementById('win-name').innerText = item.name;
+            document.getElementById('win-modal').style.display = 'flex';
+            tg.HapticFeedback.notificationOccurred('success');
         }
 
-        function closeModal() { document.getElementById('case-modal').style.display = 'none'; }
-        initLive(); render();
+        // КНОПКА ЗАБРАТЬ - ТЕПЕРЬ РАБОТАЕТ
+        async function collectWin() {
+            if (!user) return location.reload();
+
+            try {
+                // Списываем 100 за кейс и прибавляем цену шмотки (или саму шмотку в будущем)
+                // Сейчас для простоты начислим "стоимость" шмотки в звездах
+                await fetch(`${BACKEND_URL}/update_balance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: user.id,
+                        stars: wonItem.price - 100, // Цена шмотки минус цена кейса
+                        points: 1
+                    })
+                });
+                
+                tg.showAlert(`Предмет ${wonItem.name} добавлен в коллекцию!`);
+                location.href = 'index.html'; // Возвращаемся, чтобы обновить профиль
+            } catch (e) {
+                tg.showAlert("Ошибка сохранения. Попробуй еще раз.");
+            }
+        }
+
+        window.onload = () => {
+            syncBalance();
+            renderDropList();
+        };
     </script>
 </body>
 </html>
