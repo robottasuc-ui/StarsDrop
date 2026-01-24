@@ -3,64 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>StarsDrop - Cases</title>
+    <title>StarDrop Premium</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;900&display=swap');
-        body { background: #0a1205; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-        .case-glow { box-shadow: 0 0 30px rgba(163, 230, 53, 0.15); border: 1px solid rgba(163, 230, 53, 0.2); }
-        .win-anim { animation: winScale 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes winScale { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .back-btn { position: fixed; top: 20px; left: 20px; z-index: 100; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 12px; border: 1px solid rgba(163,230,53,0.3); }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Inter:wght@400;700;900&display=swap');
+        :root { --bg-main: #080a08; --neon-green: #00ff41; }
+        body { background-color: var(--bg-main); color: white; font-family: 'Inter', sans-serif; user-select: none; overflow-x: hidden; }
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .roulette-container { position: relative; width: 100%; height: 180px; background: rgba(0,0,0,0.8); margin: 20px 0; overflow: hidden; border-top: 1px solid rgba(0,255,65,0.1); border-bottom: 1px solid rgba(0,255,65,0.1); }
+        .center-line { position: absolute; left: 50%; width: 3px; height: 100%; background: var(--neon-green); z-index: 50; transform: translateX(-50%); box-shadow: 0 0 20px var(--neon-green); }
+        .roulette-rail { display: flex; position: absolute; left: 0; align-items: center; height: 100%; will-change: transform; }
+        .roulette-item { min-width: 140px; display: flex; justify-content: center; opacity: 0.3; filter: grayscale(1); transition: 0.5s; }
+        .roulette-item img { width: 90px; height: 90px; object-fit: contain; }
+        .win-glow { opacity: 1 !important; filter: grayscale(0) drop-shadow(0 0 20px var(--neon-green)); transform: scale(1.1); }
+        .case-card { background: #121612; border-radius: 25px; border: 1px solid rgba(255,255,255,0.05); }
+        #case-modal { backdrop-filter: blur(20px); background: rgba(8, 10, 8, 0.95); }
+        .cnt-btn { background: rgba(255,255,255,0.05); border-radius: 12px; transition: 0.2s; }
+        .cnt-btn.active { background: var(--neon-green); color: black; font-weight: 900; }
+        .back-link { position: absolute; top: 25px; left: 20px; color: #555; font-weight: 900; font-size: 12px; z-index: 110; }
     </style>
 </head>
-<body class="p-4">
+<body>
 
-    <div class="back-btn" onclick="location.href='index.html'">
-        <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"></path>
-        </svg>
-    </div>
+    <a href="index.html" class="back-link uppercase">← Назад</a>
 
-    <div class="flex justify-end gap-3 mb-8 mt-2">
-        <div class="bg-black/40 px-4 py-2 rounded-full border border-green-500/30 flex items-center gap-2">
-            <span id="bal-ton" class="font-black text-blue-400">0.00</span>
-            <img src="ton.png" class="w-5 h-5">
-        </div>
-        <div class="bg-black/40 px-4 py-2 rounded-full border border-yellow-500/30 flex items-center gap-2">
-            <span id="bal-stars" class="font-black text-yellow-400">0</span>
-            <img src="star.png" class="w-5 h-5">
-        </div>
-    </div>
-
-    <div class="text-center mb-10">
-        <h1 class="text-3xl font-black italic uppercase tracking-tighter">Кейс <span class="text-green-500">Ultimate</span></h1>
-        <p class="text-gray-500 text-xs font-bold mt-1">ЦЕНА: 100 STARS</p>
-    </div>
-
-    <div class="relative w-full h-40 bg-black/50 rounded-3xl border-2 border-green-500/20 overflow-hidden mb-10">
-        <div id="roulette-line" class="absolute top-0 left-1/2 w-1 h-full bg-green-500 z-10 shadow-[0_0_15px_#a3e635]"></div>
-        <div id="case-container" class="flex items-center h-full transition-transform duration-[5s] cubic-bezier(0.15, 0, 0.15, 1)">
+    <header class="p-6 flex justify-between items-center sticky top-0 z-[100] bg-[#080a08]/90 border-b border-white/5">
+        <div class="orbitron text-xl font-black italic">STAR<span class="text-green-500">DROP</span></div>
+        <div class="flex flex-col items-end gap-1">
+            <div class="flex items-center gap-2 bg-white/5 px-3 py-1 rounded-xl border border-white/10 text-xs">
+                <img src="img/star.png" class="w-3"> <b id="header-stars">...</b>
             </div>
-    </div>
-
-    <button id="open-btn" onclick="startOpening()" class="w-full bg-green-500 hover:bg-green-400 text-black font-black py-5 rounded-2xl shadow-[0_10px_20px_rgba(163,230,53,0.3)] transition-all active:scale-95 uppercase">
-        Открыть кейс
-    </button>
-
-    <div class="mt-12">
-        <h2 class="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-4 text-center">Возможное содержимое</h2>
-        <div id="drop-list" class="grid grid-cols-3 gap-3">
+            <div class="flex items-center gap-2 bg-white/5 px-3 py-1 rounded-xl border border-white/10 text-xs">
+                <img src="img/ton.png" class="w-3"> <b id="header-ton" class="text-[#0088cc]">...</b>
             </div>
-    </div>
+        </div>
+    </header>
 
-    <div id="win-modal" class="fixed inset-0 bg-black/90 z-[200] hidden flex-col items-center justify-center p-6 text-center">
-        <div class="win-anim">
-            <div class="text-green-500 font-black text-sm uppercase tracking-widest mb-2">Вы выбили</div>
-            <img id="win-img" src="" class="w-48 h-48 object-contain mb-4 drop-shadow-[0_0_30px_rgba(163,230,53,0.5)]">
-            <div id="win-name" class="text-3xl font-black uppercase mb-8">ITEM NAME</div>
-            <button onclick="collectWin()" class="bg-white text-black font-black px-12 py-4 rounded-xl uppercase tracking-tighter active:scale-90 transition-all">Забрать в профиль</button>
+    <div class="grid grid-cols-2 gap-4 p-4" id="main-grid"></div>
+
+    <div id="case-modal" class="fixed inset-0 z-[200] hidden flex-col p-6 overflow-y-auto">
+        <div class="flex justify-between items-center mb-6 mt-4">
+            <button onclick="closeModal()" class="text-gray-500 font-bold text-xs uppercase">← Отмена</button>
+            <div class="orbitron text-[10px] text-green-500">System Active</div>
+        </div>
+
+        <div id="view-preview">
+            <div class="flex flex-col items-center mb-6">
+                <img id="m-img" src="" class="w-48 h-48 object-contain drop-shadow-2xl">
+                <h1 id="m-title" class="orbitron text-xl font-black mt-4 uppercase text-center"></h1>
+            </div>
+
+            <div class="flex flex-col items-center gap-4 mb-8">
+                <div class="flex gap-2">
+                    <button onclick="setMul(1)" class="cnt-btn active w-10 h-10">1</button>
+                    <button onclick="setMul(2)" class="cnt-btn w-10 h-10">2</button>
+                    <button onclick="setMul(3)" class="cnt-btn w-10 h-10">3</button>
+                </div>
+                <button onclick="startRoll('stars')" class="w-full bg-green-500 text-black py-4 rounded-2xl font-black uppercase shadow-lg shadow-green-500/20">
+                    Открыть за ⭐ <span id="p-stars">0</span>
+                </button>
+            </div>
+
+            <div id="loot-display" class="grid grid-cols-3 gap-2 opacity-60"></div>
+        </div>
+
+        <div id="view-roulette" class="hidden flex-col items-center justify-center min-h-[40vh]">
+            <div id="roulette-rows" class="w-full"></div>
+        </div>
+
+        <div id="view-win" class="hidden flex-col items-center gap-6 mt-6">
+            <div id="win-grid" class="flex flex-wrap justify-center gap-4"></div>
+            <button onclick="saveToInventory()" class="w-full bg-white text-black py-5 rounded-2xl font-black uppercase">Забрать в профиль</button>
         </div>
     </div>
 
@@ -69,136 +83,133 @@
         const BACKEND_URL = 'https://stars-drop.vercel.app/api';
         const user = tg.initDataUnsafe?.user;
 
-        // Нормальный список предметов с шансами и ценами
-        const ITEMS = [
-            { id: 1, name: "Rocket", img: "rocket.png", price: 15, rarity: 0.5 },
-            { id: 2, name: "Lolipop", img: "spin.png", price: 400, rarity: 0.2 },
-            { id: 3, name: "Mystic Egg", img: "hero.png", price: 550, rarity: 0.15 },
-            { id: 4, name: "Laser Sword", img: "mini.png", price: 1200, rarity: 0.1 },
-            { id: 5, name: "Cyber Bear", img: "case.png", price: 3500, rarity: 0.05 }
+        const ITEMS = {
+            1: { id:1, name: "Rocket", img: "img/raketa.png", price: 15, weight: 100 },
+            2: { id:2, name: "Sword", img: "img/metch.png", price: 500, weight: 20 },
+            4: { id:4, name: "Cat", img: "img/kot.png", price: 12500, weight: 1 },
+            5: { id:5, name: "Bear", img: "img/bear.png", price: 3500, weight: 5 },
+            6: { id:6, name: "Egg", img: "img/yayko.png", price: 550, weight: 15 },
+            9: { id:9, name: "Pop", img: "img/lolipop.png", price: 400, weight: 40 }
+        };
+
+        const CASES = [
+            { name: "Шкатулка", stars: 100, ton: 1, img: "case2.png", loot: [1,9,6,2] },
+            { name: "Адская Печать", stars: 2000, ton: 13, img: "case7.png", loot: [2,5,4] }
         ];
 
-        let isRolling = false;
-        let wonItem = null;
+        let currentBalance = { stars: 0, ton: 0 };
+        let mul = 1, activeCase = null, winners = [];
 
-        // 1. Синхронизация баланса
         async function syncBalance() {
-            const localStars = localStorage.getItem('user_stars') || 0;
-            const localTon = localStorage.getItem('user_ton') || "0.00";
-            document.getElementById('bal-stars').innerText = localStars;
-            document.getElementById('bal-ton').innerText = localTon;
-
-            if (user?.id) {
-                try {
-                    const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}`);
-                    const data = await res.json();
-                    document.getElementById('bal-stars').innerText = data.stars;
-                    document.getElementById('bal-ton').innerText = data.balance.toFixed(2);
-                    localStorage.setItem('user_stars', data.stars);
-                } catch(e) {}
-            }
+            if (!user) return;
+            try {
+                const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}`);
+                const data = await res.json();
+                currentBalance.stars = data.stars;
+                currentBalance.ton = data.balance;
+                document.getElementById('header-stars').innerText = data.stars.toLocaleString();
+                document.getElementById('header-ton').innerText = data.balance.toFixed(2);
+            } catch (e) { console.error("Sync error"); }
         }
 
-        // 2. Отрисовка дропа снизу (без тупых повторов)
-        function renderDropList() {
-            const list = document.getElementById('drop-list');
-            list.innerHTML = ITEMS.map(item => `
-                <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col items-center">
-                    <img src="${item.img}" class="w-10 h-10 mb-2 object-contain">
-                    <div class="text-[10px] font-black uppercase">${item.name}</div>
-                    <div class="text-[8px] text-green-500 font-bold">${item.price} ⭐</div>
+        function render() {
+            document.getElementById('main-grid').innerHTML = CASES.map((c, i) => `
+                <div class="case-card p-5 flex flex-col items-center" onclick="openCase(${i})">
+                    <img src="img/${c.img}" class="w-20 h-20 mb-3 object-contain">
+                    <div class="orbitron text-[10px] text-green-500 font-black">${c.name}</div>
+                    <div class="text-[10px] opacity-40">⭐ ${c.stars}</div>
                 </div>
             `).join('');
         }
 
-        // 3. Логика открытия
-        function startOpening() {
-            if (isRolling) return;
-            const currentStars = parseInt(localStorage.getItem('user_stars') || 0);
-            if (currentStars < 100) return tg.showAlert("Недостаточно звезд! Пополни баланс на главной.");
+        function openCase(i) {
+            activeCase = CASES[i]; setMul(1);
+            document.getElementById('case-modal').style.display = 'flex';
+            document.getElementById('view-preview').classList.remove('hidden');
+            document.getElementById('view-roulette').classList.add('hidden');
+            document.getElementById('view-win').classList.add('hidden');
+            document.getElementById('m-img').src = `img/${activeCase.img}`;
+            document.getElementById('m-title').innerText = activeCase.name;
+            document.getElementById('loot-display').innerHTML = activeCase.loot.map(id => `
+                <div class="flex flex-col items-center bg-white/5 p-2 rounded-lg">
+                    <img src="${ITEMS[id].img}" class="w-8 h-8">
+                    <div class="text-[6px] mt-1 uppercase">${ITEMS[id].name}</div>
+                </div>`).join('');
+        }
 
-            isRolling = true;
-            tg.HapticFeedback.impactOccurred('heavy');
+        function setMul(n) {
+            mul = n;
+            document.querySelectorAll('.cnt-btn').forEach((b, i) => b.classList.toggle('active', i === n-1));
+            document.getElementById('p-stars').innerText = activeCase.stars * n;
+        }
+
+        function startRoll(type) {
+            const cost = activeCase.stars * mul;
+            if(currentBalance.stars < cost) return tg.showAlert("Недостаточно звёзд!");
             
-            const container = document.getElementById('case-container');
-            container.style.transition = 'none';
-            container.style.transform = 'translateX(0)';
+            tg.HapticFeedback.impactOccurred('medium');
+            document.getElementById('view-preview').classList.add('hidden');
+            document.getElementById('view-roulette').classList.remove('hidden');
+            document.getElementById('roulette-rows').innerHTML = '';
             
-            // Генерируем 50 предметов для прокрутки
+            winners = [];
+            for(let i=0; i<mul; i++) {
+                const win = getWin(); 
+                winners.push(win);
+                createRow(i, win);
+            }
+            setTimeout(() => { showWinDisplay(); }, 8500);
+        }
+
+        function getWin() {
+            const pool = activeCase.loot.map(id => ITEMS[id]);
+            const total = pool.reduce((s, it) => s + it.weight, 0);
+            let rnd = Math.random() * total;
+            for(let it of pool) { if(rnd < it.weight) return it; rnd -= it.weight; }
+            return pool[0];
+        }
+
+        function createRow(idx, win) {
+            const row = document.createElement('div');
+            row.className = 'roulette-container mb-2';
+            row.innerHTML = `<div class="center-line"></div><div class="roulette-rail" id="rail-${idx}"></div>`;
+            document.getElementById('roulette-rows').appendChild(row);
+            const rail = document.getElementById(`rail-${idx}`);
             let html = '';
-            for(let i=0; i<50; i++) {
-                const item = ITEMS[Math.floor(Math.random() * ITEMS.length)];
-                html += `<div class="min-w-[120px] flex flex-col items-center justify-center">
-                            <img src="${item.img}" class="w-20 h-20 object-contain">
-                         </div>`;
+            for(let i=0; i<85; i++) {
+                const it = (i === 80) ? win : ITEMS[activeCase.loot[Math.floor(Math.random()*activeCase.loot.length)]];
+                html += `<div class="roulette-item ${i===80?'win-target':''}"><img src="${it.img}"></div>`;
             }
-            container.innerHTML = html;
-
-            // Выбираем победителя по шансам
-            wonItem = getWeightedRandom();
-
-            // Вставляем победителя на 45-ю позицию
-            const winIndex = 44;
-            const items = container.children;
-            items[winIndex].innerHTML = `<img src="${wonItem.img}" class="w-20 h-20 object-contain">`;
-
+            rail.innerHTML = html;
             setTimeout(() => {
-                container.style.transition = 'transform 5s cubic-bezier(0.15, 0, 0.15, 1)';
-                const shift = (winIndex * 120) - (window.innerWidth / 2) + 60;
-                container.style.transform = `translateX(-${shift}px)`;
+                rail.style.transition = 'transform 8s cubic-bezier(0.1, 0, 0.05, 1)';
+                rail.style.transform = `translateX(-${(80 * 140) - (window.innerWidth / 2) + 70}px)`;
+                setTimeout(() => rail.querySelector('.win-target').classList.add('win-glow'), 8000);
             }, 50);
-
-            setTimeout(() => {
-                showWin(wonItem);
-                isRolling = false;
-            }, 5200);
         }
 
-        function getWeightedRandom() {
-            const rand = Math.random();
-            let cumulative = 0;
-            for (const item of ITEMS) {
-                cumulative += item.rarity;
-                if (rand < cumulative) return item;
-            }
-            return ITEMS[0];
+        function showWinDisplay() {
+            document.getElementById('view-roulette').classList.add('hidden');
+            document.getElementById('view-win').classList.remove('hidden');
+            document.getElementById('win-grid').innerHTML = winners.map(w => `
+                <div class="bg-white/5 p-4 rounded-2xl border border-white/10 flex flex-col items-center">
+                    <img src="${w.img}" class="w-16 h-16">
+                    <div class="orbitron text-[10px] text-green-500 mt-2">${w.name}</div>
+                </div>`).join('');
         }
 
-        function showWin(item) {
-            document.getElementById('win-img').src = item.img;
-            document.getElementById('win-name').innerText = item.name;
-            document.getElementById('win-modal').style.display = 'flex';
-            tg.HapticFeedback.notificationOccurred('success');
-        }
-
-        // КНОПКА ЗАБРАТЬ - ТЕПЕРЬ РАБОТАЕТ
-        async function collectWin() {
-            if (!user) return location.reload();
-
-            try {
-                // Списываем 100 за кейс и прибавляем цену шмотки (или саму шмотку в будущем)
-                // Сейчас для простоты начислим "стоимость" шмотки в звездах
-                await fetch(`${BACKEND_URL}/update_balance`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: user.id,
-                        stars: wonItem.price - 100, // Цена шмотки минус цена кейса
-                        points: 1
-                    })
-                });
-                
-                tg.showAlert(`Предмет ${wonItem.name} добавлен в коллекцию!`);
-                location.href = 'index.html'; // Возвращаемся, чтобы обновить профиль
-            } catch (e) {
-                tg.showAlert("Ошибка сохранения. Попробуй еще раз.");
-            }
-        }
-
-        window.onload = () => {
+        // КЛЮЧЕВАЯ ФУНКЦИЯ: ЗАПИСЬ В ИНВЕНТАРЬ
+        function saveToInventory() {
+            let inv = JSON.parse(localStorage.getItem('user_inventory')) || [];
+            winners.forEach(w => { if(inv.length < 6) inv.push(w); });
+            localStorage.setItem('user_inventory', JSON.stringify(inv));
+            tg.showAlert("Предметы добавлены в профиль!");
+            closeModal();
             syncBalance();
-            renderDropList();
-        };
+        }
+
+        function closeModal() { document.getElementById('case-modal').style.display = 'none'; }
+        window.onload = () => { syncBalance(); render(); };
     </script>
 </body>
 </html>
