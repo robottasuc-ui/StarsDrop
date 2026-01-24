@@ -7,6 +7,7 @@
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="config.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
@@ -180,13 +181,15 @@
             </div>
 
             <div class="flex flex-col gap-6">
-                <div class="btn-base btn-cases opacity-60 grayscale-[0.5]">
+                <div onclick="navigateTo('case.html')" class="btn-base btn-cases shadow-xl">
                     <img src="case.png" class="w-8 h-8">
                     <div class="flex flex-col">
                         <span class="font-black uppercase tracking-widest text-sm text-white">Кейсы</span>
-                        <span class="text-[10px] text-gray-500 font-bold italic">В разработке</span>
+                        <span class="text-[10px] text-green-400 font-bold italic uppercase">Открывай и побеждай</span>
                     </div>
-                    <div class="ml-auto text-[10px] bg-white/5 px-3 py-1 rounded-full text-gray-400 font-black">SOON</div>
+                    <div class="ml-auto">
+                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
                 </div>
 
                 <div onclick="navigateTo('wheel.html')" class="btn-base btn-wheel shadow-xl">
@@ -254,7 +257,6 @@
         const user = tg.initDataUnsafe?.user;
         let isProcessing = false;
 
-        // --- 1. СИЛОВОЙ ПЕРЕХВАТ ВЫИГРЫША ---
         window.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const winStars = urlParams.get('win_stars');
@@ -281,7 +283,6 @@
             }
         });
 
-        // --- 2. ИНИЦИАЛИЗАЦИЯ ---
         tg.expand();
         tg.enableClosingConfirmation();
 
@@ -299,21 +300,30 @@
 
         async function syncData() {
             if (!user) return;
-            // Плюсуем локальные "фейковые" звезды для моментального эффекта
             const fakeStars = parseInt(localStorage.getItem('fake_stars') || '0');
             
             try {
                 const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}?t=${Date.now()}`);
                 if (!res.ok) throw new Error();
                 const data = await res.json();
-                document.getElementById('bal-ton').innerText = data.balance.toFixed(2);
-                document.getElementById('bal-stars').innerText = data.stars + fakeStars;
+                
+                const finalStars = data.stars + fakeStars;
+                const finalTon = data.balance.toFixed(2);
+
+                // ОБНОВЛЕНИЕ ЭКРАНА
+                document.getElementById('bal-ton').innerText = finalTon;
+                document.getElementById('bal-stars').innerText = finalStars;
+
+                // СОХРАНЕНИЕ ДЛЯ ДРУГИХ СТРАНИЦ (КЕЙСЫ)
+                localStorage.setItem('user_stars', finalStars);
+                localStorage.setItem('user_ton', finalTon);
+
             } catch (e) {
-                document.getElementById('bal-stars').innerText = fakeStars;
+                const localStars = localStorage.getItem('user_stars') || fakeStars;
+                document.getElementById('bal-stars').innerText = localStars;
             }
         }
 
-        // --- 3. МАГАЗИН ---
         const PACKS = [1, 3, 5, 10, 20, 50, 100, 250];
         const tonBox = document.getElementById('pane-ton');
         
@@ -375,7 +385,6 @@
             document.getElementById('pane-stars').classList.toggle('hidden', isTon);
         }
 
-        // --- 4. АНИМАЦИЯ ФОНА ---
         const canvas = document.getElementById('stars-canvas');
         if (canvas) {
             const ctx = canvas.getContext('2d');
