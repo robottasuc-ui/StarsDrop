@@ -167,110 +167,81 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        let selectedIndex = null;
+    const tg = window.Telegram.WebApp;
+    let selectedIndex = null;
 
-        // Фикс запрета зума
-        document.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', (e) => {
-            const now = Date.now();
-            if (now - lastTouchEnd <= 300) e.preventDefault();
-            lastTouchEnd = now;
-        }, false);
+    // Данные для продажи (чтобы знать цены)
+    const GLOBAL_ITEMS = {
+        1: { price: 15 }, 2: { price: 500 }, 4: { price: 12500 },
+        5: { price: 3500 }, 6: { price: 550 }, 9: { price: 400 }
+    };
 
+    function loadInventory() {
+        const grid = document.getElementById('inventory-grid');
+        // Читаем то, что сохранили в кейсах
+        const items = JSON.parse(localStorage.getItem('user_inventory')) || [];
+        grid.innerHTML = '';
+        document.getElementById('item-count').innerText = `${items.length} / 6`;
+
+        for (let i = 0; i < 6; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'inventory-slot';
+            if (items[i]) {
+                slot.classList.add('cursor-pointer', 'active-item');
+                slot.innerHTML = `<img src="${items[i].img}" class="w-12 h-12 object-contain">`;
+                slot.onclick = () => {
+                    selectedIndex = i;
+                    document.getElementById('modal-img').src = items[i].img;
+                    // Показываем цену продажи
+                    const price = GLOBAL_ITEMS[items[i].id]?.price || 1;
+                    document.querySelector('#item-modal button[onclick="handleSell"]').innerText = `Продать за ${price} ⭐`;
+                    document.getElementById('item-modal').style.display = 'flex';
+                };
+            } else {
+                slot.innerHTML = `<span class="text-[8px] text-green-900 font-black uppercase">Пусто</span>`;
+            }
+            grid.appendChild(slot);
+        }
+    }
+
+    async function handleSell() {
+        let items = JSON.parse(localStorage.getItem('user_inventory')) || [];
+        const item = items[selectedIndex];
+        const price = GLOBAL_ITEMS[item.id]?.price || 1;
+
+        // Отправляем запрос на сервер, чтобы РЕАЛЬНО добавить звезды
+        if (tg.initDataUnsafe?.user) {
+            try {
+                await fetch('https://stars-drop.vercel.app/api/update_balance', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        user_id: tg.initDataUnsafe.user.id,
+                        stars: price
+                    })
+                });
+            } catch(e) {}
+        }
+
+        items.splice(selectedIndex, 1);
+        localStorage.setItem('user_inventory', JSON.stringify(items));
+        closeModal();
+        loadInventory();
+        tg.HapticFeedback.notificationOccurred('success');
+    }
+
+    function closeModal() { document.getElementById('item-modal').style.display = 'none'; }
+    
+    // Инициализация при загрузке
+    window.onload = () => {
         if (tg.initDataUnsafe?.user) {
             const u = tg.initDataUnsafe.user;
             document.getElementById('user-name').innerText = (u.username || u.first_name).toUpperCase();
             document.getElementById('user-id').innerText = `ID: ${u.id}`;
-            document.getElementById('user-avatar').src = u.photo_url || `https://ui-avatars.com/api/?background=166534&color=fff&name=${u.first_name}`;
-            document.getElementById('ref-link').innerText = `t.me/starsdrop_bot?start=${u.id}`;
+            document.getElementById('user-avatar').src = u.photo_url || `https://ui-avatars.com/api/?name=${u.first_name}`;
         }
-
-        function copyRef() {
-            const link = document.getElementById('ref-link').innerText;
-            navigator.clipboard.writeText(link);
-            tg.HapticFeedback.notificationOccurred('success');
-            tg.showScanQrPopup({ text: "Ссылка скопирована!" });
-            setTimeout(() => tg.closeScanQrPopup(), 1000);
-        }
-
-        function loadInventory() {
-            const grid = document.getElementById('inventory-grid');
-            const items = JSON.parse(localStorage.getItem('user_inventory')) || [];
-            grid.innerHTML = '';
-            document.getElementById('item-count').innerText = `${items.length} / 6`;
-            for (let i = 0; i < 6; i++) {
-                const slot = document.createElement('div');
-                slot.className = 'inventory-slot';
-                if (items[i]) {
-                    slot.classList.add('cursor-pointer', 'active-item');
-                    slot.innerHTML = `<img src="${items[i].img}" class="w-12 h-12 object-contain hover:scale-110 transition-transform">`;
-                    slot.onclick = () => {
-                        selectedIndex = i;
-                        document.getElementById('modal-img').src = items[i].img;
-                        document.getElementById('item-modal').style.display = 'flex';
-                        tg.HapticFeedback.impactOccurred('medium');
-                    };
-                } else {
-                    slot.innerHTML = `<span class="text-[8px] text-green-900 font-black uppercase">Slot ${i+1}</span>`;
-                }
-                grid.appendChild(slot);
-            }
-        }
-
-        function closeModal() { document.getElementById('item-modal').style.display = 'none'; }
-
-        // В profile.html замени handleSell на это:
-function handleSell() {
-    let items = JSON.parse(localStorage.getItem('user_inventory')) || [];
-    const item = items[selectedIndex];
-    
-    // Берем актуальную цену из конфига по ID предмета
-    const configItem = GLOBAL_ITEMS[item.id];
-    const sellPrice = configItem ? configItem.price : 1;
-
-    // Тут должна быть логика прибавления к балансу (через Telegram или локально)
-    alert(`Продано за ${sellPrice} звёзд!`);
-
-    items.splice(selectedIndex, 1);
-    localStorage.setItem('user_inventory', JSON.stringify(items));
-    closeModal(); 
-    loadInventory();
-    tg.HapticFeedback.notificationOccurred('success');
-}
-
-        function handleWithdraw() {
-            const items = JSON.parse(localStorage.getItem('user_inventory')) || [];
-            const item = items[selectedIndex];
-            tg.sendData(JSON.stringify({ action: 'withdraw', item: item.name }));
-            tg.showAlert(`Запрос на вывод ${item.name} отправлен боту!`);
-            closeModal();
-        }
-
-        const canvas = document.getElementById('stars-canvas');
-        const ctx = canvas.getContext('2d');
-        let stars = [];
-        function initStars() {
-            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-            stars = [];
-            for(let i=0; i<40; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*1.5, o: Math.random()});
-        }
-        function draw() {
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            stars.forEach(s => { 
-                ctx.beginPath(); 
-                ctx.globalAlpha = s.o;
-                ctx.fillStyle = "#a3e635"; 
-                ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); 
-                ctx.fill(); 
-                s.y += 0.3; 
-                if(s.y > canvas.height) s.y = -5; 
-            });
-            requestAnimationFrame(draw);
-        }
-        initStars(); draw(); loadInventory();
-        window.addEventListener('resize', initStars);
+        loadInventory();
+    };
     </script>
 </body>
 </html>
