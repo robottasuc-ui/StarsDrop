@@ -31,6 +31,18 @@
             filter: drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000);
         }
 
+        /* Стиль баланса как на главном экране */
+        .balance-container-v2 {
+            display: flex; flex-direction: column; gap: 4px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px 12px; border-radius: 18px;
+            backdrop-filter: blur(15px);
+        }
+        .balance-item-v2 { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+        .balance-item-v2 img { width: 18px; height: 18px; }
+        .balance-item-v2 span { font-weight: 900; font-size: 0.9rem; }
+
         /* --- LiveDrop --- */
         .live-header { display: flex; align-items: center; padding: 20px 20px 10px; gap: 12px; }
         .live-label {
@@ -56,49 +68,38 @@
             position: relative; width: 100%; height: 180px; 
             background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(20,20,20,0.1) 50%, rgba(0,0,0,0.8) 100%);
             margin: 20px 0; overflow: hidden; border-top: 1px solid rgba(0,255,65,0.1); border-bottom: 1px solid rgba(0,255,65,0.1);
-            box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
         }
-
-        .roulette-container::before, .roulette-container::after {
-            content: ''; position: absolute; top: 0; width: 100px; height: 100%; z-index: 10; pointer-events: none;
-        }
-        .roulette-container::before { left: 0; background: linear-gradient(to right, var(--bg-main), transparent); }
-        .roulette-container::after { right: 0; background: linear-gradient(to left, var(--bg-main), transparent); }
-
         .center-line {
             position: absolute; left: 50%; width: 3px; height: 100%; background: var(--neon-green);
-            z-index: 50; transform: translateX(-50%); box-shadow: 0 0 25px var(--neon-green), 0 0 10px white;
+            z-index: 50; transform: translateX(-50%); box-shadow: 0 0 25px var(--neon-green);
         }
         .roulette-rail { display: flex; position: absolute; left: 0; align-items: center; height: 100%; will-change: transform; }
-        .roulette-item { min-width: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0.2; filter: grayscale(0.8); }
+        .roulette-item { min-width: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.2; }
         .roulette-item img { width: 95px; height: 95px; object-fit: contain; }
-        
-        .roulette-item.win-glow { 
-            opacity: 1 !important; filter: grayscale(0) drop-shadow(0 0 30px var(--neon-green)); transform: scale(1.15); 
-        }
+        .roulette-item.win-glow { opacity: 1 !important; filter: drop-shadow(0 0 30px var(--neon-green)); transform: scale(1.1); }
 
         .case-card {
             background: linear-gradient(145deg, #121612, #0a0c0a);
             border-radius: 35px; border: 1px solid rgba(255,255,255,0.03);
-            transition: 0.3s;
         }
-        .case-card:active { transform: scale(0.95); opacity: 0.8; }
-
-        #case-modal { backdrop-filter: blur(25px); background: rgba(8, 10, 8, 0.9); }
-        .cnt-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); transition: 0.2s; color: white; }
-        .cnt-btn.active { background: var(--neon-green); color: black; font-weight: 900; box-shadow: 0 0 20px rgba(0,255,65,0.5); }
+        #case-modal { backdrop-filter: blur(25px); background: rgba(8, 10, 8, 0.95); }
+        .cnt-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: white; }
+        .cnt-btn.active { background: var(--neon-green); color: black; font-weight: 900; }
     </style>
 </head>
 <body>
 
     <header class="p-6 flex justify-between items-center sticky top-0 z-[100] bg-[#080a08]/90 backdrop-blur-xl border-b border-white/5">
-        <div class="orbitron text-2xl font-black italic">STAR<span class="text-green-500">DROP</span></div>
-        <div class="flex flex-col items-end gap-1">
-            <div class="flex items-center gap-2 bg-white/5 px-4 py-1.5 rounded-2xl border border-white/10">
-                <img src="img/star.png" class="w-4 icon-outline"> <b id="header-stars">0</b>
+        <div class="orbitron text-2xl font-black italic" onclick="window.location.href='index.html'">STAR<span class="text-green-500">DROP</span></div>
+        
+        <div class="balance-container-v2">
+            <div class="balance-item-v2 text-blue-400">
+                <span id="header-ton">0.00</span>
+                <img src="img/ton.png" alt="TON">
             </div>
-            <div class="flex items-center gap-2 bg-white/5 px-4 py-1.5 rounded-2xl border border-white/10">
-                <img src="img/ton.png" class="w-4 icon-outline"> <b id="header-ton" class="text-[#0088cc]">0.00</b>
+            <div class="balance-item-v2 text-yellow-400">
+                <span id="header-stars">0</span>
+                <img src="img/star.png" alt="STAR">
             </div>
         </div>
     </header>
@@ -115,35 +116,33 @@
 
     <div id="case-modal" class="fixed inset-0 z-[200] hidden flex-col p-6 overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
-            <button onclick="closeModal()" class="text-gray-500 font-bold text-xs uppercase tracking-widest">← Закрыть</button>
+            <button onclick="closeModal()" class="text-gray-500 font-bold text-xs uppercase tracking-widest">← Назад</button>
             <div class="orbitron text-[10px] text-green-500 uppercase">System Ready</div>
         </div>
 
-        <div id="view-preview" class="fade-in">
+        <div id="view-preview">
             <div class="flex flex-col items-center mb-8">
                 <img id="m-img" src="" class="w-56 h-56 object-contain">
                 <h1 id="m-title" class="orbitron text-2xl font-black mt-4 uppercase text-center"></h1>
             </div>
 
             <div class="flex flex-col items-center gap-6 mb-8">
-                <div class="flex gap-2" id="mul-container">
+                <div class="flex gap-2">
                     <button onclick="setMul(1)" class="cnt-btn active w-12 h-12 rounded-xl font-black">1</button>
                     <button onclick="setMul(2)" class="cnt-btn w-12 h-12 rounded-xl font-black">2</button>
                     <button onclick="setMul(3)" class="cnt-btn w-12 h-12 rounded-xl font-black">3</button>
-                    <button onclick="setMul(4)" class="cnt-btn w-12 h-12 rounded-xl font-black">4</button>
                     <button onclick="setMul(5)" class="cnt-btn w-12 h-12 rounded-xl font-black">5</button>
                 </div>
                 <div class="grid grid-cols-2 gap-4 w-full">
-                    <button id="btn-stars" onclick="startRoll('stars')" class="bg-green-500 text-black py-4 rounded-3xl font-black">
-                        <span class="flex justify-center items-center gap-2"><img src="img/star.png" class="w-4 icon-outline"> <span id="p-stars">0</span></span>
+                    <button onclick="startRoll('stars')" class="bg-green-500 text-black py-4 rounded-3xl font-black flex justify-center items-center gap-2">
+                        <img src="img/star.png" class="w-4 icon-outline"> <span id="p-stars">0</span>
                     </button>
-                    <button id="btn-ton" onclick="startRoll('ton')" class="bg-[#0088cc] text-white py-4 rounded-3xl font-black">
-                        <span class="flex justify-center items-center gap-2"><img src="img/ton.png" class="w-4 icon-outline"> <span id="p-ton">0.00</span></span>
+                    <button onclick="startRoll('ton')" class="bg-[#0088cc] text-white py-4 rounded-3xl font-black flex justify-center items-center gap-2">
+                        <img src="img/ton.png" class="w-4 icon-outline"> <span id="p-ton">0</span>
                     </button>
                 </div>
             </div>
 
-            <div class="text-center text-[10px] font-bold opacity-30 uppercase tracking-widest mb-4">Содержимое кейса</div>
             <div id="loot-display" class="grid grid-cols-3 gap-2 pb-10"></div>
         </div>
 
@@ -163,6 +162,35 @@
     </div>
 
     <script>
+        const tg = window.Telegram.WebApp;
+        const BACKEND_URL = 'https://stars-drop.vercel.app/api'; 
+        const user = tg.initDataUnsafe?.user;
+
+        let balance = { stars: 0, ton: 0.00 };
+        let mul = 1, activeCase = null;
+
+        // Синхронизация баланса с сервером
+        async function syncBalance() {
+            if (!user) return;
+            const fakeStars = parseInt(localStorage.getItem('fake_stars') || '0');
+            try {
+                const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}?t=${Date.now()}`);
+                const data = await res.json();
+                balance.stars = data.stars + fakeStars;
+                balance.ton = data.balance;
+                updateUI();
+            } catch (e) {
+                console.error("Ошибка сети");
+                balance.stars = parseInt(localStorage.getItem('user_stars') || '0');
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('header-stars').innerText = balance.stars.toLocaleString();
+            document.getElementById('header-ton').innerText = balance.ton.toFixed(2);
+        }
+
         const ITEMS = {
             1: { name: "Rocket", img: "raketa.png", price: 15, weight: 200 },
             2: { name: "Sword", img: "metch.png", price: 500, weight: 40 },
@@ -176,7 +204,6 @@
         };
 
         const CASES = [
-            { name: "Пробный Кейс", stars: 0, ton: 0, img: "case2.png", loot: [1,9,6,1,9], isFree: true },
             { name: "Шкатулка Удачи", stars: 100, ton: 1, img: "case2.png", loot: [1,9,1,9,1,6,1,9,1,2,1,9,1,1,9] },
             { name: "Ящик Магии", stars: 300, ton: 2.99, img: "case3.png", loot: [1,9,6,2,1,9,6,2,5,1,9,6,2,1,9] },
             { name: "Разлом", stars: 500, ton: 5.5, img: "case4.png", loot: [6,2,5,7,6,2,5,7,10,1,1,1,9,6,2] },
@@ -185,59 +212,37 @@
             { name: "Хранилище", stars: 4999, ton: 35, img: "case8.png", loot: [10,3,4,5,7,6,2,9,1,10,3,4,5,7,1] }
         ];
 
-        let balance = { stars: 25000, ton: 45.0 };
-        let mul = 1, activeCase = null;
-
         function render() {
-            const grid = document.getElementById('main-grid');
-            grid.innerHTML = CASES.map((c, i) => `
+            document.getElementById('main-grid').innerHTML = CASES.map((c, i) => `
                 <div class="case-card p-6 flex flex-col items-center" onclick="openCase(${i})">
                     <img src="img/${c.img}" class="w-24 h-24 mb-4 object-contain">
-                    <div class="orbitron text-[10px] text-green-500 font-black mb-2 text-center uppercase">${c.name}</div>
-                    <div class="text-[11px] font-bold opacity-40">${c.isFree ? 'БЕСПЛАТНО' : '⭐ ' + c.stars + ' / ' + c.ton + 'T'}</div>
+                    <div class="orbitron text-[10px] text-green-500 font-black mb-2">${c.name}</div>
+                    <div class="text-[11px] font-bold opacity-40">⭐ ${c.stars} / ${c.ton}T</div>
                 </div>
             `).join('');
-            document.getElementById('header-stars').innerText = balance.stars.toLocaleString();
-            document.getElementById('header-ton').innerText = balance.ton.toFixed(2);
+            updateUI();
         }
 
         function openCase(i) {
-            activeCase = CASES[i]; 
-            setMul(1);
+            activeCase = CASES[i]; setMul(1);
             document.getElementById('case-modal').style.display = 'flex';
             document.getElementById('view-preview').style.display = 'block';
             document.getElementById('view-roulette').style.display = 'none';
             document.getElementById('view-win').style.display = 'none';
             document.getElementById('m-img').src = `img/${activeCase.img}`;
             document.getElementById('m-title').innerText = activeCase.name;
-            
-            // Если кейс бесплатный - прячем выбор множителя и одну кнопку
-            document.getElementById('mul-container').style.opacity = activeCase.isFree ? '0' : '1';
-            document.getElementById('mul-container').style.pointerEvents = activeCase.isFree ? 'none' : 'auto';
-            
-            if(activeCase.isFree) {
-                document.getElementById('btn-stars').innerText = "ОТКРЫТЬ БЕСПЛАТНО";
-                document.getElementById('btn-ton').style.display = 'none';
-                document.getElementById('btn-stars').classList.replace('grid-cols-2', 'col-span-2');
-            } else {
-                document.getElementById('btn-ton').style.display = 'block';
-                document.getElementById('btn-stars').classList.remove('col-span-2');
-            }
-
             document.getElementById('loot-display').innerHTML = activeCase.loot.map(id => `
                 <div class="bg-white/5 border border-white/5 rounded-2xl p-2 flex flex-col items-center">
                     <img src="img/${ITEMS[id].img}" class="w-10 h-10 mb-1 object-contain">
-                    <div class="text-[7px] font-black uppercase text-gray-500 text-center">${ITEMS[id].name}</div>
                     <div class="text-[8px] text-green-500">⭐ ${ITEMS[id].price}</div>
                 </div>`).join('');
         }
 
         function setMul(n) {
-            if(activeCase && activeCase.isFree) n = 1;
             mul = n;
-            document.querySelectorAll('.cnt-btn').forEach((b, i) => b.classList.toggle('active', i === n-1));
-            document.getElementById('p-stars').innerText = activeCase.isFree ? "0" : (activeCase.stars * n);
-            document.getElementById('p-ton').innerText = activeCase.isFree ? "0.00" : (activeCase.ton * n).toFixed(2);
+            document.querySelectorAll('.cnt-btn').forEach((b, i) => b.classList.toggle('active', b.innerText == n));
+            document.getElementById('p-stars').innerText = activeCase.stars * n;
+            document.getElementById('p-ton').innerText = (activeCase.ton * n).toFixed(2);
         }
 
         function getWin() {
@@ -252,22 +257,17 @@
         }
 
         function startRoll(type) {
-            if(!activeCase.isFree) {
-                const cost = type === 'stars' ? activeCase.stars * mul : activeCase.ton * mul;
-                if(balance[type] < cost) return alert("Недостаточно средств");
-                balance[type] -= cost; 
-            }
+            const cost = type === 'stars' ? activeCase.stars * mul : activeCase.ton * mul;
+            if(balance[type] < cost) return alert("Недостаточно средств");
+            balance[type] -= cost; updateUI();
             
-            render();
             document.getElementById('view-preview').style.display = 'none';
             document.getElementById('view-roulette').style.display = 'flex';
             document.getElementById('roulette-rows').innerHTML = '';
             
             const winners = [];
             for(let i=0; i<mul; i++) {
-                const win = getWin(); 
-                winners.push(win); 
-                createRow(i, win);
+                const win = getWin(); winners.push(win); createRow(i, win);
             }
             setTimeout(() => { showWin(winners); }, 8500);
         }
@@ -297,8 +297,7 @@
             document.getElementById('view-win').style.display = 'flex';
             let total = 0;
             document.getElementById('win-grid').innerHTML = winners.map(w => {
-                total += w.price; 
-                addLiveItem(false, w); 
+                total += w.price; addLiveItem(false, w); 
                 return `<div class="bg-white/5 p-4 rounded-[30px] border border-white/10 flex flex-col items-center min-w-[100px]">
                     <img src="img/${w.img}" class="w-16 h-16">
                     <div class="orbitron text-[8px] text-green-500 mt-2">${w.name}</div>
@@ -307,8 +306,10 @@
             document.getElementById('sell-price').innerText = total.toLocaleString();
             document.getElementById('sell-btn').onclick = () => { 
                 balance.stars += total; 
-                render(); 
+                updateUI(); 
                 closeModal(); 
+                // Сохраняем "фейковые" звезды локально, чтобы они не пропали до след. синхронизации
+                localStorage.setItem('fake_stars', (parseInt(localStorage.getItem('fake_stars') || '0') + total));
             };
         }
 
@@ -325,6 +326,7 @@
 
         function addLiveItem(first=false, it = null) {
             const rail = document.getElementById('live-drop-rail');
+            if(!rail) return;
             const item = it || ITEMS[Object.keys(ITEMS)[Math.floor(Math.random()*Object.keys(ITEMS).length)]];
             const div = document.createElement('div');
             div.className = 'drop-item';
@@ -334,8 +336,11 @@
 
         function closeModal() { document.getElementById('case-modal').style.display = 'none'; }
         
-        initLive(); 
-        render();
+        window.onload = () => {
+            syncBalance();
+            render();
+            initLive();
+        };
     </script>
 </body>
 </html>
