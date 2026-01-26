@@ -12,6 +12,7 @@
             --bg-end: #0a0a0a;
             --card-bg: rgba(255, 255, 255, 0.03);
             --border: rgba(255, 255, 255, 0.1);
+            --trans: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body, html {
@@ -26,32 +27,7 @@
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             z-index: -1;
             background: radial-gradient(circle at 50% 50%, var(--bg-end) 0%, var(--bg-start) 100%);
-        }
-
-        /* Кнопка Назад */
-.back-nav {
-    position: absolute;
-    top: 15px; /* Немного выше */
-    left: 15px;
-    z-index: 1000;
-    text-decoration: none;
-    color: white;
-    background: rgba(255, 255, 255, 0.08);
-    padding: 8px 12px; /* Уменьшили паддинги */
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px; /* Чуть меньше шрифт */
-    font-weight: 800;
-    backdrop-filter: blur(10px);
-    transition: 0.3s;
-}
-
-        .back-nav:hover {
-            border-color: var(--neon);
-            box-shadow: 0 0 15px var(--neon);
+            transition: var(--trans);
         }
 
         .app-shell {
@@ -60,26 +36,24 @@
             position: relative;
         }
 
-        .header-ui { 
-    padding: 75px 20px 10px; /* Было 60px, ставим 75px-80px */
-    text-align: center; 
-    z-index: 10; 
-}
+        /* --- UI HEADER --- */
+        .header-ui { padding: 40px 20px 10px; text-align: center; z-index: 10; }
         
         .balance-card {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(20px);
             border-radius: 25px; padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center; gap: 15px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
             position: relative; overflow: hidden;
         }
 
         #balance-num {
-            font-size: 36px; font-weight: 900; margin: 0;
+            font-size: 38px; font-weight: 900; margin: 0;
             background: linear-gradient(to bottom, #fff, #999);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            transition: transform 0.1s;
         }
 
         .main-coin { width: 45px; height: 45px; filter: drop-shadow(0 0 10px var(--neon)); object-fit: contain; }
@@ -91,122 +65,130 @@
         }
         #energy-fill {
             height: 100%; width: 100%; background: linear-gradient(90deg, var(--neon), #fff);
-            box-shadow: 0 0 15px var(--neon); transition: width 0.2s ease;
+            box-shadow: 0 0 15px var(--neon); transition: width 0.3s ease-out;
         }
-        .energy-text { font-size: 13px; font-weight: 800; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 6px; }
+        .energy-text { 
+            font-size: 13px; font-weight: 800; margin-top: 10px; 
+            display: flex; justify-content: center; align-items: center; gap: 6px; 
+            letter-spacing: 1px;
+        }
 
+        /* --- GAME CORE --- */
         .game-core { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        
         .hero-platform {
-            width: 260px; height: 60px; background: var(--neon);
-            border-radius: 50%; filter: blur(50px); opacity: 0.2;
-            position: absolute; bottom: 25%;
+            width: 280px; height: 80px; background: var(--neon);
+            border-radius: 50%; filter: blur(60px); opacity: 0.15;
+            position: absolute; bottom: 22%; transition: var(--trans);
         }
+
         #hero-img {
             width: 280px; z-index: 5; cursor: pointer;
             filter: drop-shadow(0 0 30px rgba(0,0,0,0.8));
-            transition: transform 0.05s;
+            transition: transform 0.05s ease-out;
+            will-change: transform;
         }
-        .tap-anim { transform: scale(0.92) !important; }
+        .tap-anim { transform: scale(0.9) rotate(2deg) !important; }
 
+        /* --- DRAWER SYSTEM --- */
         .drawer-wardrobe {
-            position: absolute; bottom: 90px; left: 0; width: 100%; height: 80%;
+            position: absolute; bottom: 90px; left: 0; width: 100%; height: 75%;
             background: rgba(5, 5, 5, 0.98); backdrop-filter: blur(40px);
             border-radius: 40px 40px 0 0; z-index: 100;
-            transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
             padding: 25px; box-sizing: border-box;
-            border-top: 3px solid var(--neon);
+            border-top: 2px solid var(--neon);
             transform: translateY(120%);
             display: flex; flex-direction: column;
         }
         .drawer-wardrobe.active { transform: translateY(0); }
 
-        .skin-scroll-area {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-            flex: 1; overflow-y: auto; padding-bottom: 40px;
-            -webkit-overflow-scrolling: touch; 
+        .drawer-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 25px;
+        }
+        .drawer-header h3 { margin: 0; font-weight: 900; letter-spacing: 1px; font-size: 20px; }
+        .close-btn { 
+            cursor: pointer; color: var(--neon); font-weight: 900; 
+            padding: 5px 15px; border-radius: 10px; background: rgba(255,255,255,0.05);
         }
 
-        #leader-list, #quest-list {
-            flex: 1; overflow-y: auto; padding-bottom: 40px;
-            -webkit-overflow-scrolling: touch;
+        .scroll-area {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+            flex: 1; overflow-y: auto; padding-bottom: 30px;
+            scrollbar-width: none; -webkit-overflow-scrolling: touch;
+        }
+        .scroll-area::-webkit-scrollbar { display: none; }
+
+        /* --- CARDS --- */
+        .card-item {
+            background: rgba(255,255,255,0.03); border-radius: 24px;
+            padding: 20px 15px; text-align: center; border: 1px solid rgba(255,255,255,0.05);
+            position: relative; transition: var(--trans); display: flex; flex-direction: column;
+            justify-content: space-between; min-height: 180px;
+        }
+        .card-item.active-item { border-color: var(--neon); background: rgba(74,222,128,0.05); }
+        
+        .lvl-badge {
+            position: absolute; top: 12px; right: 12px;
+            background: var(--neon); color: black; font-size: 9px;
+            font-weight: 900; padding: 2px 8px; border-radius: 6px;
         }
 
-        .leader-row {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 15px; background: var(--card-bg);
-            border-radius: 18px; margin-bottom: 10px; border: 1px solid var(--border);
-        }
-        .rank-badge {
-            width: 32px; height: 32px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 900; font-size: 14px; margin-right: 12px;
-        }
-        .rank-1 { background: #ffd700; color: #000; box-shadow: 0 0 15px #ffd70055; }
-        .rank-2 { background: #c0c0c0; color: #000; }
-        .rank-3 { background: #cd7f32; color: #000; }
-        .rank-other { background: rgba(255,255,255,0.1); color: #fff; }
+        .card-icon { font-size: 40px; margin-bottom: 10px; display: block; }
+        .card-img { width: 80px; height: 80px; border-radius: 18px; object-fit: cover; margin: 0 auto 10px; }
 
-        .quest-item {
-            background: var(--card-bg); border: 1px solid var(--border);
-            border-radius: 20px; padding: 18px; margin-bottom: 12px;
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .quest-info-main { display: flex; align-items: center; gap: 15px; }
-        .quest-icon-box { font-size: 24px; }
-        .quest-title-text { font-weight: 800; font-size: 14px; margin-bottom: 4px; }
-        .quest-reward-text { color: var(--neon); font-weight: 900; font-size: 12px; }
-        .quest-btn {
-            background: #fff; color: #000; border: none; padding: 10px 16px;
-            border-radius: 12px; font-weight: 900; font-size: 11px; cursor: pointer;
-        }
-        .quest-btn.done { background: var(--neon); opacity: 0.6; cursor: default; }
+        .card-title { font-size: 13px; font-weight: 800; margin-bottom: 5px; opacity: 0.9; }
+        .card-desc { font-size: 10px; color: var(--neon); font-weight: 700; margin-bottom: 15px; }
 
-        .skin-card {
-            background: rgba(255,255,255,0.03); border-radius: 20px;
-            padding: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.05);
-            position: relative; transition: all 0.3s ease; height: fit-content;
-        }
-        .skin-card.current { border-color: var(--neon); }
-        .lvl-tag { position: absolute; top: 10px; right: 12px; font-size: 9px; font-weight: 900; color: var(--neon); }
-
-        .btn-skin {
-            width: 100%; padding: 12px 5px; border-radius: 12px; border: none;
+        .btn-action {
+            width: 100%; padding: 12px 5px; border-radius: 14px; border: none;
             font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase;
+            transition: var(--trans);
         }
-        .btn-buy { background: var(--neon); color: black; }
-        .btn-buy:disabled { background: #333; color: #777; cursor: not-allowed; }
-        .btn-select { background: #222; color: white; }
+        .btn-buy { background: var(--neon); color: black; box-shadow: 0 4px 15px rgba(74,222,128,0.3); }
+        .btn-buy:disabled { background: #222; color: #555; box-shadow: none; cursor: not-allowed; }
+        .btn-owned { background: #1a1a1a; color: white; border: 1px solid var(--border); }
 
+        /* --- NAVBAR --- */
         .nav-bar {
             position: fixed; bottom: 0; width: 100%; max-width: 430px;
-            height: 90px; background: #000;
+            height: 90px; background: rgba(0,0,0,0.95);
             display: flex; justify-content: space-around; align-items: center;
-            border-top: 1px solid rgba(255,255,255,0.1); z-index: 110; padding-bottom: 10px;
+            border-top: 1px solid var(--border); z-index: 110; padding-bottom: 15px;
+            backdrop-filter: blur(10px);
         }
-        .nav-item { color: #555; font-size: 9px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; }
-        .nav-item.active { color: var(--neon); }
-        .nav-item svg { width: 22px; height: 22px; }
+        .nav-item { color: #555; font-size: 10px; font-weight: 800; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: var(--trans); }
+        .nav-item.active { color: var(--neon); transform: translateY(-5px); }
+        .nav-item svg { width: 24px; height: 24px; }
 
+        /* --- ANIMATIONS --- */
         .click-pop {
             position: absolute; pointer-events: none; z-index: 999;
             font-weight: 900; font-size: 32px; color: white;
-            animation: float-up 0.7s ease-out forwards;
+            animation: float-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            text-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
         @keyframes float-up {
-            0% { transform: translateY(0); opacity: 0; }
-            20% { opacity: 1; }
-            100% { transform: translateY(-120px); opacity: 0; }
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            20% { opacity: 1; transform: translateY(-20px) scale(1.2); }
+            100% { transform: translateY(-150px) scale(1); opacity: 0; }
+        }
+
+        .auto-collect-notify {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--neon); color: black; padding: 10px 20px;
+            border-radius: 50px; font-weight: 900; font-size: 12px;
+            z-index: 2000; animation: slide-down 3s ease-in-out forwards;
+        }
+        @keyframes slide-down {
+            0% { top: -50px; } 10%, 90% { top: 20px; } 100% { top: -50px; }
         }
     </style>
 </head>
 <body>
 
 <div id="main-bg"></div>
-
-<a href="index.html" class="back-nav">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-    НАЗАД
-</a>
 
 <div class="app-shell">
     <div class="header-ui">
@@ -226,35 +208,19 @@
     </div>
 
     <div class="drawer-wardrobe" id="market-panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h3 style="margin:0; font-weight:900;">УСИЛЕНИЯ</h3>
-            <div onclick="closeAllPanels()" style="cursor:pointer; color:var(--neon); font-weight:900;">ЗАКРЫТЬ</div>
+        <div class="drawer-header">
+            <h3>УСИЛЕНИЯ</h3>
+            <div class="close-btn" onclick="closeAllPanels()">ЗАКРЫТЬ</div>
         </div>
-        <div class="skin-scroll-area" id="market-list"></div>
+        <div class="scroll-area" id="market-list"></div>
     </div>
 
     <div class="drawer-wardrobe" id="wardrobe-panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h3 style="margin:0; font-weight:900;">ГЕРОИ</h3>
-            <div onclick="closeAllPanels()" style="cursor:pointer; color:var(--neon); font-weight:900;">ЗАКРЫТЬ</div>
+        <div class="drawer-header">
+            <h3>ГЕРОИ</h3>
+            <div class="close-btn" onclick="closeAllPanels()">ЗАКРЫТЬ</div>
         </div>
-        <div class="skin-scroll-area" id="skin-list"></div>
-    </div>
-
-    <div class="drawer-wardrobe" id="quest-panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h3 style="margin:0; font-weight:900;">КВЕСТЫ</h3>
-            <div onclick="closeAllPanels()" style="cursor:pointer; color:var(--neon); font-weight:900;">ЗАКРЫТЬ</div>
-        </div>
-        <div id="quest-list"></div>
-    </div>
-
-    <div class="drawer-wardrobe" id="leader-panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <h3 style="margin:0; font-weight:900;">ЛИДЕРЫ МИРА</h3>
-            <div onclick="closeAllPanels()" style="cursor:pointer; color:var(--neon); font-weight:900;">ЗАКРЫТЬ</div>
-        </div>
-        <div id="leader-list"></div>
+        <div class="scroll-area" id="skin-list"></div>
     </div>
 
     <div class="nav-bar">
@@ -262,282 +228,259 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
             <div>МАРКЕТ</div>
         </div>
-        <div class="nav-item" onclick="openPanel('quest-panel', this)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-            <div>КВЕСТЫ</div>
-        </div>
         <div class="nav-item active" id="nav-main" onclick="closeAllPanels()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
             <div>ГЛАВНАЯ</div>
         </div>
         <div class="nav-item" onclick="openPanel('wardrobe-panel', this)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"/></circle></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"/></svg>
             <div>ГЕРОИ</div>
-        </div>
-        <div class="nav-item" onclick="openPanel('leader-panel', this)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17M14 14.66V17M18 4.66V9a6 6 0 0 1-12 0V4.66h12z"/></svg>
-            <div>ТОП</div>
         </div>
     </div>
 </div>
 
 <script>
-    // Весь твой JS код остается без изменений
-    const BACKEND_URL = "https://stars-drop.vercel.app/api"; 
+    /**
+     * STAR DROP NOVA - DELUXE ENGINE v3.0
+     * Полностью локализованный код без лишних зависимостей.
+     */
 
+    // --- ДАННЫЕ ИГРЫ ---
     const heroes = [
-        { id: 0, name: "Новичок", x: 1, price: 0, img: "hero.png", color: "#4ade80", bg: "radial-gradient(circle, #0f2a1a 0%, #050505 100%)" },
-        { id: 1, name: "Путешественник", x: 5, price: 500000, img: "img/hero1.jpg", color: "#facc15", bg: "radial-gradient(circle, #2a250f 0%, #050505 100%)" },
-        { id: 2, name: "Шаман", x: 10, price: 1000000, img: "img/hero2.jpg", color: "#a855f7", bg: "radial-gradient(circle, #251635 0%, #050505 100%)" },
-        { id: 3, name: "Ниндзя", x: 25, price: 5000000, img: "img/hero3.jpg", color: "#3b82f6", bg: "radial-gradient(circle, #162235 0%, #050505 100%)" },
-        { id: 4, name: "Король", x: 40, price: 15000000, img: "img/hero4.jpg", color: "#eab308", bg: "radial-gradient(circle, #352e16 0%, #050505 100%)" },
-        { id: 5, name: "Пират", x: 50, price: 100000000, img: "img/hero5.jpg", color: "#ef4444", bg: "radial-gradient(circle, #351616 0%, #050505 100%)" },
-        { id: 6, name: "Космонавт", x: 65, price: 10000000000, img: "img/hero6.jpg", color: "#60a5fa", bg: "radial-gradient(circle, #162235 0%, #050505 100%)" }
+        { id: 0, name: "Новичок", x: 1, price: 0, img: "hero.png", color: "#4ade80", bg: "#0f2a1a" },
+        { id: 1, name: "Путешественник", x: 5, price: 500000, img: "img/hero1.jpg", color: "#facc15", bg: "#2a250f" },
+        { id: 2, name: "Шаман", x: 10, price: 1000000, img: "img/hero2.jpg", color: "#a855f7", bg: "#251635" },
+        { id: 3, name: "Ниндзя", x: 20, price: 5000000, img: "img/hero3.jpg", color: "#3b82f6", bg: "#162235" },
+        { id: 4, name: "Король", x: 30, price: 15000000, img: "img/hero5.jpg", color: "#eab308", bg: "#352e16" },
+        { id: 5, name: "Пират", x: 45, price: 100000000, img: "img/hero6.jpg", color: "#ef4444", bg: "#351616" },
+        { id: 6, name: "Космонавт", x: 55, price: 10000000000, img: "img/hero7.jpg", color: "#60a5fa", bg: "#162235" }
     ];
 
-    let marketItems = [
-        { id: 0, name: "Энергетик", baseAdd: 4, basePrice: 100, icon: "⚡️", level: 1 },
-        { id: 1, name: "Перчатки", baseAdd: 10, basePrice: 700, icon: "🧤", level: 1, reqId: 0, reqLvl: 3 },
-        { id: 2, name: "Золотой палец", baseAdd: 50, basePrice: 3000, icon: "☝️", level: 1, reqId: 1, reqLvl: 5 },
-        { id: 3, name: "Кликер-бот", baseAdd: 200, basePrice: 10000, icon: "🤖", level: 1, reqId: 2, reqLvl: 5 },
-        { id: 4, name: "Тяжелая гиря", baseAdd: 500, basePrice: 75000, icon: "🏋️", level: 1, reqId: 3, reqLvl: 7 },
-        { id: 5, name: "Батарейка", energyAdd: 1000, basePrice: 150000, icon: "🔋", level: 1, reqId: 4, reqLvl: 10 },
-        { id: 6, name: "Ядерный реактор", energyAdd: 500, basePrice: 500, icon: "⚛️", level: 1 }
+    const marketData = [
+        { id: 0, name: "Энергетик", baseAdd: 5, basePrice: 150, icon: "⚡️", type: "click" },
+        { id: 1, name: "Перчатки", baseAdd: 15, basePrice: 1000, icon: "🧤", type: "click" },
+        { id: 2, name: "Золотой палец", baseAdd: 60, basePrice: 5000, icon: "☝️", type: "click" },
+        { id: 3, name: "Кликер-бот", baseAdd: 250, basePrice: 20000, icon: "🤖", type: "click" },
+        { id: 4, name: "Тяжелая гиря", baseAdd: 1000, basePrice: 100000, icon: "🏋️", type: "click" },
+        { id: 5, name: "Мега-Батарея", baseAdd: 500, basePrice: 50000, icon: "🔋", type: "energy" }
     ];
 
-    const quests = [
-        { id: 0, title: "Подписка на ТГ", reward: 50000, icon: "📢", link: "https://t.me/StarDrop_Chanel" },
-        { id: 1, title: "Вступить в чат", reward: 25000, icon: "💬", link: "https://t.me/+cur_4KbYlj44NmJi" },
-        { id: 2, title: "Секретный бонус", reward: 100000, icon: "🎁", link: "https://t.me/StarDrop_Chanel" }
-    ];
-
+    // --- СОСТОЯНИЕ ---
     let state = {
         coins: 0,
         energy: 1000,
         maxEnergy: 1000,
-        owned: [0],
-        activeId: 0,
-        baseBonus: 1,
+        ownedHeroes: [0],
+        activeHeroId: 0,
+        clickPower: 1,
         marketLevels: {},
-        doneQuests: []
+        lastUnix: Date.now()
     };
 
-    const saved = localStorage.getItem('nova_deluxe_v2');
-    if(saved) {
-        state = {...state, ...JSON.parse(saved)};
-        marketItems.forEach(item => {
-            if(state.marketLevels[item.id]) item.level = state.marketLevels[item.id];
-        });
+    // --- ИНИЦИАЛИЗАЦИЯ ---
+    function init() {
+        const saved = localStorage.getItem('nova_engine_save');
+        if (saved) {
+            const data = JSON.parse(saved);
+            state = { ...state, ...data };
+        }
+
+        // Расчет оффлайн прибыли или регена (упрощенно)
+        const now = Date.now();
+        const diff = Math.floor((now - state.lastUnix) / 1000);
+        if (diff > 10) {
+            const regen = Math.min(state.maxEnergy - state.energy, diff * (state.maxEnergy / 3600));
+            state.energy += regen;
+        }
+
+        applyHeroVisuals();
+        updateUI();
+        startLoops();
     }
 
-    const USER_ID = localStorage.getItem('nova_user_id') || 'user_' + Math.random().toString(36).substr(2, 9);
-    localStorage.setItem('nova_user_id', USER_ID);
+    function startLoops() {
+        // Регенерация энергии (1.5% в минуту базово)
+        setInterval(() => {
+            if (state.energy < state.maxEnergy) {
+                state.energy = Math.min(state.maxEnergy, state.energy + (state.maxEnergy / 4000));
+                updateUI();
+            }
+        }, 1000);
 
-    document.getElementById('tap-zone').addEventListener('touchstart', (e) => {
+        // Авто-сохранение раз в 10 сек
+        setInterval(save, 10000);
+    }
+
+    // --- ЛОГИКА КЛИКА ---
+    const tapZone = document.getElementById('tap-zone');
+    const heroImg = document.getElementById('hero-img');
+
+    tapZone.addEventListener('touchstart', (e) => {
         e.preventDefault();
         if (state.energy < 1) return;
-        
-        const img = document.getElementById('hero-img');
-        img.classList.add('tap-anim');
-        setTimeout(() => img.classList.remove('tap-anim'), 50);
-        
-        const h = heroes.find(h => h.id === state.activeId);
-        const bonus = Number(state.baseBonus) || 1;
-        const mult = Number(h.x) || 1;
-        const profit = bonus * mult;
-        
+
+        // Визуал клика
+        heroImg.classList.add('tap-anim');
+        setTimeout(() => heroImg.classList.remove('tap-anim'), 50);
+
+        // Расчет прибыли
+        const hero = heroes.find(h => h.id === state.activeHeroId);
+        const profit = state.clickPower * hero.x;
+
         state.coins += profit;
         state.energy -= 1;
-        
-        showPop(e.touches[0].clientX, e.touches[0].clientY, profit);
+
+        // Эффект цифр (поддержка мультитача)
+        for (let i = 0; i < e.touches.length; i++) {
+            showPop(e.touches[i].clientX, e.touches[i].clientY, profit);
+        }
+
         updateUI();
-        save();
     });
 
     function showPop(x, y, val) {
         const p = document.createElement('div');
-        p.className = 'click-pop'; p.innerHTML = `+${Math.floor(val).toLocaleString()}`;
-        p.style.left = x + 'px'; p.style.top = y + 'px';
+        p.className = 'click-pop';
+        p.innerHTML = `+${Math.floor(val).toLocaleString()}`;
+        p.style.left = `${x}px`;
+        p.style.top = `${y}px`;
         document.body.appendChild(p);
-        setTimeout(() => p.remove(), 700);
+        setTimeout(() => p.remove(), 800);
     }
 
-    function updateUI() {
-        document.getElementById('balance-num').innerText = Math.floor(state.coins).toLocaleString();
-        document.getElementById('energy-val').innerText = Math.floor(state.energy);
-        document.getElementById('max-energy-val').innerText = state.maxEnergy;
-        document.getElementById('energy-fill').style.width = (state.energy / state.maxEnergy * 100) + '%';
-    }
-
+    // --- МАГАЗИН И ГЕРОИ ---
     function renderMarket() {
-        const list = document.getElementById('market-list');
-        list.innerHTML = '';
-        marketItems.forEach(item => {
-            let isLocked = false; let lockMsg = "";
-            if (item.reqId !== undefined) {
-                const prev = marketItems.find(i => i.id === item.reqId);
-                if (prev.level < item.reqLvl) { isLocked = true; lockMsg = `${prev.name} LVL ${item.reqLvl}`; }
-            }
-            const price = item.basePrice * Math.pow(2, item.level - 1);
-            const bonus = (item.baseAdd || 0) * Math.pow(2, item.level - 1);
-            list.innerHTML += `
-                <div class="skin-card" style="${isLocked ? 'opacity:0.5; filter:grayscale(1)' : ''}">
-                    <div class="lvl-tag">LVL ${item.level}</div>
-                    <div style="font-size:35px; margin-bottom:5px;">${isLocked ? '🔒' : item.icon}</div>
-                    <div style="font-size:11px; font-weight:900; height:26px; overflow:hidden;">${item.name}</div>
-                    <div style="font-size:9px; color:var(--neon); margin: 8px 0; font-weight:bold;">
-                        ${isLocked ? 'НУЖЕН: ' + lockMsg : (item.energyAdd ? '+'+item.energyAdd+'⚡️' : '+'+bonus.toLocaleString()+' / клик')}
-                    </div>
-                    <button class="btn-skin btn-buy" ${isLocked ? 'disabled' : ''} onclick="buyMarketItem(${item.id})">
-                        ${isLocked ? 'ЗАКРЫТО' : Math.floor(price).toLocaleString()}
+        const container = document.getElementById('market-list');
+        container.innerHTML = '';
+
+        marketData.forEach(item => {
+            const lvl = state.marketLevels[item.id] || 0;
+            const price = Math.floor(item.basePrice * Math.pow(1.6, lvl));
+            const bonus = item.baseAdd * (lvl + 1);
+
+            container.innerHTML += `
+                <div class="card-item">
+                    <span class="lvl-badge">LVL ${lvl}</span>
+                    <span class="card-icon">${item.icon}</span>
+                    <div class="card-title">${item.name}</div>
+                    <div class="card-desc">${item.type === 'click' ? '+' + bonus + ' к клику' : '+' + item.baseAdd + ' к лимиту'}</div>
+                    <button class="btn-action btn-buy" ${state.coins < price ? 'disabled' : ''} onclick="buyMarketItem(${item.id})">
+                        ${price.toLocaleString()}
                     </button>
-                </div>`;
+                </div>
+            `;
         });
     }
 
     window.buyMarketItem = function(id) {
-        const item = marketItems.find(i => i.id === id);
-        const price = item.basePrice * Math.pow(2, item.level - 1);
+        const item = marketData.find(i => i.id === id);
+        const lvl = state.marketLevels[item.id] || 0;
+        const price = Math.floor(item.basePrice * Math.pow(1.6, lvl));
+
         if (state.coins >= price) {
             state.coins -= price;
-            if (item.energyAdd) { 
-                state.maxEnergy += item.energyAdd; 
-                state.energy += item.energyAdd; 
-            } else { 
-                state.baseBonus += item.baseAdd * Math.pow(2, item.level - 1); 
+            state.marketLevels[id] = lvl + 1;
+            
+            if (item.type === 'click') {
+                state.clickPower += item.baseAdd;
+            } else {
+                state.maxEnergy += item.baseAdd;
+                state.energy += item.baseAdd;
             }
-            item.level++;
-            state.marketLevels[id] = item.level;
-            renderMarket(); updateUI(); save();
+
+            renderMarket();
+            updateUI();
+            save();
         }
-    };
+    }
 
     function renderSkins() {
-        const list = document.getElementById('skin-list');
-        list.innerHTML = '';
+        const container = document.getElementById('skin-list');
+        container.innerHTML = '';
+
         heroes.forEach(h => {
-            const isOwned = state.owned.includes(h.id);
-            const isActive = state.activeId === h.id;
-            list.innerHTML += `
-                <div class="skin-card ${isActive ? 'current' : ''}">
-                    <img src="${h.img}" style="width:70px; height:70px; border-radius:15px; margin-bottom:10px; object-fit:cover;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1144/1144760.png'">
-                    <div style="font-size:12px; font-weight:900;">${h.name}</div>
-                    <div style="font-size:10px; color:var(--neon); margin:5px 0;">БУСТ x${h.x.toLocaleString()}</div>
-                    <button class="btn-skin ${isOwned ? 'btn-select' : 'btn-buy'}" onclick="handleHero(${h.id})">
+            const isOwned = state.ownedHeroes.includes(h.id);
+            const isActive = state.activeHeroId === h.id;
+
+            container.innerHTML += `
+                <div class="card-item ${isActive ? 'active-item' : ''}">
+                    <img src="${h.img}" class="card-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1144/1144760.png'">
+                    <div class="card-title">${h.name}</div>
+                    <div class="card-desc">МНОЖИТЕЛЬ x${h.x.toLocaleString()}</div>
+                    <button class="btn-action ${isOwned ? 'btn-owned' : 'btn-buy'}" 
+                            ${(!isOwned && state.coins < h.price) ? 'disabled' : ''} 
+                            onclick="handleHero(${h.id})">
                         ${isOwned ? (isActive ? 'АКТИВЕН' : 'ВЫБРАТЬ') : h.price.toLocaleString()}
                     </button>
-                </div>`;
+                </div>
+            `;
         });
     }
 
     window.handleHero = function(id) {
         const h = heroes.find(x => x.id === id);
-        if (state.owned.includes(id)) { state.activeId = id; } 
-        else if (state.coins >= h.price) { state.coins -= h.price; state.owned.push(id); state.activeId = id; }
-        applyHeroVisuals(heroes.find(x => x.id === state.activeId));
-        updateUI(); save(); renderSkins();
-    };
-
-    async function fetchRealLeaderboard() {
-        try {
-            const response = await fetch(BACKEND_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: USER_ID, username: "Player_" + USER_ID.slice(-4), coins: state.coins })
-            });
-            const data = await response.json();
-            return Array.isArray(data) ? data : (data.players || []); 
-        } catch (e) {
-            return [{username: "Offline", coins: state.coins, user_id: USER_ID}];
+        if (state.ownedHeroes.includes(id)) {
+            state.activeHeroId = id;
+        } else if (state.coins >= h.price) {
+            state.coins -= h.price;
+            state.ownedHeroes.push(id);
+            state.activeHeroId = id;
         }
+        
+        applyHeroVisuals();
+        renderSkins();
+        updateUI();
+        save();
     }
 
-    async function renderLeaderboard() {
-        const list = document.getElementById('leader-list');
-        list.innerHTML = '<div style="text-align:center; padding:20px;">Загрузка топа...</div>';
-        const realUsers = await fetchRealLeaderboard();
-        list.innerHTML = '';
-        realUsers.sort((a,b) => b.coins - a.coins).forEach((p, i) => {
-            const isMe = p.user_id === USER_ID;
-            let rankClass = i === 0 ? "rank-1" : i === 1 ? "rank-2" : i === 2 ? "rank-3" : "rank-other";
-            list.innerHTML += `
-                <div class="leader-row" style="${isMe ? 'border-color: var(--neon); background: rgba(74,222,128,0.1);' : ''}">
-                    <div style="display:flex; align-items:center;">
-                        <div class="rank-badge ${rankClass}">${i + 1}</div>
-                        <div style="font-weight:700;">${p.username || p.name} ${isMe ? '(ТЫ)' : ''}</div>
-                    </div>
-                    <div style="font-weight:900; color:var(--neon);">${Math.floor(p.coins).toLocaleString()}</div>
-                </div>`;
-        });
-    }
-
-    function renderQuests() {
-        const list = document.getElementById('quest-list');
-        list.innerHTML = '';
-        quests.forEach(q => {
-            const isDone = state.doneQuests.includes(q.id);
-            list.innerHTML += `
-                <div class="quest-item">
-                    <div class="quest-info-main">
-                        <div class="quest-icon-box">${q.icon}</div>
-                        <div>
-                            <div class="quest-title-text">${q.title}</div>
-                            <div class="quest-reward-text">+${q.reward.toLocaleString()} 💰</div>
-                        </div>
-                    </div>
-                    <button class="quest-btn ${isDone ? 'done' : ''}" onclick="doQuest(${q.id})">
-                        ${isDone ? 'ГОТОВО' : 'ПЕРЕЙТИ'}
-                    </button>
-                </div>`;
-        });
-    }
-
-    window.doQuest = function(id) {
-        if(state.doneQuests.includes(id)) return;
-        const q = quests.find(x => x.id === id);
-        window.open(q.link, '_blank');
-        setTimeout(() => {
-            state.coins += q.reward;
-            state.doneQuests.push(id);
-            renderQuests(); updateUI(); save();
-        }, 3000);
-    }
-
-    function openPanel(id, el) {
-        closeAllPanels();
+    // --- СИСТЕМНЫЕ ФУНКЦИИ ---
+    function openPanel(id, navEl) {
+        document.querySelectorAll('.drawer-wardrobe').forEach(d => d.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        
         document.getElementById(id).classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        el.classList.add('active');
-        if(id === 'market-panel') renderMarket();
-        if(id === 'wardrobe-panel') renderSkins();
-        if(id === 'leader-panel') renderLeaderboard();
-        if(id === 'quest-panel') renderQuests();
+        navEl.classList.add('active');
+
+        if (id === 'market-panel') renderMarket();
+        if (id === 'wardrobe-panel') renderSkins();
     }
 
     function closeAllPanels() {
-        document.querySelectorAll('.drawer-wardrobe').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.querySelectorAll('.drawer-wardrobe').forEach(d => d.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById('nav-main').classList.add('active');
     }
 
-    function applyHeroVisuals(h) {
-        document.getElementById('hero-img').src = h.img;
-        document.documentElement.style.setProperty('--neon', h.color);
-        document.getElementById('main-bg').style.background = h.bg;
+    function updateUI() {
+        const count = document.getElementById('balance-num');
+        count.innerText = Math.floor(state.coins).toLocaleString();
+        
+        // Легкая анимация увеличения при изменении
+        count.style.transform = 'scale(1.05)';
+        setTimeout(() => count.style.transform = 'scale(1)', 50);
+
+        document.getElementById('energy-val').innerText = Math.floor(state.energy);
+        document.getElementById('max-energy-val').innerText = state.maxEnergy;
+        
+        const perc = (state.energy / state.maxEnergy) * 100;
+        document.getElementById('energy-fill').style.width = perc + '%';
     }
 
-    function save() { localStorage.setItem('nova_deluxe_v2', JSON.stringify(state)); }
+    function applyHeroVisuals() {
+        const h = heroes.find(x => x.id === state.activeHeroId);
+        document.getElementById('hero-img').src = h.img;
+        document.documentElement.style.setProperty('--neon', h.color);
+        document.getElementById('main-bg').style.background = `radial-gradient(circle at 50% 50%, ${h.bg} 0%, #050505 100%)`;
+    }
 
-    setInterval(() => {
-        if (Number(state.energy) < Number(state.maxEnergy)) {
-            const regenAmount = Number(state.maxEnergy) * 0.000093;
-            state.energy = Math.min(Number(state.maxEnergy), Number(state.energy) + regenAmount);
-            updateUI();
-        }
-    }, 1000);
+    function save() {
+        state.lastUnix = Date.now();
+        localStorage.setItem('nova_engine_save', JSON.stringify(state));
+    }
 
-    applyHeroVisuals(heroes.find(h => h.id === state.activeId));
-    updateUI();
+    // Запуск двигателя
+    window.onload = init;
+
 </script>
 </body>
 </html>
