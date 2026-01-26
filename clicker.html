@@ -87,8 +87,9 @@
             filter: drop-shadow(0 0 30px rgba(0,0,0,0.8));
             transition: transform 0.05s ease-out;
             will-change: transform;
+            -webkit-user-drag: none;
         }
-        .tap-anim { transform: scale(0.9) rotate(2deg) !important; }
+        .tap-anim { transform: scale(0.92) rotate(1deg) !important; }
 
         /* --- DRAWER SYSTEM --- */
         .drawer-wardrobe {
@@ -119,6 +120,8 @@
             scrollbar-width: none; -webkit-overflow-scrolling: touch;
         }
         .scroll-area::-webkit-scrollbar { display: none; }
+
+        #quest-list { grid-template-columns: 1fr; }
 
         /* --- CARDS --- */
         .card-item {
@@ -162,27 +165,23 @@
         .nav-item.active { color: var(--neon); transform: translateY(-5px); }
         .nav-item svg { width: 24px; height: 24px; }
 
-        /* --- ANIMATIONS --- */
+        /* --- ANIMATIONS (ИСПРАВЛЕНО) --- */
         .click-pop {
-            position: absolute; pointer-events: none; z-index: 999;
-            font-weight: 900; font-size: 32px; color: white;
-            animation: float-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            position: absolute;
+            pointer-events: none;
+            z-index: 9999;
+            font-weight: 900;
+            font-size: 32px;
+            color: #fff;
             text-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
-        @keyframes float-up {
-            0% { transform: translateY(0) scale(0.5); opacity: 0; }
-            20% { opacity: 1; transform: translateY(-20px) scale(1.2); }
-            100% { transform: translateY(-150px) scale(1); opacity: 0; }
+            animation: float-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            will-change: transform, opacity;
         }
 
-        .auto-collect-notify {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: var(--neon); color: black; padding: 10px 20px;
-            border-radius: 50px; font-weight: 900; font-size: 12px;
-            z-index: 2000; animation: slide-down 3s ease-in-out forwards;
-        }
-        @keyframes slide-down {
-            0% { top: -50px; } 10%, 90% { top: 20px; } 100% { top: -50px; }
+        @keyframes float-up {
+            0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; }
+            20% { opacity: 1; transform: translate(-50%, -20px) scale(1.2); }
+            100% { transform: translate(-50%, -120px) scale(1); opacity: 0; }
         }
     </style>
 </head>
@@ -208,25 +207,26 @@
     </div>
 
     <div class="drawer-wardrobe" id="market-panel">
-        <div class="drawer-header">
-            <h3>УСИЛЕНИЯ</h3>
-            <div class="close-btn" onclick="closeAllPanels()">ЗАКРЫТЬ</div>
-        </div>
+        <div class="drawer-header"><h3>УСИЛЕНИЯ</h3><div class="close-btn" onclick="closeAllPanels()">ЗАКРЫТЬ</div></div>
         <div class="scroll-area" id="market-list"></div>
     </div>
-
     <div class="drawer-wardrobe" id="wardrobe-panel">
-        <div class="drawer-header">
-            <h3>ГЕРОИ</h3>
-            <div class="close-btn" onclick="closeAllPanels()">ЗАКРЫТЬ</div>
-        </div>
+        <div class="drawer-header"><h3>ГЕРОИ</h3><div class="close-btn" onclick="closeAllPanels()">ЗАКРЫТЬ</div></div>
         <div class="scroll-area" id="skin-list"></div>
+    </div>
+    <div class="drawer-wardrobe" id="quest-panel">
+        <div class="drawer-header"><h3>КВЕСТЫ</h3><div class="close-btn" onclick="closeAllPanels()">ЗАКРЫТЬ</div></div>
+        <div class="scroll-area" id="quest-list"></div>
     </div>
 
     <div class="nav-bar">
         <div class="nav-item" onclick="openPanel('market-panel', this)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
             <div>МАРКЕТ</div>
+        </div>
+        <div class="nav-item" onclick="openPanel('quest-panel', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <div>КВЕСТЫ</div>
         </div>
         <div class="nav-item active" id="nav-main" onclick="closeAllPanels()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
@@ -240,11 +240,6 @@
 </div>
 
 <script>
-    /**
-     * STAR DROP NOVA - DELUXE ENGINE v3.0
-     * Полностью локализованный код без лишних зависимостей.
-     */
-
     // --- ДАННЫЕ ИГРЫ ---
     const heroes = [
         { id: 0, name: "Новичок", x: 1, price: 0, img: "hero.png", color: "#4ade80", bg: "#0f2a1a" },
@@ -265,7 +260,12 @@
         { id: 5, name: "Мега-Батарея", baseAdd: 500, basePrice: 50000, icon: "🔋", type: "energy" }
     ];
 
-    // --- СОСТОЯНИЕ ---
+    const questsData = [
+        { id: 'q1', name: "Подписка на канал", reward: 25000, link: "https://t.me/StarDrop_Chanel", icon: "📢" },
+        { id: 'q2', name: "Вступить в группу", reward: 75000, link: "https://t.me/ChatStarDropa", icon: "👥" },
+        { id: 'q3', name: "Секретный чат", reward: 100000, link: "https://t.me/secret", icon: "🔐" }
+    ];
+
     let state = {
         coins: 0,
         energy: 1000,
@@ -274,76 +274,68 @@
         activeHeroId: 0,
         clickPower: 1,
         marketLevels: {},
+        completedQuests: [],
         lastUnix: Date.now()
     };
 
-    // --- ИНИЦИАЛИЗАЦИЯ ---
     function init() {
         const saved = localStorage.getItem('nova_engine_save');
         if (saved) {
             const data = JSON.parse(saved);
             state = { ...state, ...data };
         }
-
-        // Расчет оффлайн прибыли или регена (упрощенно)
-        const now = Date.now();
-        const diff = Math.floor((now - state.lastUnix) / 1000);
-        if (diff > 10) {
-            const regen = Math.min(state.maxEnergy - state.energy, diff * (state.maxEnergy / 3600));
-            state.energy += regen;
-        }
-
         applyHeroVisuals();
         updateUI();
         startLoops();
     }
 
     function startLoops() {
-        // Регенерация энергии (1.5% в минуту базово)
         setInterval(() => {
             if (state.energy < state.maxEnergy) {
                 state.energy = Math.min(state.maxEnergy, state.energy + (state.maxEnergy / 4000));
                 updateUI();
             }
         }, 1000);
-
-        // Авто-сохранение раз в 10 сек
         setInterval(save, 10000);
     }
 
-    // --- ЛОГИКА КЛИКА ---
+    // --- ЛОГИКА КЛИКА (ИСПРАВЛЕНО) ---
     const tapZone = document.getElementById('tap-zone');
     const heroImg = document.getElementById('hero-img');
 
-    tapZone.addEventListener('touchstart', (e) => {
-        e.preventDefault();
+    function handleTapLogic(x, y) {
         if (state.energy < 1) return;
 
-        // Визуал клика
         heroImg.classList.add('tap-anim');
         setTimeout(() => heroImg.classList.remove('tap-anim'), 50);
 
-        // Расчет прибыли
         const hero = heroes.find(h => h.id === state.activeHeroId);
         const profit = state.clickPower * hero.x;
 
         state.coins += profit;
         state.energy -= 1;
 
-        // Эффект цифр (поддержка мультитача)
-        for (let i = 0; i < e.touches.length; i++) {
-            showPop(e.touches[i].clientX, e.touches[i].clientY, profit);
-        }
-
+        showPop(x, y, profit);
         updateUI();
+    }
+
+    tapZone.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            handleTapLogic(e.changedTouches[i].clientX, e.changedTouches[i].clientY);
+        }
+    }, { passive: false });
+
+    tapZone.addEventListener('mousedown', (e) => {
+        if(e.button === 0) handleTapLogic(e.clientX, e.clientY);
     });
 
     function showPop(x, y, val) {
         const p = document.createElement('div');
         p.className = 'click-pop';
         p.innerHTML = `+${Math.floor(val).toLocaleString()}`;
-        p.style.left = `${x}px`;
-        p.style.top = `${y}px`;
+        p.style.left = x + 'px';
+        p.style.top = y + 'px';
         document.body.appendChild(p);
         setTimeout(() => p.remove(), 800);
     }
@@ -352,12 +344,10 @@
     function renderMarket() {
         const container = document.getElementById('market-list');
         container.innerHTML = '';
-
         marketData.forEach(item => {
             const lvl = state.marketLevels[item.id] || 0;
             const price = Math.floor(item.basePrice * Math.pow(1.6, lvl));
             const bonus = item.baseAdd * (lvl + 1);
-
             container.innerHTML += `
                 <div class="card-item">
                     <span class="lvl-badge">LVL ${lvl}</span>
@@ -367,8 +357,7 @@
                     <button class="btn-action btn-buy" ${state.coins < price ? 'disabled' : ''} onclick="buyMarketItem(${item.id})">
                         ${price.toLocaleString()}
                     </button>
-                </div>
-            `;
+                </div>`;
         });
     }
 
@@ -376,73 +365,88 @@
         const item = marketData.find(i => i.id === id);
         const lvl = state.marketLevels[item.id] || 0;
         const price = Math.floor(item.basePrice * Math.pow(1.6, lvl));
-
         if (state.coins >= price) {
             state.coins -= price;
             state.marketLevels[id] = lvl + 1;
-            
-            if (item.type === 'click') {
-                state.clickPower += item.baseAdd;
-            } else {
-                state.maxEnergy += item.baseAdd;
-                state.energy += item.baseAdd;
-            }
-
-            renderMarket();
-            updateUI();
-            save();
+            if (item.type === 'click') state.clickPower += item.baseAdd;
+            else { state.maxEnergy += item.baseAdd; state.energy += item.baseAdd; }
+            renderMarket(); updateUI(); save();
         }
     }
 
+    // --- ГЕРОИ И КВЕСТЫ ---
     function renderSkins() {
         const container = document.getElementById('skin-list');
         container.innerHTML = '';
-
         heroes.forEach(h => {
             const isOwned = state.ownedHeroes.includes(h.id);
             const isActive = state.activeHeroId === h.id;
-
             container.innerHTML += `
                 <div class="card-item ${isActive ? 'active-item' : ''}">
                     <img src="${h.img}" class="card-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1144/1144760.png'">
                     <div class="card-title">${h.name}</div>
-                    <div class="card-desc">МНОЖИТЕЛЬ x${h.x.toLocaleString()}</div>
+                    <div class="card-desc">МНОЖИТЕЛЬ x${h.x}</div>
                     <button class="btn-action ${isOwned ? 'btn-owned' : 'btn-buy'}" 
                             ${(!isOwned && state.coins < h.price) ? 'disabled' : ''} 
                             onclick="handleHero(${h.id})">
                         ${isOwned ? (isActive ? 'АКТИВЕН' : 'ВЫБРАТЬ') : h.price.toLocaleString()}
                     </button>
-                </div>
-            `;
+                </div>`;
         });
     }
 
     window.handleHero = function(id) {
         const h = heroes.find(x => x.id === id);
-        if (state.ownedHeroes.includes(id)) {
-            state.activeHeroId = id;
-        } else if (state.coins >= h.price) {
+        if (state.ownedHeroes.includes(id)) state.activeHeroId = id;
+        else if (state.coins >= h.price) {
             state.coins -= h.price;
             state.ownedHeroes.push(id);
             state.activeHeroId = id;
         }
-        
-        applyHeroVisuals();
-        renderSkins();
-        updateUI();
-        save();
+        applyHeroVisuals(); renderSkins(); updateUI(); save();
     }
 
-    // --- СИСТЕМНЫЕ ФУНКЦИИ ---
+    function renderQuests() {
+        const container = document.getElementById('quest-list');
+        container.innerHTML = '';
+        questsData.forEach(q => {
+            const isDone = state.completedQuests.includes(q.id);
+            container.innerHTML += `
+                <div class="card-item" style="min-height: 80px; flex-direction: row; align-items: center; justify-content: space-between; padding: 15px;">
+                    <div style="display:flex; align-items:center; gap:15px">
+                        <span style="font-size:24px">${q.icon}</span>
+                        <div style="text-align:left">
+                            <div class="card-title" style="margin:0">${q.name}</div>
+                            <div class="card-desc" style="margin:0">+${q.reward.toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <button class="btn-action ${isDone ? 'btn-owned' : 'btn-buy'}" style="width:90px" onclick="handleQuest('${q.id}', '${q.link}')" ${isDone ? 'disabled' : ''}>
+                        ${isDone ? 'OK' : 'Начать'}
+                    </button>
+                </div>`;
+        });
+    }
+
+    window.handleQuest = function(id, link) {
+        window.open(link, '_blank');
+        setTimeout(() => {
+            if (!state.completedQuests.includes(id)) {
+                state.coins += questsData.find(x => x.id === id).reward;
+                state.completedQuests.push(id);
+                renderQuests(); updateUI(); save();
+            }
+        }, 2000);
+    }
+
+    // --- СИСТЕМА ---
     function openPanel(id, navEl) {
         document.querySelectorAll('.drawer-wardrobe').forEach(d => d.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        
         document.getElementById(id).classList.add('active');
         navEl.classList.add('active');
-
         if (id === 'market-panel') renderMarket();
         if (id === 'wardrobe-panel') renderSkins();
+        if (id === 'quest-panel') renderQuests();
     }
 
     function closeAllPanels() {
@@ -452,18 +456,10 @@
     }
 
     function updateUI() {
-        const count = document.getElementById('balance-num');
-        count.innerText = Math.floor(state.coins).toLocaleString();
-        
-        // Легкая анимация увеличения при изменении
-        count.style.transform = 'scale(1.05)';
-        setTimeout(() => count.style.transform = 'scale(1)', 50);
-
+        document.getElementById('balance-num').innerText = Math.floor(state.coins).toLocaleString();
         document.getElementById('energy-val').innerText = Math.floor(state.energy);
         document.getElementById('max-energy-val').innerText = state.maxEnergy;
-        
-        const perc = (state.energy / state.maxEnergy) * 100;
-        document.getElementById('energy-fill').style.width = perc + '%';
+        document.getElementById('energy-fill').style.width = (state.energy / state.maxEnergy * 100) + '%';
     }
 
     function applyHeroVisuals() {
@@ -478,9 +474,7 @@
         localStorage.setItem('nova_engine_save', JSON.stringify(state));
     }
 
-    // Запуск двигателя
     window.onload = init;
-
 </script>
 </body>
 </html>
