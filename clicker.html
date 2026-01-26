@@ -183,6 +183,32 @@
             20% { opacity: 1; transform: translate(-50%, -20px) scale(1.2); }
             100% { transform: translate(-50%, -120px) scale(1); opacity: 0; }
         }
+        /* --- BACK BUTTON --- */
+        .back-nav {
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            z-index: 200;
+        }
+        .btn-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 12px;
+            color: white;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 800;
+            transition: var(--trans);
+            backdrop-filter: blur(10px);
+        }
+        .btn-back:active {
+            transform: scale(0.95);
+            border-color: var(--neon);
+        }
     </style>
 </head>
 <body>
@@ -190,6 +216,13 @@
 <div id="main-bg"></div>
 
 <div class="app-shell">
+    <div class="back-nav">
+        <a href="index.html" class="btn-back">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            НАЗАД
+        </a>
+    </div>
+
     <div class="header-ui">
         <div class="balance-card">
             <img src="img/Nova Token.png" class="main-coin" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1205/1205194.png'">
