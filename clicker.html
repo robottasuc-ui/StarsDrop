@@ -28,13 +28,43 @@
             background: radial-gradient(circle at 50% 50%, var(--bg-end) 0%, var(--bg-start) 100%);
         }
 
+        /* Кнопка Назад */
+.back-nav {
+    position: absolute;
+    top: 15px; /* Немного выше */
+    left: 15px;
+    z-index: 1000;
+    text-decoration: none;
+    color: white;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 8px 12px; /* Уменьшили паддинги */
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px; /* Чуть меньше шрифт */
+    font-weight: 800;
+    backdrop-filter: blur(10px);
+    transition: 0.3s;
+}
+
+        .back-nav:hover {
+            border-color: var(--neon);
+            box-shadow: 0 0 15px var(--neon);
+        }
+
         .app-shell {
             display: flex; flex-direction: column;
             height: 100vh; max-width: 430px; margin: 0 auto;
             position: relative;
         }
 
-        .header-ui { padding: 40px 20px 10px; text-align: center; z-index: 10; }
+        .header-ui { 
+    padding: 75px 20px 10px; /* Было 60px, ставим 75px-80px */
+    text-align: center; 
+    z-index: 10; 
+}
         
         .balance-card {
             background: rgba(255, 255, 255, 0.05);
@@ -173,6 +203,11 @@
 
 <div id="main-bg"></div>
 
+<a href="index.html" class="back-nav">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+    НАЗАД
+</a>
+
 <div class="app-shell">
     <div class="header-ui">
         <div class="balance-card">
@@ -247,6 +282,7 @@
 </div>
 
 <script>
+    // Весь твой JS код остается без изменений
     const BACKEND_URL = "https://stars-drop.vercel.app/api"; 
 
     const heroes = [
@@ -266,7 +302,7 @@
         { id: 3, name: "Кликер-бот", baseAdd: 200, basePrice: 10000, icon: "🤖", level: 1, reqId: 2, reqLvl: 5 },
         { id: 4, name: "Тяжелая гиря", baseAdd: 500, basePrice: 75000, icon: "🏋️", level: 1, reqId: 3, reqLvl: 7 },
         { id: 5, name: "Батарейка", energyAdd: 1000, basePrice: 150000, icon: "🔋", level: 1, reqId: 4, reqLvl: 10 },
-        { id: 6, name: "Ядерный реактор", energyAdd: 500, basePrice: 500, icon: "⚛️", level: 1 } // ТВОЁ НОВОЕ УСИЛЕНИЕ
+        { id: 6, name: "Ядерный реактор", energyAdd: 500, basePrice: 500, icon: "⚛️", level: 1 }
     ];
 
     const quests = [
@@ -286,7 +322,6 @@
         doneQuests: []
     };
 
-    // ЗАГРУЗКА СОСТОЯНИЯ
     const saved = localStorage.getItem('nova_deluxe_v2');
     if(saved) {
         state = {...state, ...JSON.parse(saved)};
@@ -298,7 +333,6 @@
     const USER_ID = localStorage.getItem('nova_user_id') || 'user_' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('nova_user_id', USER_ID);
 
-    // ПОЧИНЕННЫЙ ТАП (ФИКС +0)
     document.getElementById('tap-zone').addEventListener('touchstart', (e) => {
         e.preventDefault();
         if (state.energy < 1) return;
@@ -308,8 +342,6 @@
         setTimeout(() => img.classList.remove('tap-anim'), 50);
         
         const h = heroes.find(h => h.id === state.activeId);
-        
-        // Гарантируем, что это числа
         const bonus = Number(state.baseBonus) || 1;
         const mult = Number(h.x) || 1;
         const profit = bonus * mult;
@@ -337,7 +369,6 @@
         document.getElementById('energy-fill').style.width = (state.energy / state.maxEnergy * 100) + '%';
     }
 
-    // РЕНДЕР МАРКЕТА (ФИКС НОВОГО УСИЛЕНИЯ)
     function renderMarket() {
         const list = document.getElementById('market-list');
         list.innerHTML = '';
@@ -381,7 +412,6 @@
         }
     };
 
-    // ОСТАЛЬНЫЕ ФУНКЦИИ (ГЕРОИ, КВЕСТЫ, ТОП)
     function renderSkins() {
         const list = document.getElementById('skin-list');
         list.innerHTML = '';
@@ -473,7 +503,6 @@
         }, 3000);
     }
 
-    // НАВИГАЦИЯ
     function openPanel(id, el) {
         closeAllPanels();
         document.getElementById(id).classList.add('active');
@@ -499,25 +528,14 @@
 
     function save() { localStorage.setItem('nova_deluxe_v2', JSON.stringify(state)); }
 
-    // ТАЙМЕР ЭНЕРГИИ
-    // AUTO REGEN ENERGY (Полное восстановление за 1 час)
-    // 60 минут = 3600 секунд. Коэффициент: 1 / 3600 ≈ 0.000278
     setInterval(() => {
         if (Number(state.energy) < Number(state.maxEnergy)) {
-            // Рассчитываем прибавку: 0.0278% от максимума в секунду
             const regenAmount = Number(state.maxEnergy) * 0.000093;
-            
-            // Добавляем энергию, следя за тем, чтобы не превысить максимум
-            state.energy = Math.min(
-                Number(state.maxEnergy), 
-                Number(state.energy) + regenAmount
-            );
-            
+            state.energy = Math.min(Number(state.maxEnergy), Number(state.energy) + regenAmount);
             updateUI();
         }
-    }, 1000); // Повторять каждую секунду
+    }, 1000);
 
-    // СТАРТ
     applyHeroVisuals(heroes.find(h => h.id === state.activeId));
     updateUI();
 </script>
