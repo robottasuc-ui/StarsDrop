@@ -254,8 +254,9 @@
         function updateStatus() {
             const lastSpin = localStorage.getItem('last_free_spin');
             const now = Date.now();
-            const stars = parseInt(localStorage.getItem('stars_balance')) || 0;
-            const cooldown = 86400000; // 24 часа
+            // ИСПРАВЛЕНО: используем ключ user_stars
+            const stars = parseInt(localStorage.getItem('user_stars')) || 0; 
+            const cooldown = 86400000; 
 
             if (!lastSpin || (now - lastSpin) >= cooldown) {
                 spinBtn.innerHTML = "КРУТИТЬ БЕСПЛАТНО";
@@ -263,7 +264,6 @@
                 timerDisplay.innerText = "ЕЖЕДНЕВНЫЙ БОНУС ДОСТУПЕН!";
                 return "free";
             } else {
-                // Вместо эмодзи вставляем маленькую картинку star.png
                 spinBtn.innerHTML = `КРУТИТЬ ЗА 100 <img src="img/star.png" class="star-icon">`;
                 timerDisplay.innerText = "БЕСПЛАТНО РАЗ В 24 ЧАСА";
                 
@@ -276,6 +276,19 @@
                 return "paid";
             }
         }
+
+        // Кнопка продать в модалке
+        document.getElementById('sell-btn').onclick = () => {
+            // ИСПРАВЛЕНО: читаем и пишем в user_stars
+            let s = parseInt(localStorage.getItem('user_stars')) || 0;
+            localStorage.setItem('user_stars', (s + 1).toString()); 
+            
+            tg.HapticFeedback.impactOccurred('medium');
+            goToMain();
+        };
+
+        // В функции клика на SPIN тоже замени списание:
+        // localStorage.setItem('user_stars', (stars - SPIN_COST).toString());
 
         // Инициализация ленты
         function initWheel() {
