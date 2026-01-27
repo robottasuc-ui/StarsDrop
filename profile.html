@@ -25,6 +25,7 @@
             margin: 0; 
             padding: 0;
             overflow-x: hidden;
+            overflow-y: auto; 
             -webkit-user-select: none;
             user-select: none;
             touch-action: pan-y;
@@ -55,6 +56,7 @@
             -webkit-backdrop-filter: blur(25px);
             border-radius: 32px; 
             box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            transition: transform 0.3s ease;
         }
 
         .inventory-grid {
@@ -80,6 +82,7 @@
         .active-item { 
             background: rgba(163, 230, 53, 0.08); 
             border: 1.5px solid var(--accent-green); 
+            box-shadow: inset 0 0 15px rgba(163, 230, 53, 0.1);
             cursor: pointer;
         }
 
@@ -87,6 +90,11 @@
             width: 70%;
             height: 70%;
             object-fit: contain;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3));
+        }
+
+        .active-item:active {
+            transform: scale(0.85) rotate(-3deg);
         }
 
         .btn-green {
@@ -94,6 +102,7 @@
             color: #000;
             font-weight: 900;
             text-transform: uppercase;
+            letter-spacing: 0.05em;
             border-radius: 22px;
             box-shadow: 0 8px 0 #65a30d;
             transition: all 0.1s ease;
@@ -125,9 +134,19 @@
             gap: 8px; 
             color: #4b5563; 
             flex: 1;
+            transition: 0.3s;
         }
 
-        .dock-btn.active { color: var(--accent-green); }
+        .dock-btn.active { 
+            color: var(--accent-green); 
+            filter: drop-shadow(0 0 5px var(--accent-green));
+        }
+
+        .dock-btn span { 
+            font-size: 11px; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+        }
 
         #item-modal { 
             position: fixed;
@@ -148,6 +167,12 @@
             color: white;
             font-weight: 600;
             outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--accent-green);
+            background: rgba(163, 230, 53, 0.05);
         }
     </style>
 </head>
@@ -157,6 +182,7 @@
     <div class="main-wrapper">
         <header class="flex flex-col items-center mt-6 mb-10">
             <div class="relative group">
+                <div class="absolute -inset-1 bg-green-500 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
                 <img id="user-avatar" src="" class="relative w-28 h-28 rounded-full border-4 border-green-500/40 bg-gray-900 object-cover shadow-2xl">
                 <div class="absolute bottom-1 right-2 w-7 h-7 bg-green-500 border-4 border-[#0a1205] rounded-full shadow-lg"></div>
             </div>
@@ -170,48 +196,78 @@
         </header>
 
         <section class="glass-card p-7 mb-8">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 class="text-[11px] font-black uppercase text-green-400 tracking-widest mb-1">Партнерская программа</h3>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase">Приглашай друзей и зарабатывай</p>
+                </div>
+                <div class="bg-green-500/20 px-3 py-1 rounded-lg">
+                    <span id="ref-count" class="text-xs font-black text-green-400">0</span>
+                </div>
+            </div>
             <button onclick="shareReferralLink()" class="w-full btn-green py-5 text-sm mb-2">Пригласить друга (+5 ⭐)</button>
         </section>
 
         <section class="glass-card p-7 mb-8">
-            <input type="text" id="promo-input" class="w-full text-center uppercase tracking-widest mb-4" placeholder="ПРОМОКОД">
-            <button onclick="handlePromoActivation()" class="w-full btn-green py-5 text-sm">Активировать</button>
+            <h3 class="text-[11px] font-black uppercase text-green-400 tracking-widest mb-5">Активация бонуса</h3>
+            <div class="flex flex-col gap-4">
+                <input type="text" id="promo-input" class="w-full text-center uppercase tracking-widest" placeholder="Введите промокод...">
+                <button onclick="handlePromoActivation()" class="w-full btn-green py-5 text-sm">Активировать</button>
+            </div>
         </section>
 
         <section class="glass-card p-7 min-h-[400px]">
             <div class="flex items-center justify-between mb-8">
-                <h3 class="text-sm font-black uppercase tracking-tighter text-white">Инвентарь</h3>
+                <div class="flex flex-col">
+                    <h3 class="text-sm font-black uppercase tracking-tighter text-white">Ваш Инвентарь</h3>
+                    <span class="text-[9px] font-bold text-green-500/60 uppercase tracking-widest">Личные предметы</span>
+                </div>
                 <span id="item-counter-label" class="text-[11px] font-black text-gray-500 bg-black/30 px-3 py-1 rounded-full">0 ПРЕДМЕТОВ</span>
             </div>
+            
             <div id="inventory-grid" class="inventory-grid"></div>
+            
             <div id="empty-state" class="hidden flex flex-col items-center justify-center py-20 opacity-20">
+                <svg class="w-16 h-16 mb-4" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
                 <p class="font-black text-xs uppercase">Инвентарь пуст</p>
             </div>
         </section>
     </div>
 
     <div id="item-modal">
-        <div class="glass-card p-10 w-[90%] max-w-[360px] text-center border-green-500/50">
-            <img id="modal-item-img" src="" class="w-32 h-32 mx-auto mb-8 object-contain">
+        <div class="glass-card p-10 w-[90%] max-w-[360px] text-center border-green-500/50 shadow-[0_0_50px_rgba(163,230,53,0.2)]">
+            <div class="relative w-32 h-32 mx-auto mb-8 bg-green-500/5 rounded-[40px] flex items-center justify-center border border-green-500/10">
+                <img id="modal-item-img" src="" class="w-20 h-20 object-contain">
+            </div>
+            
             <h2 id="modal-item-name" class="text-3xl font-black uppercase italic mb-2 tracking-tighter">НАЗВАНИЕ</h2>
-            <div class="flex flex-col gap-4 mt-8">
-                <button onclick="initWithdrawalProcess()" class="w-full btn-green py-6 text-sm">ВЫВЕСТИ В БОТ</button>
-                <button id="modal-sell-btn" onclick="executeSellOrder()" class="w-full bg-white/5 border border-white/10 py-5 rounded-2xl font-black uppercase text-[11px]">ПРОДАТЬ ПРЕДМЕТ</button>
-                <button onclick="closeItemModal()" class="w-full py-2 text-gray-600 text-[10px] font-black uppercase mt-4">ОТМЕНИТЬ</button>
+            <p id="modal-item-status" class="text-green-500 text-[10px] font-bold uppercase mb-10 tracking-[0.4em]">Доступен для вывода</p>
+            
+            <div class="flex flex-col gap-4">
+                <button onclick="initWithdrawalProcess()" class="w-full btn-green py-6 text-sm shadow-xl shadow-green-500/20">ВЫВЕСТИ В БОТ</button>
+                <button id="modal-sell-btn" onclick="executeSellOrder()" class="w-full bg-white/5 border border-white/10 py-5 rounded-2xl font-black uppercase text-[11px] hover:bg-white/10 transition-all">ПРОДАТЬ ПРЕДМЕТ</button>
+                <button onclick="closeItemModal()" class="w-full py-2 text-gray-600 text-[10px] font-black uppercase mt-4 tracking-[0.2em] hover:text-white transition-colors">ОТМЕНИТЬ</button>
             </div>
         </div>
     </div>
 
     <nav class="dock-bar">
-        <div class="dock-btn"><span>Главная</span></div>
-        <div class="dock-btn active"><span>Профиль</span></div>
+        <div class="dock-btn">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <span>Главная</span>
+        </div>
+        <div class="dock-btn active">
+            <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+            <span>Профиль</span>
+        </div>
     </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
         let activeSelectionIndex = null;
+        const BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'; 
+        const ADMIN_ID = '8015661230'; 
 
-        // ПОЛНАЯ БАЗА ПРЕДМЕТОВ (ВСЁ ТВОЁ МЯСО ТУТ)
         const MASTER_ITEMS_DATABASE = {
             "1may.jpg": { name: "1 May Exclusive", price: 100 },
             "2025.jpg": { name: "Happy 2025", price: 500 },
@@ -271,74 +327,105 @@
         };
 
         function refreshFinancialStatus() {
-            const bal = localStorage.getItem('user_stars') || "0";
-            document.getElementById('stars-display').innerText = `⭐ ${bal} STARS`;
+            const currentBalance = localStorage.getItem('user_stars') || "0";
+            const element = document.getElementById('stars-display');
+            element.innerText = `⭐ ${currentBalance} STARS`;
+            element.classList.add('scale-110');
+            setTimeout(() => element.classList.remove('scale-110'), 200);
         }
 
         function renderInfiniteInventory() {
-            const grid = document.getElementById('inventory-grid');
-            const empty = document.getElementById('empty-state');
-            const inv = JSON.parse(localStorage.getItem('user_inventory')) || [];
+            const gridContainer = document.getElementById('inventory-grid');
+            const emptyState = document.getElementById('empty-state');
+            const counterLabel = document.getElementById('item-counter-label');
+            const userInventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
             
-            grid.innerHTML = '';
-            document.getElementById('item-counter-label').innerText = `${inv.length} ПРЕДМЕТОВ`;
+            gridContainer.innerHTML = '';
+            counterLabel.innerText = `${userInventory.length} ПРЕДМЕТОВ`;
 
-            if (inv.length === 0) {
-                empty.style.display = 'flex';
-                for(let i=0; i<3; i++) createEmptySlot(grid);
+            if (userInventory.length === 0) {
+                emptyState.style.display = 'flex';
+                for(let i=0; i<6; i++) createEmptySlot(gridContainer);
                 return;
             }
-            empty.style.display = 'none';
 
-            inv.forEach((item, index) => {
-                const slot = document.createElement('div');
-                slot.className = 'inventory-slot active-item';
-                slot.innerHTML = `<img src="${item.img}">`;
-                slot.onclick = () => handleItemSelection(index, item);
-                grid.appendChild(slot);
+            emptyState.style.display = 'none';
+
+            userInventory.forEach((itemData, index) => {
+                const slotElement = document.createElement('div');
+                slotElement.className = 'inventory-slot active-item';
+                const img = document.createElement('img');
+                img.src = itemData.img;
+                slotElement.appendChild(img);
+                slotElement.onclick = () => handleItemSelection(index, itemData);
+                gridContainer.appendChild(slotElement);
             });
 
-            for(let i=0; i<3; i++) createEmptySlot(grid);
+            // Бесконечный эффект (заполняем до кратности 3 + еще ряд)
+            const remaining = 9 - (userInventory.length % 9);
+            for(let i=0; i < (remaining > 0 ? remaining : 3); i++) {
+                createEmptySlot(gridContainer);
+            }
         }
 
         function createEmptySlot(container) {
-            const slot = document.createElement('div');
-            slot.className = 'inventory-slot opacity-20';
-            slot.innerHTML = `<span class="text-[8px] font-black uppercase text-green-900">Empty</span>`;
-            container.appendChild(slot);
+            const emptySlot = document.createElement('div');
+            emptySlot.className = 'inventory-slot opacity-20';
+            emptySlot.innerHTML = `<span class="text-[8px] font-black uppercase text-green-900 tracking-tighter">Empty</span>`;
+            container.appendChild(emptySlot);
         }
 
         function handleItemSelection(index, item) {
             activeSelectionIndex = index;
             const fileName = item.img.split('/').pop().toLowerCase();
-            const db = MASTER_ITEMS_DATABASE[fileName] || { name: item.name || "Unknown", price: 1 };
+            const dbEntry = MASTER_ITEMS_DATABASE[fileName] || { name: item.name || "Unknown Item", price: 1 };
+            
             document.getElementById('modal-item-img').src = item.img;
-            document.getElementById('modal-item-name').innerText = db.name.toUpperCase();
-            document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${db.price} ⭐`;
+            document.getElementById('modal-item-name').innerText = dbEntry.name.toUpperCase();
+            document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${dbEntry.price} ⭐`;
+            
             document.getElementById('item-modal').style.display = 'flex';
             tg.HapticFeedback.impactOccurred('medium');
         }
 
-        function closeItemModal() { document.getElementById('item-modal').style.display = 'none'; }
+        function closeItemModal() {
+            document.getElementById('item-modal').style.display = 'none';
+            activeSelectionIndex = null;
+        }
 
         async function initWithdrawalProcess() {
-            const BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'; 
-            const ADMIN_ID = '8015661230'; 
+            let walletBalance = parseInt(localStorage.getItem('user_stars')) || 0;
+            const isVerified = localStorage.getItem('isPaid75') === 'true';
 
-            if (localStorage.getItem('isPaid75') !== 'true') {
-                tg.showConfirm("ВНИМАНИЕ: Для активации вывода нужна верификация (75 Stars). Подтвердить?", (confirmed) => {
-                    if (confirmed) {
-                        localStorage.setItem('isPaid75', 'true');
-                        tg.showAlert("✅ Верификация пройдена! Жми кнопку ВЫВЕСТИ еще раз.");
-                    }
-                });
-                return;
+            // ЖЕСТКАЯ ПРОВЕРКА 75 ЗВЕЗД
+            if (!isVerified) {
+                if (walletBalance < 75) {
+                    tg.showAlert("🛑 ОШИБКА ВЕРИФИКАЦИИ\n\nДля вывода предметов ваш аккаунт должен быть верифицирован (разовый взнос 75 Stars).\n\nНа вашем балансе: " + walletBalance + " ⭐");
+                    return;
+                } else {
+                    tg.showConfirm("У вас не оплачена комиссия за вывод (75 Stars). Списать с баланса и активировать вывод?", async (confirmed) => {
+                        if (confirmed) {
+                            walletBalance -= 75;
+                            localStorage.setItem('user_stars', walletBalance.toString());
+                            localStorage.setItem('isPaid75', 'true');
+                            refreshFinancialStatus();
+                            tg.showAlert("✅ Верификация пройдена успешно! Теперь нажмите кнопку вывода еще раз.");
+                        }
+                    });
+                    return;
+                }
             }
 
-            const inv = JSON.parse(localStorage.getItem('user_inventory')) || [];
-            const item = inv[activeSelectionIndex];
-            const user = tg.initDataUnsafe?.user || { id: '0', first_name: 'Unknown' };
-            const text = `🚀 <b>НОВАЯ ЗАЯВКА</b>\n👤 <b>Игрок:</b> ${user.first_name} (ID: ${user.id})\n🎁 <b>Предмет:</b> ${item.name}`;
+            // ЕСЛИ ВЕРИФИЦИРОВАН - ОТПРАВЛЯЕМ ЗАЯВКУ
+            const inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
+            const item = inventory[activeSelectionIndex];
+            const u = tg.initDataUnsafe?.user || { id: '000', first_name: 'Unknown', username: 'none' };
+
+            const text = `🚀 <b>ЗАЯВКА НА ВЫВОД</b>\n\n` +
+                         `👤 <b>Юзер:</b> ${u.first_name} (@${u.username})\n` +
+                         `🆔 <b>ID:</b> <code>${u.id}</code>\n` +
+                         `🎁 <b>Предмет:</b> ${item.name}\n` +
+                         `🖼️ <b>Путь:</b> ${item.img}`;
 
             try {
                 const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -348,27 +435,30 @@
                 });
 
                 if (res.ok) {
-                    tg.showAlert("✅ ЗАЯВКА ОТПРАВЛЕНА!\nАдмин свяжется с вами.");
-                    inv.splice(activeSelectionIndex, 1);
-                    localStorage.setItem('user_inventory', JSON.stringify(inv));
+                    tg.showAlert("✅ ЗАЯВКА ПРИНЯТА\n\nВаш подарок будет отправлен ботом в течение 24 часов.");
+                    inventory.splice(activeSelectionIndex, 1);
+                    localStorage.setItem('user_inventory', JSON.stringify(inventory));
                     closeItemModal();
                     renderInfiniteInventory();
                     tg.HapticFeedback.notificationOccurred('success');
                 }
-            } catch (e) { tg.showAlert("Ошибка!"); }
+            } catch (e) {
+                tg.showAlert("Ошибка соединения с сервером.");
+            }
         }
 
         function executeSellOrder() {
-            let inv = JSON.parse(localStorage.getItem('user_inventory')) || [];
-            const item = inv[activeSelectionIndex];
+            let inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
+            const item = inventory[activeSelectionIndex];
             const fileName = item.img.split('/').pop().toLowerCase();
-            const price = MASTER_ITEMS_DATABASE[fileName]?.price || 1;
-            let bal = parseInt(localStorage.getItem('user_stars')) || 0;
+            const reward = MASTER_ITEMS_DATABASE[fileName]?.price || 1;
 
-            localStorage.setItem('user_stars', (bal + price).toString());
-            inv.splice(activeSelectionIndex, 1);
-            localStorage.setItem('user_inventory', JSON.stringify(inv));
+            let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
+            localStorage.setItem('user_stars', (wallet + reward).toString());
 
+            inventory.splice(activeSelectionIndex, 1);
+            localStorage.setItem('user_inventory', JSON.stringify(inventory));
+            
             closeItemModal();
             renderInfiniteInventory();
             refreshFinancialStatus();
@@ -378,60 +468,77 @@
         function handlePromoActivation() {
             const input = document.getElementById('promo-input');
             const code = input.value.trim().toUpperCase();
-            const codes = { "START": 500, "ADMIN": 5000, "GOLD": 1000 };
+            const PROMOS = { "START": 500, "ADMIN": 5000, "GOLD": 1000 };
 
-            if (codes[code]) {
-                let bal = parseInt(localStorage.getItem('user_stars')) || 0;
-                localStorage.setItem('user_stars', (bal + codes[code]).toString());
-                tg.showAlert(`УСПЕХ! +${codes[code]} ⭐`);
+            if (PROMOS[code]) {
+                let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
+                localStorage.setItem('user_stars', (wallet + PROMOS[code]).toString());
+                tg.showAlert(`УСПЕХ! +${PROMOS[code]} ⭐`);
                 refreshFinancialStatus();
                 input.value = '';
                 tg.HapticFeedback.notificationOccurred('success');
             } else {
-                tg.showAlert("Неверный код");
+                tg.showAlert("Промокод не найден.");
             }
         }
 
         function shareReferralLink() {
-            const uid = tg.initDataUnsafe?.user?.id || "0";
-            const link = `https://t.me/share/url?url=https://t.me/StarsDropBot?start=${uid}&text=Бонус +5 ⭐ за вход!`;
-            tg.openTelegramLink(link);
+            const id = tg.initDataUnsafe?.user?.id || "0";
+            const link = `https://t.me/StarsDropBot?start=${id}`;
+            const text = "🔥 Открывай кейсы и забирай Stars! По моей ссылке бонус +5 ⭐";
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
         }
 
         // АНИМАЦИЯ ЗВЕЗД
-        const canvas = document.getElementById('stars-canvas');
-        const ctx = canvas.getContext('2d');
+        const starContainer = document.getElementById('stars-canvas');
+        const starCtx = starContainer.getContext('2d');
         let starArray = [];
-        function initStars() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+
+        function setupStarfield() {
+            starContainer.width = window.innerWidth;
+            starContainer.height = window.innerHeight;
             starArray = [];
-            for(let i=0; i<70; i++) starArray.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*2, v: Math.random()*0.5});
-        }
-        function drawStars() {
-            ctx.clearRect(0,0,canvas.width, canvas.height);
-            ctx.fillStyle = "#a3e635";
-            starArray.forEach(s => {
-                ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill();
-                s.y += s.v; if(s.y > canvas.height) s.y = 0;
-            });
-            requestAnimationFrame(drawStars);
+            for(let i = 0; i < 70; i++) {
+                starArray.push({
+                    x: Math.random() * starContainer.width,
+                    y: Math.random() * starContainer.height,
+                    s: Math.random() * 2.5,
+                    v: Math.random() * 0.4 + 0.1,
+                    a: Math.random()
+                });
+            }
         }
 
-        window.onload = () => {
+        function animateStarfield() {
+            starCtx.clearRect(0, 0, starContainer.width, starContainer.height);
+            starCtx.fillStyle = "#a3e635";
+            starArray.forEach(dot => {
+                starCtx.globalAlpha = dot.a;
+                starCtx.beginPath();
+                starCtx.arc(dot.x, dot.y, dot.s, 0, Math.PI * 2);
+                starCtx.fill();
+                dot.y += dot.v;
+                if(dot.y > starContainer.height) dot.y = -10;
+            });
+            requestAnimationFrame(animateStarfield);
+        }
+
+        window.onload = function() {
             const u = tg.initDataUnsafe?.user;
-            if(u) {
+            if (u) {
                 document.getElementById('user-name').innerText = (u.username || u.first_name).toUpperCase();
                 document.getElementById('user-id').innerText = `ID: ${u.id}`;
-                document.getElementById('user-avatar').src = u.photo_url || `https://ui-avatars.com/api/?name=${u.first_name}`;
+                document.getElementById('user-avatar').src = u.photo_url || `https://ui-avatars.com/api/?name=${u.first_name}&background=166534&color=fff&size=128`;
             }
-            initStars();
-            drawStars();
+            setupStarfield();
+            animateStarfield();
             renderInfiniteInventory();
             refreshFinancialStatus();
             tg.expand();
+            tg.ready();
         };
-        window.onresize = initStars;
+
+        window.onresize = setupStarfield;
     </script>
 </body>
 </html>
