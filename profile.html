@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Profile - StarsDrop Green</title>
+    <title>Profile - StarsDrop Premium</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -11,59 +11,61 @@
         :root { --accent-green: #a3e635; --bg-dark: #0a1205; }
         body { background: var(--bg-dark); color: white; font-family: 'Inter', sans-serif; margin: 0; padding-bottom: 120px; }
         .glass-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(163, 230, 53, 0.1); backdrop-filter: blur(15px); border-radius: 24px; }
-        .inventory-slot { aspect-ratio: 1/1; background: rgba(163, 230, 53, 0.05); border: 1px dashed rgba(163, 230, 53, 0.2); border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+        .inventory-slot { aspect-ratio: 1/1; background: rgba(163, 230, 53, 0.05); border: 1px dashed rgba(163, 230, 53, 0.2); border-radius: 16px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .active-item { border: 1px solid var(--accent-green); background: rgba(163, 230, 53, 0.1); box-shadow: 0 0 15px rgba(163, 230, 53, 0.1); }
         .btn-green { background: var(--accent-green); color: black; font-weight: 900; border-radius: 14px; transition: 0.2s; }
         .btn-green:active { transform: scale(0.95); }
-        .status-badge { font-size: 10px; padding: 2px 10px; border-radius: 20px; text-transform: uppercase; font-weight: 900; }
+        .status-badge { font-size: 10px; padding: 2px 12px; border-radius: 20px; text-transform: uppercase; font-weight: 900; letter-spacing: 1px; }
     </style>
 </head>
 <body>
     <div class="p-6">
-        <button onclick="location.href='index.html'" class="mb-6 bg-white/5 p-3 rounded-xl border border-white/10">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
+        <button onclick="location.href='index.html'" class="mb-6 bg-white/5 p-3 rounded-xl border border-white/10 active:scale-90 transition">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
         </button>
 
         <div class="flex flex-col items-center mb-8">
             <div class="relative">
-                <img id="user-avatar" src="" class="w-24 h-24 rounded-full border-2 border-green-500 mb-4 object-cover">
-                <div id="donate-status" class="absolute -bottom-2 left-1/2 -translate-x-1/2 status-badge bg-gray-600 text-white/50">GUEST</div>
+                <img id="user-avatar" src="" class="w-24 h-24 rounded-full border-2 border-green-500 mb-4 object-cover shadow-[0_0_20px_rgba(163,230,53,0.3)]">
+                <div id="donate-status" class="absolute -bottom-2 left-1/2 -translate-x-1/2 status-badge bg-gray-600 text-white">GUEST</div>
             </div>
-            <h2 id="user-name" class="text-2xl font-black italic uppercase mt-4">ЗАГРУЗКА...</h2>
-            <div id="stars-display" class="mt-2 text-yellow-400 font-black text-xl">⭐ 0</div>
+            <h2 id="user-name" class="text-2xl font-black italic uppercase mt-4 tracking-tighter">ЗАГРУЗКА...</h2>
+            <div id="stars-display" class="mt-1 text-yellow-400 font-black text-xl italic">⭐ 0</div>
         </div>
 
-        <div class="glass-card p-5 mb-6">
-            <h3 class="text-[10px] font-black uppercase text-green-400 mb-3 tracking-widest text-center">Активация бонусов</h3>
+        <div class="glass-card p-4 mb-6">
             <div class="flex gap-2">
-                <input id="promo-input" type="text" placeholder="КОД..." class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-500 transition-all">
-                <button onclick="activatePromo()" class="btn-green px-6 text-sm">OK</button>
+                <input id="promo-input" type="text" placeholder="ПРОМОКОД" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-500">
+                <button onclick="activatePromo()" class="btn-green px-6 uppercase text-xs">OK</button>
             </div>
         </div>
 
         <div class="glass-card p-5">
-            <div class="flex justify-between items-center mb-4 px-1">
-                <h3 class="text-[10px] font-black uppercase text-green-400 tracking-widest">Инвентарь</h3>
-                <span id="inv-count" class="text-[10px] font-bold text-white/30 italic">0/6</span>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-[10px] font-black uppercase text-green-400 tracking-[3px]">Inventory</h3>
+                <span id="inv-count" class="text-[10px] font-bold text-white/20 italic">0/6</span>
             </div>
             <div id="inventory-grid" class="grid grid-cols-3 gap-3"></div>
         </div>
     </div>
 
     <div id="item-modal" class="fixed inset-0 bg-black/95 hidden z-[200] items-center justify-center p-8 backdrop-blur-md">
-        <div class="glass-card w-full max-w-xs p-8 text-center border-green-500/40">
-            <img id="modal-img" src="" class="w-28 h-28 mx-auto mb-6 object-contain">
-            <h2 id="modal-title" class="text-2xl font-black uppercase mb-2 italic">ПРЕДМЕТ</h2>
-            <p id="modal-price-info" class="text-green-400 text-xs font-bold mb-8 opacity-80"></p>
+        <div class="glass-card w-full max-w-xs p-8 text-center border-green-500/30">
+            <div class="relative mb-6">
+                <div class="absolute inset-0 bg-green-500/20 blur-3xl rounded-full"></div>
+                <img id="modal-img" src="" class="relative w-28 h-28 mx-auto object-contain">
+            </div>
+            <h2 id="modal-title" class="text-2xl font-black uppercase mb-1 italic">ПРЕДМЕТ</h2>
+            <p id="modal-price-info" class="text-green-400 text-xs font-bold mb-8 tracking-widest opacity-70"></p>
             
             <div class="flex flex-col gap-3">
-                <div id="withdraw-section">
+                <div id="withdraw-section" class="w-full">
                     <button id="withdraw-btn" onclick="sendWithdrawRequest()" class="w-full btn-green py-5 text-sm uppercase tracking-tighter hidden">ВЫВЕСТИ В БОТ</button>
-                    <button id="unlock-btn" onclick="processDonate()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest hidden">Разблокировать вывод (75 ⭐)</button>
+                    <button id="unlock-btn" onclick="processDonate()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl text-[10px] font-black uppercase tracking-[2px] hidden">Разблокировать вывод (75 ⭐)</button>
                 </div>
                 
                 <button id="modal-sell-btn" onclick="handleSell()" class="bg-white/5 py-4 rounded-xl text-xs font-bold border border-white/10">ПРОДАТЬ</button>
-                <button onclick="closeModal()" class="text-white/20 text-[10px] mt-4 uppercase font-black hover:text-white transition">Закрыть</button>
+                <button onclick="closeModal()" class="text-white/20 text-[10px] mt-4 uppercase font-black tracking-widest">Закрыть</button>
             </div>
         </div>
     </div>
@@ -74,17 +76,31 @@
 
         let selectedIndex = null;
         
-        // --- ОБЯЗАТЕЛЬНО ЗАПОЛНИ ЭТО ---
-        const BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'; 
-        const ADMIN_ID = '8015661230';
+        // --- ТВОИ ДАННЫЕ ---
+        const BOT_TOKEN = 'ТВОЙ_ТОКЕН_БОТА'; 
+        const ADMIN_ID = 'ТВОЙ_ID';
 
-        // База данных предметов
+        // ПОЛНАЯ БАЗА ЦЕН
         const ITEMS_DB = {
-            1: { name: "1 May", price: 100 }, 2: { name: "2025", price: 500 },
-            3: { name: "Bear", price: 3500 }, 4: { name: "Book", price: 1000 },
-            7: { name: "Jack Box", price: 600 }, 8: { name: "Car", price: 5000 },
-            23: { name: "Rich Dog", price: 500 }, 44: { name: "Atomic Cat", price: 10000 },
-            65: { name: "Golden Star", price: 15 }, 27: { name: "Lava Lips", price: 5000 }
+            1: { name: "1 May", price: 100 }, 2: { name: "2025", price: 500 }, 3: { name: "Bear", price: 3500 },
+            4: { name: "Book", price: 1000 }, 5: { name: "Berry Box", price: 700 }, 6: { name: "Boot", price: 400 },
+            7: { name: "Jack Box", price: 600 }, 8: { name: "Car", price: 5000 }, 9: { name: "Rocket", price: 50 },
+            16: { name: "Star Ring", price: 3000 }, 17: { name: "Gingerbread", price: 500 }, 18: { name: "Suitcase", price: 5000 },
+            19: { name: "Cigar", price: 3000 }, 20: { name: "Blue Ring", price: 2500 }, 21: { name: "Costume", price: 10000 },
+            22: { name: "Flower", price: 1000 }, 23: { name: "Rich Dog", price: 500 }, 24: { name: "Perfume", price: 10000 },
+            25: { name: "Lantern", price: 100 }, 26: { name: "Coffin", price: 5000 }, 27: { name: "Lava Lips", price: 5000 },
+            28: { name: "B-Day Cake", price: 200 }, 29: { name: "Heart Lock", price: 2000 }, 30: { name: "Spartan", price: 25000 },
+            39: { name: "Calendar", price: 400 }, 40: { name: "Red Cap", price: 100000 }, 41: { name: "Brick", price: 10000 },
+            42: { name: "Cocktail", price: 150 }, 43: { name: "Green Mix", price: 500 }, 44: { name: "Atomic Cat", price: 10000 },
+            45: { name: "Cauldron", price: 500 }, 46: { name: "Bow Tie", price: 600 }, 47: { name: "Lollipop", price: 500 },
+            48: { name: "Clover", price: 500 }, 49: { name: "Muffin", price: 700 }, 50: { name: "Lightsaber", price: 700 },
+            51: { name: "SD Token", price: 600 }, 53: { name: "Sneakers", price: 10000 }, 54: { name: "Glasses", price: 30000 },
+            55: { name: "Eagle", price: 5000 }, 56: { name: "Dove Post", price: 150 }, 57: { name: "Easter Cake", price: 75 },
+            58: { name: "Rocket", price: 500 }, 59: { name: "Rose", price: 2000 }, 60: { name: "Backpack", price: 500 },
+            61: { name: "Santa Hat", price: 500 }, 62: { name: "Crystal Ball", price: 1000 }, 63: { name: "Helmet Biker", price: 3500 },
+            64: { name: "Pacifier", price: 3000 }, 65: { name: "Golden Star", price: 15 }, 66: { name: "Statue", price: 41000 },
+            69: { name: "Wreath", price: 500 }, 70: { name: "Spotted Egg", price: 600 }, 71: { name: "Green Slime", price: 700 },
+            72: { name: "Snake", price: 500 }
         };
 
         function loadProfile() {
@@ -98,7 +114,7 @@
             const statusBadge = document.getElementById('donate-status');
             if (isDonator) {
                 statusBadge.innerText = "PREMIUM";
-                statusBadge.className = "absolute -bottom-2 left-1/2 -translate-x-1/2 status-badge bg-green-500 text-black";
+                statusBadge.className = "absolute -bottom-2 left-1/2 -translate-x-1/2 status-badge bg-green-500 text-black shadow-[0_0_10px_#a3e635]";
             }
             
             const grid = document.getElementById('inventory-grid');
@@ -111,7 +127,7 @@
                     slot.innerHTML = `<img src="${items[i].img}" class="w-14 h-14 object-contain">`;
                     slot.onclick = () => openItem(i, items[i]);
                 } else {
-                    slot.innerHTML = `<span class="text-[8px] text-white/5 font-black uppercase tracking-widest">Пусто</span>`;
+                    slot.innerHTML = `<span class="text-[8px] text-white/5 font-black uppercase">Empty</span>`;
                 }
                 grid.appendChild(slot);
             }
@@ -119,12 +135,13 @@
 
         function openItem(index, item) {
             selectedIndex = index;
+            // Теперь берем строго из ITEMS_DB по ID
             const data = ITEMS_DB[item.id] || { name: item.name, price: 1 };
             const isDonator = localStorage.getItem('has_donated') === 'true';
 
             document.getElementById('modal-img').src = item.img;
             document.getElementById('modal-title').innerText = data.name;
-            document.getElementById('modal-price-info').innerText = `ОЦЕНКА: ${data.price} ЗВЕЗД`;
+            document.getElementById('modal-price-info').innerText = `WORTH: ${data.price} STARS`;
             document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${data.price} ⭐`;
 
             const withdrawBtn = document.getElementById('withdraw-btn');
@@ -141,11 +158,11 @@
         }
 
         function processDonate() {
-            tg.showConfirm("Разблокировать вывод навсегда за 75 ⭐?", (ok) => {
+            tg.showConfirm("Вы подтверждаете оплату 75 ⭐ для разблокировки вывода?", (ok) => {
                 if(ok) {
-                    // Симуляция успешной оплаты
+                    // Здесь в будущем будет вызов платежки: tg.openInvoice(link)
                     localStorage.setItem('has_donated', 'true');
-                    tg.showAlert("✅ ВЫВОД РАЗБЛОКИРОВАН!");
+                    tg.showAlert("✅ ПЛАТЕЖ ПРИНЯТ! ВЫВОД РАЗБЛОКИРОВАН.");
                     loadProfile();
                     closeModal();
                 }
@@ -156,7 +173,6 @@
             const items = JSON.parse(localStorage.getItem('user_inventory')) || [];
             const item = items[selectedIndex];
             const user = tg.initDataUnsafe?.user || { id: 'unknown', first_name: 'Player' };
-
             const text = `🚨 <b>ЗАЯВКА НА ВЫВОД</b>\n\n👤 Игрок: <b>${user.first_name}</b>\n🆔 ID: <code>${user.id}</code>\n🔗 Юзер: @${user.username || 'нет'}\n\n🎁 Предмет: <b>${item.name}</b>`;
 
             try {
@@ -165,17 +181,14 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ chat_id: ADMIN_ID, text: text, parse_mode: 'HTML' })
                 });
-
                 if(res.ok) {
                     items.splice(selectedIndex, 1);
                     localStorage.setItem('user_inventory', JSON.stringify(items));
                     closeModal();
                     loadProfile();
-                    tg.showAlert("✅ Заявка отправлена администратору!");
+                    tg.showAlert("✅ Заявка отправлена! Жди сообщения.");
                 }
-            } catch (e) {
-                tg.showAlert("Ошибка отправки заявки.");
-            }
+            } catch (e) { tg.showAlert("Ошибка API"); }
         }
 
         function handleSell() {
@@ -196,7 +209,6 @@
         function activatePromo() {
             const input = document.getElementById('promo-input');
             const code = input.value.trim().toUpperCase();
-            
             if (code === 'START') {
                 let used = JSON.parse(localStorage.getItem('used_promos')) || [];
                 if(used.includes('START')) return tg.showAlert("Уже использован!");
@@ -206,9 +218,7 @@
                 localStorage.setItem('used_promos', JSON.stringify(used));
                 tg.showAlert("Успех! +500 ⭐");
                 loadProfile();
-            } else {
-                tg.showAlert("Код не активен");
-            }
+            } else { tg.showAlert("Код не найден"); }
             input.value = '';
         }
 
@@ -217,7 +227,7 @@
         window.onload = () => {
             const u = tg.initDataUnsafe?.user;
             if(u) {
-                document.getElementById('user-name').innerText = u.first_name.toUpperCase();
+                document.getElementById('user-name').innerText = (u.first_name + ' ' + (u.last_name || '')).trim().toUpperCase();
                 document.getElementById('user-avatar').src = u.photo_url || 'https://ui-avatars.com/api/?name=' + u.first_name;
             }
             loadProfile();
