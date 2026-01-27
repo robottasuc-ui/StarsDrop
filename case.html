@@ -250,9 +250,9 @@
         75: { name: "Golden Watch", img: "chassiki.png", price: 1000000 },
         76: { name: "Golden Ring", img: "kkolso.png", price: 1500000 },
         77: { name: "Nail Bracelet", img: "kkoolsoo.png", price: 3000000 },
-        78: { name: "Precious Peach", img: "sliva.png", price: 5000000 },
+        78: { name: "Precious Peach", img: "sliva.png", price: 4000000 },
         79: { name: "Figurine", img: "statyyetka.png", price: 3500000 },
-        80: { name: "Figurine of Durov", img: "statyya.jpg", price: 50000000 },
+        80: { name: "Figurine of Durov", img: "statyya.jpg", price: 2000000 },
     };
 
 const CASES = [
@@ -271,7 +271,7 @@ const CASES = [
         // ВОТ ТУТ БЫЛА ОШИБКА (добавлена запятая перед [4, 10])
         { name: "Лимонный", stars: 500, ton: 15, img: "case9.png", loot: [[74, 20], [75, 20], [76, 20], [77, 20], [78, 20]] }, 
 
-        { name: "Рекламный", stars: 100, ton: 15, img: "chemodan.jpg", loot: [[80, 20], [79, 20], [78, 20], [77, 20], [76, 20]] }, 
+        { name: "Кейс Дурова", stars: 100, ton: 15, img: "chemodan.jpg", loot: [[80, 20], [79, 20], [78, 20], [77, 20], [76, 20]] }, 
     ];
 
     async function syncBalance() {
@@ -292,10 +292,14 @@ const CASES = [
         updateUI();
     }
 
-    function updateUI() {
-        document.getElementById('header-stars').innerText = Math.floor(balance.stars).toLocaleString();
-        document.getElementById('header-ton').innerText = balance.ton.toFixed(2);
-    }
+function updateUI() {
+    // Форматируем число, заменяя пробелы на точки
+    const formattedStars = Math.floor(balance.stars).toLocaleString('ru-RU').replace(/\s/g, '.');
+    document.getElementById('header-stars').innerText = formattedStars;
+    
+    document.getElementById('header-ton').innerText = balance.ton.toFixed(2);
+}
+
 
     function render() {
         document.getElementById('main-grid').innerHTML = CASES.map((c, i) => `
@@ -403,7 +407,7 @@ const CASES = [
         }, 100);
     }
 
-    function showWin(winners) {
+function showWin(winners) {
         currentWinners = winners;
         document.getElementById('view-roulette').style.display = 'none';
         document.getElementById('view-win').style.display = 'flex';
@@ -419,7 +423,9 @@ const CASES = [
             </div>`;
         }).join('');
 
-        document.getElementById('sell-price').innerText = totalSellPrice.toLocaleString();
+        // Форматируем общую цену: разделяем разряды и меняем пробелы на точки
+        const formattedPrice = totalSellPrice.toLocaleString('ru-RU').replace(/\s/g, '.');
+        document.getElementById('sell-price').innerText = formattedPrice;
         
         document.getElementById('sell-btn').onclick = () => {
             balance.stars += totalSellPrice;
