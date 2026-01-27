@@ -232,6 +232,26 @@
                     </div>
                 </div>
 
+                <div onclick="navigateTo('update.html')" class="btn-base btn-upgrade shadow-xl">
+    <img src="helmet.png" class="w-8 h-8 object-contain">
+    <div class="flex flex-col">
+        <span class="font-black uppercase tracking-widest text-sm text-white">Апгрейд</span>
+        <span class="text-[10px] text-orange-400 font-bold italic uppercase">Улучши свои шансы</span>
+    </div>
+    <div class="ml-auto">
+        <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+        </svg>
+    </div>
+</div>
+
+<style>
+    .btn-upgrade { 
+        background: linear-gradient(135deg, #431407 0%, #000000 100%); 
+        border-left: 5px solid #92400e; 
+    }
+</style>
+
                 <div onclick="navigateTo('games.html')" class="btn-base btn-games shadow-xl">
                     <img src="mini.png" class="w-8 h-8">
                     <div class="flex flex-col">
@@ -329,7 +349,6 @@
 
         async function syncData() {
             if (!user) return;
-            // ПОЛУЧАЕМ ФЕЙКОВЫЕ ЗВЕЗДЫ ИЗ КЕЙСОВ
             const fakeStars = parseInt(localStorage.getItem('fake_stars') || '0');
             
             try {
@@ -337,20 +356,18 @@
                 if (!res.ok) throw new Error();
                 const data = await res.json();
                 
-                // СКЛАДЫВАЕМ БАЛАНС СЕРВЕРА И ЗВЕЗДЫ ОТ ПРОДАЖИ
                 const finalStars = data.stars + fakeStars;
                 const finalTon = data.balance.toFixed(2);
 
                 document.getElementById('bal-ton').innerText = finalTon;
-                document.getElementById('bal-stars').innerText = Math.floor(finalStars).toLocaleString();
+                document.getElementById('bal-stars').innerText = finalStars;
 
                 localStorage.setItem('user_stars', finalStars);
                 localStorage.setItem('user_ton', finalTon);
 
             } catch (e) {
-                // Если нет интернета, показываем локально сохраненное
-                const savedStars = parseInt(localStorage.getItem('user_stars') || '0');
-                document.getElementById('bal-stars').innerText = Math.floor(savedStars).toLocaleString();
+                const localStars = localStorage.getItem('user_stars') || fakeStars;
+                document.getElementById('bal-stars').innerText = localStars;
             }
         }
 
@@ -445,12 +462,7 @@
                 if(loader) loader.style.opacity = '0';
                 setTimeout(() => { loader.style.display = 'none'; }, 500);
             }, 800); 
-            // ОБНОВЛЯЕМ БАЛАНС ПРИ ЗАГРУЗКЕ
-            syncData();
         };
-
-        // ТАКЖЕ ОБНОВЛЯЕМ ПРИ ВОЗВРАТЕ НА ВКЛАДКУ
-        window.onfocus = () => { syncData(); };
     </script>
 </body>
 </html>
