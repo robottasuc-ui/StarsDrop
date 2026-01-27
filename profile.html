@@ -20,7 +20,6 @@
             font-family: 'Inter', sans-serif; 
             margin: 0; 
             overflow-x: hidden; 
-            /* ФИКС: Запрет системных жестов зума */
             touch-action: pan-y;
             -webkit-user-select: none;
             user-select: none;
@@ -120,7 +119,7 @@
                 <span class="text-[10px] font-bold text-gray-500">+10% с депозитов</span>
             </div>
             <div class="ref-box flex items-center justify-between gap-3">
-                <code class="text-[11px] text-green-200 truncate" id="ref-link">t.me/starsdrop_bot?start=12345</code>
+                <code class="text-[11px] text-green-200 truncate" id="ref-link">ЗАГРУЗКА...</code>
                 <button onclick="copyRef()" class="btn-green px-4 py-2 text-[10px]">Копия</button>
             </div>
         </div>
@@ -140,12 +139,12 @@
             <div class="w-24 h-24 bg-green-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
                 <img id="modal-img" src="" class="w-16 h-16 object-contain">
             </div>
-            <h2 class="text-xl font-black uppercase mb-2">Предмет найден!</h2>
+            <h2 id="modal-title" class="text-xl font-black uppercase mb-2">ПРЕДМЕТ</h2>
             <p class="text-gray-400 text-[10px] uppercase mb-8 tracking-widest">Выберите действие ниже</p>
             
             <div class="flex flex-col gap-3">
                 <button onclick="handleWithdraw()" class="w-full btn-green py-4 active:scale-95 shadow-lg shadow-green-500/20">Вывести в бот</button>
-                <button onclick="handleSell()" class="w-full bg-white/5 border border-white/10 py-4 rounded-xl font-bold uppercase text-xs active:scale-95">Продать за 1 ⭐</button>
+                <button id="modal-sell-btn" onclick="handleSell()" class="w-full bg-white/5 border border-white/10 py-4 rounded-xl font-bold uppercase text-xs active:scale-95">Продать за ... ⭐</button>
                 <button onclick="closeModal()" class="w-full py-2 text-gray-500 text-[10px] font-black uppercase mt-2 tracking-widest">Отмена</button>
             </div>
         </div>
@@ -153,8 +152,8 @@
 
     <div class="dock-bar">
         <div onclick="window.location.href='index.html'" class="dock-btn">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-            <span>Депозит</span>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5a2 2 0 10-2 2h2z"></path></svg>
+            <span>Бонус</span>
         </div>
         <div onclick="window.location.href='index.html'" class="dock-btn">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
@@ -170,15 +169,40 @@
     const tg = window.Telegram.WebApp;
     let selectedIndex = null;
 
-    // Данные для продажи (чтобы знать цены)
+    // ПОЛНАЯ БАЗА ЦЕН ИЗ WHEEL.HTML ДЛЯ ПРОДАЖИ
     const GLOBAL_ITEMS = {
-        1: { price: 15 }, 2: { price: 500 }, 4: { price: 12500 },
-        5: { price: 3500 }, 6: { price: 550 }, 9: { price: 400 }
+        1: { name: "1 May", price: 100 }, 2: { name: "2025", price: 500 },
+        3: { name: "Bear", price: 3500 }, 4: { name: "Book", price: 1000 },
+        5: { name: "Berry Box", price: 700 }, 6: { name: "Boot", price: 400 },
+        7: { name: "Jack Box", price: 600 }, 8: { name: "Car", price: 5000 },
+        9: { name: "Rocket", price: 50 }, 16: { name: "Star Ring", price: 3000 },
+        17: { name: "Gingerbread", price: 500 }, 18: { name: "Suitcase", price: 5000 },
+        19: { name: "Cigar", price: 3000 }, 20: { name: "Blue Ring", price: 2500 },
+        21: { name: "Costume", price: 10000 }, 22: { name: "Flower", price: 1000 },
+        23: { name: "Rich Dog", price: 500 }, 24: { name: "Perfume", price: 10000 },
+        25: { name: "Lantern", price: 100 }, 26: { name: "Coffin", price: 5000 },
+        27: { name: "Lava Lips", price: 5000 }, 28: { name: "B-Day Cake", price: 200 },
+        29: { name: "Heart Lock", price: 2000 }, 30: { name: "Spartan", price: 25000 },
+        39: { name: "Calendar", price: 400 }, 40: { name: "Red Cap", price: 100000 },
+        41: { name: "Brick", price: 10000 }, 42: { name: "Cocktail", price: 150 },
+        43: { name: "Green Mix", price: 500 }, 44: { name: "Atomic Cat", price: 10000 },
+        45: { name: "Cauldron", price: 500 }, 46: { name: "Bow Tie", price: 600 },
+        47: { name: "Lollipop", price: 500 }, 48: { name: "Clover", price: 500 },
+        49: { name: "Muffin", price: 700 }, 50: { name: "Lightsaber", price: 700 },
+        51: { name: "SD Token", price: 600 }, 53: { name: "Sneakers", price: 10000 },
+        54: { name: "Glasses", price: 30000 }, 55: { name: "Eagle", price: 5000 },
+        56: { name: "Dove Post", price: 150 }, 57: { name: "Easter Cake", price: 75 },
+        59: { name: "Rose", price: 2000 }, 60: { name: "Backpack", price: 500 },
+        61: { name: "Santa Hat", price: 500 }, 62: { name: "Crystal Ball", price: 1000 },
+        63: { name: "Helmet Biker", price: 3500 }, 64: { name: "Pacifier", price: 3000 },
+        65: { name: "Golden Star", price: 15 }, 66: { name: "Statue", price: 41000 },
+        69: { name: "Wreath", price: 500 }, 70: { name: "Spotted Egg", price: 600 },
+        71: { name: "Green Slime", price: 700 }, 72: { name: "Snake", price: 500 },
+        73: { name: "Ring", price: 100 }
     };
 
     function loadInventory() {
         const grid = document.getElementById('inventory-grid');
-        // Читаем то, что сохранили в кейсах
         const items = JSON.parse(localStorage.getItem('user_inventory')) || [];
         grid.innerHTML = '';
         document.getElementById('item-count').innerText = `${items.length} / 6`;
@@ -192,9 +216,9 @@
                 slot.onclick = () => {
                     selectedIndex = i;
                     document.getElementById('modal-img').src = items[i].img;
-                    // Показываем цену продажи
+                    document.getElementById('modal-title').innerText = items[i].name;
                     const price = GLOBAL_ITEMS[items[i].id]?.price || 1;
-                    document.querySelector('#item-modal button[onclick="handleSell"]').innerText = `Продать за ${price} ⭐`;
+                    document.getElementById('modal-sell-btn').innerText = `Продать за ${price} ⭐`;
                     document.getElementById('item-modal').style.display = 'flex';
                 };
             } else {
@@ -209,7 +233,11 @@
         const item = items[selectedIndex];
         const price = GLOBAL_ITEMS[item.id]?.price || 1;
 
-        // Отправляем запрос на сервер, чтобы РЕАЛЬНО добавить звезды
+        // Обновляем локальный баланс
+        let currentStars = parseInt(localStorage.getItem('user_stars')) || 0;
+        localStorage.setItem('user_stars', (currentStars + price).toString());
+
+        // Запрос к API
         if (tg.initDataUnsafe?.user) {
             try {
                 await fetch('https://stars-drop.vercel.app/api/update_balance', {
@@ -220,7 +248,7 @@
                         stars: price
                     })
                 });
-            } catch(e) {}
+            } catch(e) { console.error("Ошибка API:", e); }
         }
 
         items.splice(selectedIndex, 1);
@@ -230,15 +258,29 @@
         tg.HapticFeedback.notificationOccurred('success');
     }
 
+    function handleWithdraw() {
+        tg.showAlert("Для вывода предмета напишите в поддержку бота с вашим ID.");
+    }
+
+    function copyRef() {
+        const link = document.getElementById('ref-link').innerText;
+        navigator.clipboard.writeText(link);
+        tg.HapticFeedback.impactOccurred('medium');
+        tg.showPopup({ message: "Ссылка скопирована!" });
+    }
+
     function closeModal() { document.getElementById('item-modal').style.display = 'none'; }
     
-    // Инициализация при загрузке
     window.onload = () => {
         if (tg.initDataUnsafe?.user) {
             const u = tg.initDataUnsafe.user;
             document.getElementById('user-name').innerText = (u.username || u.first_name).toUpperCase();
             document.getElementById('user-id').innerText = `ID: ${u.id}`;
             document.getElementById('user-avatar').src = u.photo_url || `https://ui-avatars.com/api/?name=${u.first_name}`;
+            document.getElementById('ref-link').innerText = `t.me/starsdrop_bot?start=${u.id}`;
+        } else {
+            document.getElementById('user-name').innerText = "GUEST USER";
+            document.getElementById('ref-link').innerText = `t.me/starsdrop_bot?start=12345`;
         }
         loadInventory();
     };
