@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>StarsDrop - Profile Premium</title>
+    <title>StarsDrop - Ultimate Profile</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -94,6 +94,16 @@
             font-weight: 700;
         }
         input:focus { border-color: var(--accent-green); }
+
+        .stat-badge {
+            background: rgba(255,255,255,0.05);
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 800;
+            color: #a3e635;
+            border: 1px solid rgba(163, 230, 53, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -106,23 +116,26 @@
                 <div class="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-4 border-[#0a1205] rounded-full"></div>
             </div>
             <h2 id="user-name" class="text-3xl font-black uppercase italic mt-4 tracking-tighter">ЗАГРУЗКА...</h2>
-            <div id="user-id" class="text-[10px] bg-green-500/20 text-green-400 px-4 py-1.5 rounded-full font-bold uppercase mt-2 tracking-widest">ID: 000000</div>
+            <div class="flex gap-2 mt-2">
+                <div id="user-id" class="stat-badge">ID: 000000</div>
+                <div id="stars-display" class="stat-badge text-yellow-400">⭐ 0</div>
+            </div>
         </div>
 
         <div class="glass-card p-6 mb-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-[10px] font-black uppercase text-green-400 tracking-[0.2em]">Реферальная система</h3>
-                <span id="ref-count" class="text-xs font-bold text-white">0 пригл.</span>
+                <span id="ref-count" class="text-xs font-bold text-white">0 ПРИГЛ.</span>
             </div>
-            <p class="text-[10px] text-gray-400 mb-4">Получай 5 ⭐ за каждого друга!</p>
-            <button onclick="shareReferral()" class="w-full btn-green py-3 text-xs">Пригласить друга</button>
+            <p class="text-[10px] text-gray-400 mb-4 uppercase font-bold tracking-tighter">Получай 50 ⭐ за каждого приглашенного друга!</p>
+            <button onclick="shareReferral()" class="w-full btn-green py-4 text-xs tracking-widest">Пригласить друга</button>
         </div>
 
         <div class="glass-card p-6 mb-6">
             <h3 class="text-[10px] font-black uppercase text-green-400 mb-4 tracking-[0.2em]">Промокод</h3>
             <div class="flex gap-3">
-                <input type="text" id="promo-input" class="flex-1 text-sm uppercase" placeholder="    Введите код">
-                <button onclick="applyPromo()" class="btn-green px-6 py-3 text-xs">ОК</button>
+                <input type="text" id="promo-input" class="flex-1 text-sm uppercase" placeholder="ВВЕДИТЕ КОД...">
+                <button onclick="applyPromo()" class="btn-green px-8 py-4 text-xs">ОК</button>
             </div>
         </div>
 
@@ -145,7 +158,7 @@
             
             <div class="flex flex-col gap-4">
                 <button onclick="handleWithdraw()" class="w-full btn-green py-5 shadow-lg shadow-green-500/20 text-sm">ВЫВЕСТИ В БОТ</button>
-                <button id="sell-btn" onclick="handleSell()" class="w-full bg-white/5 border border-white/10 py-5 rounded-2xl font-black uppercase text-[11px] tracking-wider active:bg-white/10 transition-all">ПРОДАТЬ ЗА ...</button>
+                <button id="sell-btn" onclick="handleSell()" class="w-full bg-white/5 border border-white/10 py-5 rounded-2xl font-black uppercase text-[11px] tracking-wider active:bg-white/10 transition-all">ПРОДАТЬ</button>
                 <button onclick="closeModal()" class="w-full py-2 text-gray-600 text-[10px] font-black uppercase mt-2 tracking-widest">ОТМЕНА</button>
             </div>
         </div>
@@ -153,7 +166,7 @@
 
     <div class="dock-bar">
         <div onclick="buyStars(100)" class="dock-btn">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z"/><path stroke-width="2" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/></svg>
             <span>Депозит</span>
         </div>
         <div onclick="location.href='index.html'" class="dock-btn">
@@ -169,9 +182,9 @@
     <script>
         const tg = window.Telegram.WebApp;
         let selectedIdx = null;
-        // Проверка флага оплаты в памяти браузера
         let isPaid75 = localStorage.getItem('isPaid75') === 'true';
 
+        // ПОЛНАЯ БАЗА ЦЕН (БЕЗ УДАЛЕНИЙ)
         const PRICE_DB = {
             "1may.jpg": { n: "1 May", p: 100 }, "2025.jpg": { n: "2025", p: 500 },
             "bear.png": { n: "Bear", p: 3500 }, "book.jpg": { n: "Book", p: 1000 },
@@ -203,6 +216,11 @@
             "kolechko.png": { n: "Ring", p: 100 }
         };
 
+        function updateBalanceUI() {
+            const stars = localStorage.getItem('user_stars') || "0";
+            document.getElementById('stars-display').innerText = `⭐ ${stars}`;
+        }
+
         function loadInventory() {
             const grid = document.getElementById('inventory-grid');
             const items = JSON.parse(localStorage.getItem('user_inventory')) || [];
@@ -215,15 +233,7 @@
                 if (items[i]) {
                     slot.classList.add('active-item');
                     slot.innerHTML = `<img src="${items[i].img}" class="w-12 h-12 object-contain">`;
-                    slot.onclick = () => {
-                        selectedIdx = i;
-                        const fName = items[i].img.split('/').pop().toLowerCase();
-                        const data = PRICE_DB[fName] || { n: items[i].name || "Item", p: items[i].price || 0 };
-                        document.getElementById('modal-img').src = items[i].img;
-                        document.getElementById('modal-title').innerText = data.n.toUpperCase();
-                        document.getElementById('sell-btn').innerText = `ПРОДАТЬ ЗА ${data.p} ⭐`;
-                        document.getElementById('item-modal').style.display = 'flex';
-                    };
+                    slot.onclick = () => openItem(i, items[i]);
                 } else {
                     slot.innerHTML = `<span class="text-[8px] text-green-900 font-black">EMPTY</span>`;
                 }
@@ -231,77 +241,44 @@
             }
         }
 
-        function buyStars(amount) {
-            tg.showConfirm(`Вы хотите пополнить баланс на ${amount} Stars?`, (ok) => {
-                if(ok) {
-                    fetch('https://stars-drop.vercel.app/api/create_invoice', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ user_id: tg.initDataUnsafe.user.id, amount: amount })
-                    })
-                    .then(r => r.json())
-                    .then(data => {
-                        if(data.invoice_url) tg.openInvoice(data.invoice_url);
-                    });
-                }
-            });
+        function openItem(index, item) {
+            selectedIdx = index;
+            const fileName = item.img.split('/').pop().toLowerCase();
+            const data = PRICE_DB[fileName] || { n: item.name || "Item", p: 1 };
+            
+            document.getElementById('modal-img').src = item.img;
+            document.getElementById('modal-title').innerText = data.n.toUpperCase();
+            document.getElementById('sell-btn').innerText = `ПРОДАТЬ ЗА ${data.p} ⭐`;
+            document.getElementById('item-modal').style.display = 'flex';
         }
 
-        function shareReferral() {
-            const userId = tg.initDataUnsafe?.user?.id;
-            const refLink = `https://t.me/StarsDropBot?start=${userId}`; 
-            const text = "Заходи в StarsDrop, открывай кейсы и получай подарки!";
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(text)}`);
-        }
-
-        function applyPromo() {
-            const val = document.getElementById('promo-input').value.trim().toUpperCase();
-            if(!val) return;
-            const PROMO_LIST = { "START2026": 50, "GIFT5": 5, "FREEWEB": 10 };
-            if (PROMO_LIST[val]) {
-                const reward = PROMO_LIST[val];
-                tg.showPopup({ title: "Успех!", message: `Промокод активирован! Вам начислено ${reward} ⭐`, buttons: [{type: "ok"}] });
-                fetch('https://stars-drop.vercel.app/api/update_balance', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: tg.initDataUnsafe?.user?.id, stars: reward, type: 'promo' })
-                });
-            } else {
-                tg.showAlert("Такого промокода не существует.");
-            }
-            document.getElementById('promo-input').value = '';
-        }
-
-        async function handleSell() {
+        function handleSell() {
             let items = JSON.parse(localStorage.getItem('user_inventory')) || [];
             const item = items[selectedIdx];
-            if (!item) return;
-            const fName = item.img.split('/').pop().toLowerCase();
-            const price = PRICE_DB[fName]?.p || 0;
-            if (tg.initDataUnsafe?.user) {
-                try {
-                    await fetch('https://stars-drop.vercel.app/api/update_balance', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ user_id: tg.initDataUnsafe.user.id, stars: price })
-                    });
-                } catch(e) { console.error("Balance update failed"); }
-            }
+            const fileName = item.img.split('/').pop().toLowerCase();
+            const price = PRICE_DB[fileName]?.p || 1;
+
+            let currentStars = parseInt(localStorage.getItem('user_stars')) || 0;
+            localStorage.setItem('user_stars', (currentStars + price).toString());
+
             items.splice(selectedIdx, 1);
             localStorage.setItem('user_inventory', JSON.stringify(items));
+            
             closeModal();
             loadInventory();
+            updateBalanceUI();
+            tg.HapticFeedback.notificationOccurred('success');
         }
 
-        // --- ГЛАВНАЯ ФУНКЦИЯ ВЫВОДА ---
         function handleWithdraw() {
+            // ПРОВЕРКА ЗВЕЗД (ВЕРИФИКАЦИЯ)
             if (!isPaid75) {
-                tg.showConfirm("Для вывода предметов необходимо разово оплатить верификацию аккаунта (75 Stars). Оплатить?", (ok) => {
+                tg.showConfirm("Для вывода предметов нужно разово оплатить комиссию верификации (75 Stars). Перейти к оплате?", (ok) => {
                     if (ok) {
-                        // Эмулируем оплату для теста. В идеале тут вызов tg.openInvoice
+                        // Эмулируем оплату. В продакшене тут вызов инвойса.
                         isPaid75 = true;
                         localStorage.setItem('isPaid75', 'true');
-                        tg.showAlert("Верификация прошла! Теперь нажми 'Вывести' еще раз.");
+                        tg.showAlert("Аккаунт верифицирован! Теперь вы можете выводить любые предметы.");
                     }
                 });
                 return;
@@ -309,52 +286,96 @@
 
             const items = JSON.parse(localStorage.getItem('user_inventory')) || [];
             const item = items[selectedIdx];
-            const user = tg.initDataUnsafe.user || { first_name: "Unknown", id: 0 };
+            const user = tg.initDataUnsafe?.user || { id: 0, first_name: "User" };
 
-            // Сообщение, которое прилетит тебе в бот
-            const dataToBot = {
-                action: "WITHDRAW_REQUEST",
-                user_name: user.username || user.first_name,
-                user_id: user.id,
-                item_name: item.name || "Предмет",
-                item_img: item.img
-            };
+            tg.showConfirm(`Вывести "${item.name || 'Предмет'}"? Администратор получит уведомление.`, (ok) => {
+                if (ok) {
+                    // Отправка данных в ТГ бот
+                    const requestData = {
+                        action: "WITHDRAW_REQUEST",
+                        user_id: user.id,
+                        user_name: user.username || user.first_name,
+                        item: item
+                    };
+                    tg.sendData(JSON.stringify(requestData));
 
-            // Отправляем данные боту (приложение закроется)
-            tg.sendData(JSON.stringify(dataToBot));
+                    // Удаление из инвентаря
+                    items.splice(selectedIdx, 1);
+                    localStorage.setItem('user_inventory', JSON.stringify(items));
+                    closeModal();
+                    loadInventory();
+                }
+            });
+        }
 
-            // Удаляем предмет после отправки
-            items.splice(selectedIdx, 1);
-            localStorage.setItem('user_inventory', JSON.stringify(items));
-            closeModal();
-            loadInventory();
+        function applyPromo() {
+            const val = document.getElementById('promo-input').value.trim().toUpperCase();
+            if (!val) return;
+
+            // Расширенный список промокодов
+            const PROMOS = { "START": 500, "GIFT100": 100, "WEB3": 50, "BONUS": 1000 };
+
+            if (PROMOS[val]) {
+                let currentStars = parseInt(localStorage.getItem('user_stars')) || 0;
+                localStorage.setItem('user_stars', (currentStars + PROMOS[val]).toString());
+                tg.showAlert(`Промокод активирован! +${PROMOS[val]} ⭐`);
+                updateBalanceUI();
+            } else {
+                tg.showAlert("Неверный промокод!");
+            }
+            document.getElementById('promo-input').value = '';
+        }
+
+        function shareReferral() {
+            const uid = tg.initDataUnsafe?.user?.id || 0;
+            const link = `https://t.me/StarsDropBot?start=${uid}`;
+            const text = "Залетай в StarsDrop! Дают халявные звезды при регистрации!";
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
+        }
+
+        function buyStars(amount) {
+            tg.showConfirm(`Вы точно хотите пополнить баланс на ${amount} ⭐?`, (ok) => {
+                if (ok) {
+                    // Имитация депозита
+                    let current = parseInt(localStorage.getItem('user_stars')) || 0;
+                    localStorage.setItem('user_stars', (current + amount).toString());
+                    tg.showAlert("Баланс пополнен!");
+                    updateBalanceUI();
+                }
+            });
         }
 
         function closeModal() { document.getElementById('item-modal').style.display = 'none'; }
 
-        // Анимация звезд
+        // АНИМАЦИЯ ЗВЕЗД
         const canvas = document.getElementById('stars-canvas');
-        if (canvas) {
-            const ctx = canvas.getContext('2d');
-            let stars = [];
-            function init() {
-                canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-                stars = Array.from({length: 50}, () => ({
-                    x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-                    s: Math.random() * 2, sp: Math.random() * 0.4 + 0.1, o: Math.random()
-                }));
-            }
-            function draw() {
-                ctx.clearRect(0,0,canvas.width, canvas.height);
-                stars.forEach(s => {
-                    ctx.beginPath(); ctx.globalAlpha = s.o; ctx.fillStyle = "#a3e635";
-                    ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill();
-                    s.y += s.sp; if(s.y > canvas.height) s.y = -5;
-                });
-                requestAnimationFrame(draw);
-            }
-            window.addEventListener('resize', init);
-            init(); draw();
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+
+        function initStars() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            stars = Array.from({length: 60}, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                s: Math.random() * 2,
+                sp: Math.random() * 0.4 + 0.1,
+                o: Math.random()
+            }));
+        }
+
+        function drawStars() {
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+            stars.forEach(s => {
+                ctx.beginPath();
+                ctx.globalAlpha = s.o;
+                ctx.fillStyle = "#a3e635";
+                ctx.arc(s.x, s.y, s.s, 0, Math.PI*2);
+                ctx.fill();
+                s.y += s.sp;
+                if(s.y > canvas.height) s.y = -5;
+            });
+            requestAnimationFrame(drawStars);
         }
 
         window.onload = () => {
@@ -364,9 +385,14 @@
                 document.getElementById('user-id').innerText = `ID: ${u.id}`;
                 document.getElementById('user-avatar').src = u.photo_url || `https://ui-avatars.com/api/?name=${u.first_name}&background=166534&color=fff`;
             }
+            initStars();
+            drawStars();
             loadInventory();
+            updateBalanceUI();
             tg.expand();
         };
+
+        window.addEventListener('resize', initStars);
     </script>
 </body>
 </html>
