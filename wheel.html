@@ -10,7 +10,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         
         :root {
-            --green-primary: #a3e635; /* Тот самый зеленый */
+            --green-primary: #a3e635;
             --green-dark: #166534;
             --bg-dark: #0a1205;
         }
@@ -23,7 +23,6 @@
             margin: 0; 
         }
 
-        /* Динамический зеленый фон как на картинке */
         .bg-glow { 
             position: fixed; 
             inset: 0; 
@@ -61,7 +60,6 @@
             justify-content: center; 
         }
 
-        /* Стилизация ленты рулетки */
         .wheel-outer { 
             position: relative; 
             width: 100%; 
@@ -82,7 +80,6 @@
             box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
         }
 
-        /* Красный указатель заменен на неоново-зеленый */
         .pointer { 
             position: absolute; 
             top: 0; 
@@ -119,7 +116,6 @@
 
         .item img { width: 80px; height: 80px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
 
-        /* Кастомная кнопка с логотипом звезды */
         .btn-main {
             background: var(--green-primary);
             color: black;
@@ -139,7 +135,6 @@
         }
         .star-icon { width: 18px; height: 18px; display: inline-block; vertical-align: middle; }
 
-        /* Модалка выигрыша */
         #win-modal { 
             display: none; 
             position: fixed; 
@@ -171,7 +166,6 @@
             opacity: 0.7;
         }
 
-        /* Эффект мерцания для заголовка */
         .glitch-text {
             text-shadow: 0 0 15px rgba(163, 230, 53, 0.5);
         }
@@ -179,7 +173,6 @@
 </head>
 <body>
     <div class="bg-glow"></div>
-    
     <div class="back-button" onclick="goToMain()">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
             <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"/>
@@ -200,9 +193,9 @@
 
         <div class="w-full px-8 mt-14 text-center">
             <button id="spin-btn" class="w-full btn-main py-6 rounded-3xl text-lg uppercase tracking-widest active:scale-95 disabled:opacity-50 transition-all">
-                ПРОВЕРКА...
+                ЗАГРУЗКА...
             </button>
-            <div id="timer-display" class="status-text">ПОДКЛЮЧЕНИЕ К СЕТИ</div>
+            <div id="timer-display" class="status-text">СИНХРОНИЗАЦИЯ...</div>
         </div>
     </div>
 
@@ -210,7 +203,7 @@
         <div class="modal-content">
             <div class="relative inline-block mb-6">
                 <div class="absolute inset-0 bg-green-500 blur-2xl opacity-30"></div>
-                <img id="won-item-img" src="img/star.png" class="relative w-28 h-28 mx-auto object-contain">
+                <img id="won-item-img" src="" class="relative w-28 h-28 mx-auto object-contain">
             </div>
             
             <h2 class="text-3xl font-black mb-2 uppercase italic tracking-tighter">ВЫИГРЫШ!</h2>
@@ -218,7 +211,7 @@
             
             <div class="flex flex-col gap-4">
                 <button id="sell-btn" class="w-full bg-green-500 text-black py-5 rounded-2xl font-black uppercase text-sm active:scale-95 shadow-lg">
-                    Продать за 1 ⭐
+                    Продать за ...
                 </button>
                 <button id="keep-btn" class="w-full bg-white/5 border border-white/10 py-5 rounded-2xl font-bold uppercase text-xs text-white/70 active:scale-95">
                     В инвентарь
@@ -228,35 +221,46 @@
     </div>
 
     <script>
+        /**
+         * КОНФИГУРАЦИЯ И ПЕРЕМЕННЫЕ
+         */
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Расширяем на весь экран
+        tg.expand();
 
         const wheel = document.getElementById('wheel');
         const spinBtn = document.getElementById('spin-btn');
         const timerDisplay = document.getElementById('timer-display');
         const winModal = document.getElementById('win-modal');
-        
         const SPIN_COST = 100;
-        const itemsList = [
-            { n: 'star.png', name: '1 Звезда' },
-            { n: 'box.png', name: 'Кейс' },
-            { n: 'dog.png', name: 'Собака' },
-            { n: 'kot.png', name: 'Кот' },
-            { n: 'bear.png', name: 'Мишка' },
-            { n: 'gyba.png', name: 'Губа' }
-        ];
 
-        let winningItem = itemsList[0]; 
+        // ПОЛНЫЙ СПИСОК ПРЕДМЕТОВ С ЦЕНАМИ
+        const ITEMS_DB = {
+            1: { name: "1 May", img: "1may.jpg", price: 100 },
+            2: { name: "2025", img: "2025.jpg", price: 500 },
+            3: { name: "Bear", img: "bear.png", price: 3500 },
+            4: { name: "Book", img: "book.jpg", price: 1000 },
+            7: { name: "Jack Box", img: "box.png", price: 600 },
+            8: { name: "Car", img: "car.png", price: 5000 },
+            23: { name: "Rich Dog", img: "dog.png", price: 500 },
+            44: { name: "Atomic Cat", img: "kot.png", price: 10000 },
+            65: { name: "Golden Star", img: "star.png", price: 15 },
+            27: { name: "Lava Lips", img: "gyba.png", price: 5000 }
+        };
+
+        const itemIds = Object.keys(ITEMS_DB);
+        let winningItem = null;
+
+        /**
+         * ФУНКЦИИ ЛОГИКИ
+         */
 
         function goToMain() { window.location.href = 'index.html'; }
 
-        // Обновление состояния кнопки (Бесплатно / 100 звезд)
         function updateStatus() {
             const lastSpin = localStorage.getItem('last_free_spin');
             const now = Date.now();
-            // ИСПРАВЛЕНО: используем ключ user_stars
-            const stars = parseInt(localStorage.getItem('user_stars')) || 0; 
-            const cooldown = 86400000; 
+            const stars = parseInt(localStorage.getItem('user_stars')) || 0;
+            const cooldown = 86400000;
 
             if (!lastSpin || (now - lastSpin) >= cooldown) {
                 spinBtn.innerHTML = "КРУТИТЬ БЕСПЛАТНО";
@@ -269,7 +273,7 @@
                 
                 if (stars < SPIN_COST) {
                     spinBtn.disabled = true;
-                    timerDisplay.innerText = "НЕДОСТАТОЧНО ЗВЕЗД";
+                    timerDisplay.innerText = "НЕДОСТАТОЧНО ЗВЕЗД (" + stars + ")";
                 } else {
                     spinBtn.disabled = false;
                 }
@@ -277,61 +281,46 @@
             }
         }
 
-        // Кнопка продать в модалке
-        document.getElementById('sell-btn').onclick = () => {
-            // ИСПРАВЛЕНО: читаем и пишем в user_stars
-            let s = parseInt(localStorage.getItem('user_stars')) || 0;
-            localStorage.setItem('user_stars', (s + 1).toString()); 
-            
-            tg.HapticFeedback.impactOccurred('medium');
-            goToMain();
-        };
-
-        // В функции клика на SPIN тоже замени списание:
-        // localStorage.setItem('user_stars', (stars - SPIN_COST).toString());
-
-        // Инициализация ленты
         function initWheel() {
+            const winId = itemIds[Math.floor(Math.random() * itemIds.length)];
+            winningItem = { id: winId, ...ITEMS_DB[winId] };
+            
             wheel.innerHTML = '';
             wheel.style.transition = 'none';
             wheel.style.transform = 'translateX(0)';
             
-            // Генерируем длинную ленту для плавного прокрута
             for (let i = 0; i < 90; i++) {
-                let item;
-                if (i === 80) { // 80-й элемент будет выигрышным
-                    item = winningItem;
-                } else {
-                    item = itemsList[Math.floor(Math.random() * itemsList.length)];
-                }
-
+                const id = (i === 80) ? winningItem.id : itemIds[Math.floor(Math.random() * itemIds.length)];
                 const div = document.createElement('div');
                 div.className = 'item';
-                div.innerHTML = `<img src="img/${item.n}" onerror="this.src='img/star.png'">`;
+                div.innerHTML = `<img src="img/${ITEMS_DB[id].img}" onerror="this.src='img/star.png'">`;
                 wheel.appendChild(div);
             }
         }
 
+        /**
+         * ОБРАБОТЧИКИ СОБЫТИЙ
+         */
+
         spinBtn.addEventListener('click', () => {
             const mode = updateStatus();
-            const stars = parseInt(localStorage.getItem('stars_balance')) || 0;
+            const stars = parseInt(localStorage.getItem('user_stars')) || 0;
 
             if (mode === "paid" && stars < SPIN_COST) {
                 tg.HapticFeedback.notificationOccurred('error');
                 return;
             }
 
-            // Списываем баланс или ставим таймер
+            // ИСПРАВЛЕННОЕ СПИСАНИЕ
             if (mode === "paid") {
-                localStorage.setItem('stars_balance', (stars - SPIN_COST).toString());
+                localStorage.setItem('user_stars', (stars - SPIN_COST).toString());
             } else {
                 localStorage.setItem('last_free_spin', Date.now().toString());
             }
 
             spinBtn.disabled = true;
-            tg.HapticFeedback.impactOccurred('heavy');
+            initWheel();
             
-            // Расчет смещения (120px ширина айтема + 16px маржины)
             const itemWidth = 136; 
             const centerOffset = window.innerWidth / 2;
             const finalPosition = (80 * itemWidth) - centerOffset + (itemWidth / 2);
@@ -339,44 +328,42 @@
             wheel.style.transition = 'transform 8s cubic-bezier(0.15, 0, 0.05, 1)';
             wheel.style.transform = `translateX(-${finalPosition}px)`;
 
-            // Звуки или вибрация во время кручения (имитация)
+            // Вибрация при прокрутке
             let clicks = 0;
             const clickInterval = setInterval(() => {
                 clicks++;
-                if (clicks > 40) clearInterval(clickInterval);
+                if (clicks > 45) clearInterval(clickInterval);
                 tg.HapticFeedback.impactOccurred('light');
-            }, 150);
+            }, 140);
 
             setTimeout(() => { 
                 clearInterval(clickInterval);
-                document.getElementById('won-item-img').src = `img/${winningItem.n}`;
+                document.getElementById('won-item-img').src = `img/${winningItem.img}`;
                 document.getElementById('won-item-name').innerText = winningItem.name;
+                document.getElementById('sell-btn').innerText = `ПРОДАТЬ ЗА ${winningItem.price} ⭐`;
                 winModal.style.display = 'flex'; 
                 tg.HapticFeedback.notificationOccurred('success');
             }, 8200);
         });
 
-        // Кнопки в модалке
         document.getElementById('sell-btn').onclick = () => {
-            let s = parseInt(localStorage.getItem('stars_balance')) || 0;
-            localStorage.setItem('stars_balance', (s + 1).toString());
+            let s = parseInt(localStorage.getItem('user_stars')) || 0;
+            localStorage.setItem('user_stars', (s + winningItem.price).toString());
             tg.HapticFeedback.impactOccurred('medium');
             goToMain();
         };
 
         document.getElementById('keep-btn').onclick = () => {
             let inv = JSON.parse(localStorage.getItem('user_inventory')) || [];
-            inv.push({ name: winningItem.name, img: `img/${winningItem.n}` });
+            inv.push({ id: winningItem.id, name: winningItem.name, img: `img/${winningItem.img}` });
             localStorage.setItem('user_inventory', JSON.stringify(inv));
             tg.HapticFeedback.impactOccurred('medium');
             goToMain();
         };
 
-        // Запуск
+        // СТАРТ
         initWheel();
         updateStatus();
-
-        // Адаптация при ресайзе
         window.addEventListener('resize', initWheel);
     </script>
 </body>
