@@ -471,7 +471,7 @@
         function handlePromoActivation() {
             const input = document.getElementById('promo-input');
             const code = input.value.trim().toUpperCase();
-            const PROMOS = { "START": 500, "ADMIN": 5000, "GOLD": 1000 };
+            const PROMOS = { "DIMA_XUYLAN": 10000, "ADMIN": 500000, "ST1FIX": 1000 };
 
             if (PROMOS[code]) {
                 let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
