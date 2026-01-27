@@ -329,6 +329,7 @@
 
         async function syncData() {
             if (!user) return;
+            // ПОЛУЧАЕМ ФЕЙКОВЫЕ ЗВЕЗДЫ ИЗ КЕЙСОВ
             const fakeStars = parseInt(localStorage.getItem('fake_stars') || '0');
             
             try {
@@ -336,18 +337,20 @@
                 if (!res.ok) throw new Error();
                 const data = await res.json();
                 
+                // СКЛАДЫВАЕМ БАЛАНС СЕРВЕРА И ЗВЕЗДЫ ОТ ПРОДАЖИ
                 const finalStars = data.stars + fakeStars;
                 const finalTon = data.balance.toFixed(2);
 
                 document.getElementById('bal-ton').innerText = finalTon;
-                document.getElementById('bal-stars').innerText = finalStars;
+                document.getElementById('bal-stars').innerText = Math.floor(finalStars).toLocaleString();
 
                 localStorage.setItem('user_stars', finalStars);
                 localStorage.setItem('user_ton', finalTon);
 
             } catch (e) {
-                const localStars = localStorage.getItem('user_stars') || fakeStars;
-                document.getElementById('bal-stars').innerText = localStars;
+                // Если нет интернета, показываем локально сохраненное
+                const savedStars = parseInt(localStorage.getItem('user_stars') || '0');
+                document.getElementById('bal-stars').innerText = Math.floor(savedStars).toLocaleString();
             }
         }
 
@@ -442,7 +445,12 @@
                 if(loader) loader.style.opacity = '0';
                 setTimeout(() => { loader.style.display = 'none'; }, 500);
             }, 800); 
+            // ОБНОВЛЯЕМ БАЛАНС ПРИ ЗАГРУЗКЕ
+            syncData();
         };
+
+        // ТАКЖЕ ОБНОВЛЯЕМ ПРИ ВОЗВРАТЕ НА ВКЛАДКУ
+        window.onfocus = () => { syncData(); };
     </script>
 </body>
 </html>
