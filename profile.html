@@ -263,10 +263,6 @@
     </div>
 
     <nav class="dock-bar">
-        <a href="#" onclick="buyStarsAction()" class="dock-btn">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/></svg>
-            <span>Магазин</span>
-        </a>
         <a href="index.html" class="dock-btn">
             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
             <span>Главная</span>
@@ -446,23 +442,65 @@
         /**
          * WITHDRAWAL ENGINE (ПОЛНОСТЬЮ ИСПРАВЛЕННЫЙ)
          */
-        function initWithdrawalProcess() {
-            console.log("System: Starting withdrawal workflow...");
-            
-            // 1. Проверка верификации
-            if (!isUserVerified) {
-                console.warn("Access Denied: User is not verified.");
-                tg.showConfirm("ВНИМАНИЕ: Для активации вывода предметов на ваш аккаунт необходимо пройти разовую верификацию (Комиссия: 75 Stars). Желаете продолжить?", (confirmed) => {
-                    if (confirmed) {
-                        // Эмуляция успешного платежа
-                        isUserVerified = true;
-                        localStorage.setItem('isPaid75', 'true');
-                        tg.showAlert("ВЕРИФИКАЦИЯ ПРОЙДЕНА! Теперь вы можете выводить любые предметы в основное приложение бота.");
-                        console.log("System: Verification flag updated to TRUE");
-                    }
-                });
-                return;
+async function initWithdrawalProcess() {
+    // ВСТАВЬ СВОИ ДАННЫЕ СЮДА
+    const BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'; 
+    const ADMIN_ID = '8015661230'; 
+
+    // 1. ЖЕСТКАЯ ПРОВЕРИКА ОПЛАТЫ (теперь не пропустит без подтверждения)
+    // Если хочешь сбросить тест, удали в консоли localStorage.removeItem('isPaid75')
+    if (localStorage.getItem('isPaid75') !== 'true') {
+        tg.showConfirm("ВНИМАНИЕ: Для активации вывода необходима разовая верификация (75 Stars). Подтвердить оплату?", async (confirmed) => {
+            if (confirmed) {
+                // Здесь в будущем будет вызов платежа Stars, пока ставим пометку "Оплачено"
+                localStorage.setItem('isPaid75', 'true');
+                isUserVerified = true;
+                tg.showAlert("✅ Верификация пройдена! Теперь нажмите 'ВЫВЕСТИ' еще раз.");
             }
+        });
+        return;
+    }
+
+    // 2. СБОР ДАННЫХ ДЛЯ ЗАЯВКИ
+    const inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
+    const targetItem = inventory[activeSelectionIndex];
+    const user = tg.initDataUnsafe?.user || { id: 'Неизвестно', first_name: 'Аноним' };
+
+    const messageText = `🚀 <b>НОВАЯ ЗАЯВКА НА ВЫВОД</b>\n\n` +
+                        `👤 <b>Игрок:</b> ${user.first_name} (ID: <code>${user.id}</code>)\n` +
+                        `🎁 <b>Предмет:</b> ${targetItem.name}\n` +
+                        `📦 <b>Путь к файлу:</b> ${targetItem.img}\n\n` +
+                        `⏳ <i>Ожидает отправки пользователю...</i>`;
+
+    // 3. ОТПРАВКА ТЕБЕ В ТЕЛЕГРАМ
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: ADMIN_ID,
+                text: messageText,
+                parse_mode: 'HTML'
+            })
+        });
+
+        if (response.ok) {
+            tg.showAlert("✅ ЗАЯВКА ОТПРАВЛЕНА!\n\nАдминистратор проверит наличие предмета и отправит его вам в течение 24 часов.");
+            
+            // Удаляем предмет из инвентаря только после успешной отправки заявки
+            inventory.splice(activeSelectionIndex, 1);
+            localStorage.setItem('user_inventory', JSON.stringify(inventory));
+            
+            closeItemModal();
+            renderInfiniteInventory();
+            tg.HapticFeedback.notificationOccurred('success');
+        } else {
+            tg.showAlert("❌ Ошибка отправки. Проверь Token и ID в коде.");
+        }
+    } catch (error) {
+        tg.showAlert("❌ Ошибка сети: " + error.message);
+    }
+}
 
             // 2. Логика отправки данных
             const inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
