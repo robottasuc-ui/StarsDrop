@@ -211,7 +211,7 @@
             
             <div class="flex flex-col gap-4">
                 <button id="sell-btn" class="w-full bg-green-500 text-black py-5 rounded-2xl font-black uppercase text-sm active:scale-95 shadow-lg">
-                    Продать за ...
+                    Продать
                 </button>
                 <button id="keep-btn" class="w-full bg-white/5 border border-white/10 py-5 rounded-2xl font-bold uppercase text-xs text-white/70 active:scale-95">
                     В инвентарь
@@ -221,9 +221,6 @@
     </div>
 
     <script>
-        /**
-         * КОНФИГУРАЦИЯ И ПЕРЕМЕННЫЕ
-         */
         const tg = window.Telegram.WebApp;
         tg.expand();
 
@@ -233,7 +230,6 @@
         const winModal = document.getElementById('win-modal');
         const SPIN_COST = 100;
 
-        // ПОЛНЫЙ СПИСОК ПРЕДМЕТОВ С ЦЕНАМИ
         const ITEMS_DB = {
             1: { name: "1 May", img: "1may.jpg", price: 100 },
             2: { name: "2025", img: "2025.jpg", price: 500 },
@@ -250,10 +246,6 @@
         const itemIds = Object.keys(ITEMS_DB);
         let winningItem = null;
 
-        /**
-         * ФУНКЦИИ ЛОГИКИ
-         */
-
         function goToMain() { window.location.href = 'index.html'; }
 
         function updateStatus() {
@@ -269,27 +261,30 @@
                 return "free";
             } else {
                 spinBtn.innerHTML = `КРУТИТЬ ЗА 100 <img src="img/star.png" class="star-icon">`;
-                timerDisplay.innerText = "БЕСПЛАТНО РАЗ В 24 ЧАСА";
-                
                 if (stars < SPIN_COST) {
                     spinBtn.disabled = true;
-                    timerDisplay.innerText = "НЕДОСТАТОЧНО ЗВЕЗД (" + stars + ")";
+                    timerDisplay.innerText = `НУЖНО ${SPIN_COST} ⭐ (У ВАС ${stars})`;
                 } else {
                     spinBtn.disabled = false;
+                    timerDisplay.innerText = "ПЛАТНЫЙ ПРОКРУТ ДОСТУПЕН";
                 }
                 return "paid";
             }
         }
 
         function initWheel() {
-            const winId = itemIds[Math.floor(Math.random() * itemIds.length)];
+            // Шансы: в 80% случаев падает Golden Star (ID 65)
+            const isCheap = Math.random() > 0.2;
+            const winId = isCheap ? "65" : itemIds[Math.floor(Math.random() * itemIds.length)];
+            
             winningItem = { id: winId, ...ITEMS_DB[winId] };
             
             wheel.innerHTML = '';
             wheel.style.transition = 'none';
             wheel.style.transform = 'translateX(0)';
             
-            for (let i = 0; i < 90; i++) {
+            // Наполняем ленту (90 элементов для плавности)
+            for (let i = 0; i < 95; i++) {
                 const id = (i === 80) ? winningItem.id : itemIds[Math.floor(Math.random() * itemIds.length)];
                 const div = document.createElement('div');
                 div.className = 'item';
@@ -298,21 +293,12 @@
             }
         }
 
-        /**
-         * ОБРАБОТЧИКИ СОБЫТИЙ
-         */
-
         spinBtn.addEventListener('click', () => {
             const mode = updateStatus();
-            const stars = parseInt(localStorage.getItem('user_stars')) || 0;
+            let stars = parseInt(localStorage.getItem('user_stars')) || 0;
 
-            if (mode === "paid" && stars < SPIN_COST) {
-                tg.HapticFeedback.notificationOccurred('error');
-                return;
-            }
-
-            // ИСПРАВЛЕННОЕ СПИСАНИЕ
             if (mode === "paid") {
+                if (stars < SPIN_COST) return;
                 localStorage.setItem('user_stars', (stars - SPIN_COST).toString());
             } else {
                 localStorage.setItem('last_free_spin', Date.now().toString());
@@ -321,23 +307,22 @@
             spinBtn.disabled = true;
             initWheel();
             
-            const itemWidth = 136; 
-            const centerOffset = window.innerWidth / 2;
-            const finalPosition = (80 * itemWidth) - centerOffset + (itemWidth / 2);
+            const itemWidth = 136; // 120px + 16px margins
+            const finalPosition = (80 * itemWidth) - (window.innerWidth / 2) + (itemWidth / 2);
             
             wheel.style.transition = 'transform 8s cubic-bezier(0.15, 0, 0.05, 1)';
             wheel.style.transform = `translateX(-${finalPosition}px)`;
 
-            // Вибрация при прокрутке
+            // Звук/вибрация
             let clicks = 0;
-            const clickInterval = setInterval(() => {
+            const interval = setInterval(() => {
                 clicks++;
-                if (clicks > 45) clearInterval(clickInterval);
+                if(clicks > 50) clearInterval(interval);
                 tg.HapticFeedback.impactOccurred('light');
-            }, 140);
+            }, 150);
 
             setTimeout(() => { 
-                clearInterval(clickInterval);
+                clearInterval(interval);
                 document.getElementById('won-item-img').src = `img/${winningItem.img}`;
                 document.getElementById('won-item-name').innerText = winningItem.name;
                 document.getElementById('sell-btn').innerText = `ПРОДАТЬ ЗА ${winningItem.price} ⭐`;
@@ -349,7 +334,6 @@
         document.getElementById('sell-btn').onclick = () => {
             let s = parseInt(localStorage.getItem('user_stars')) || 0;
             localStorage.setItem('user_stars', (s + winningItem.price).toString());
-            tg.HapticFeedback.impactOccurred('medium');
             goToMain();
         };
 
@@ -357,14 +341,11 @@
             let inv = JSON.parse(localStorage.getItem('user_inventory')) || [];
             inv.push({ id: winningItem.id, name: winningItem.name, img: `img/${winningItem.img}` });
             localStorage.setItem('user_inventory', JSON.stringify(inv));
-            tg.HapticFeedback.impactOccurred('medium');
             goToMain();
         };
 
-        // СТАРТ
         initWheel();
         updateStatus();
-        window.addEventListener('resize', initWheel);
     </script>
 </body>
 </html>
