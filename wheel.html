@@ -246,21 +246,27 @@
         const itemIds = Object.keys(ITEMS_DB);
         let winningItem = null;
 
-        // --- ДОБАВЛЕНО: Генератор звука тиканья ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // --- УЛУЧШЕННЫЙ АУДИО КОНТЕКСТ ---
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioCtx();
+
         function playTickSound() {
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.1);
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime); // Звонкий клик
+            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.05);
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
         }
-        // ------------------------------------------
 
         function goToMain() { window.location.href = 'index.html'; }
 
@@ -291,7 +297,6 @@
         function initWheel() {
             const isCheap = Math.random() > 0.2;
             const winId = isCheap ? "65" : itemIds[Math.floor(Math.random() * itemIds.length)];
-            
             winningItem = { id: winId, ...ITEMS_DB[winId] };
             
             wheel.innerHTML = '';
@@ -308,7 +313,7 @@
         }
 
         spinBtn.addEventListener('click', () => {
-            if (audioCtx.state === 'suspended') audioCtx.resume(); // Активация аудио контекста
+            if (audioCtx.state === 'suspended') audioCtx.resume();
 
             const mode = updateStatus();
             let stars = parseInt(localStorage.getItem('user_stars')) || 0;
@@ -323,37 +328,40 @@
             spinBtn.disabled = true;
             initWheel();
             
-            const itemWidth = 136; 
+            const itemWidth = 136; // 120px + 16px margins
             const finalPosition = (80 * itemWidth) - (window.innerWidth / 2) + (itemWidth / 2);
             
-            wheel.style.transition = 'transform 8s cubic-bezier(0.15, 0, 0.05, 1)';
+            wheel.style.transition = 'transform 8s cubic-bezier(0.1, 0, 0.05, 1)';
             wheel.style.transform = `translateX(-${finalPosition}px)`;
 
-            // --- ОБНОВЛЕНО: Синхронизированный звук и вибрация ---
-            let startTime = null;
-            const duration = 8000;
+            // --- МОЗГ РИТМА ЗВУКА ---
+            let lastTickIndex = 0;
+            let isSpinning = true;
 
-            function triggerTick(timestamp) {
-                if (!startTime) startTime = timestamp;
-                let progress = (timestamp - startTime) / duration;
+            function syncTick() {
+                if (!isSpinning) return;
 
-                if (progress < 1) {
-                    // Кривая замедления (аналогично CSS cubic-bezier)
-                    let currentSpeed = Math.pow(1 - progress, 2); 
-                    let nextTickDelay = 100 + (1000 * (1 - currentSpeed)); 
+                // Получаем реальный текущий X из матрицы трансформации
+                const style = window.getComputedStyle(wheel);
+                const matrix = new WebKitCSSMatrix(style.transform);
+                const currentX = Math.abs(matrix.m41);
 
+                // Считаем, сколько "границ" айтемов мы пересекли
+                const currentTickIndex = Math.floor(currentX / itemWidth);
+
+                if (currentTickIndex > lastTickIndex) {
                     playTickSound();
                     tg.HapticFeedback.impactOccurred('light');
-
-                    setTimeout(() => {
-                        requestAnimationFrame(triggerTick);
-                    }, nextTickDelay / 10); // Делитель для настройки частоты
+                    lastTickIndex = currentTickIndex;
                 }
+
+                requestAnimationFrame(syncTick);
             }
-            requestAnimationFrame(triggerTick);
-            // ----------------------------------------------------
+
+            requestAnimationFrame(syncTick);
 
             setTimeout(() => { 
+                isSpinning = false;
                 document.getElementById('won-item-img').src = `img/${winningItem.img}`;
                 document.getElementById('won-item-name').innerText = winningItem.name;
                 document.getElementById('sell-btn').innerText = `ПРОДАТЬ ЗА ${winningItem.price} ⭐`;
