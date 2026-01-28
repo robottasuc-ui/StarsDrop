@@ -11,16 +11,8 @@
         :root { --bg-dark: #0a1205; --accent-green: #a3e635; --deep-green: #166534; --glow-green: rgba(163, 230, 53, 0.2); }
         body { background-color: var(--bg-dark); color: white; font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh; overflow-x: hidden; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         
-        #pc-only-blocker {
-            display: none; 
-            position: fixed; inset: 0; background: #000; z-index: 999999;
-            flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; padding: 20px;
-        }
-        .qr-frame {
-            background: white; padding: 15px; border-radius: 25px;
-            box-shadow: 0 0 40px var(--accent-green); margin-bottom: 25px;
-        }
+        #pc-only-blocker { display: none; position: fixed; inset: 0; background: #000; z-index: 999999; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+        .qr-frame { background: white; padding: 15px; border-radius: 25px; box-shadow: 0 0 40px var(--accent-green); margin-bottom: 25px; }
 
         #stars-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
         .main-wrapper { background: radial-gradient(circle at 50% 30%, #5d9e1c 0%, #0a1205 75%); min-height: 100vh; position: relative; z-index: 1; }
@@ -50,6 +42,10 @@
         .modal-sheet { background: #0d1a07; width: 100%; border-radius: 35px 35px 0 0; padding: 30px 24px 60px 24px; border-top: 2px solid rgba(163, 230, 53, 0.2); transform: translateY(0); animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
+        /* СТИЛИ ВКЛАДОК ДЛЯ ДЕПОЗИТА */
+        .tab-trigger { flex: 1; text-align: center; padding: 12px; cursor: pointer; font-weight: 900; font-size: 14px; transition: 0.3s; color: #555; border-radius: 12px; }
+        .tab-trigger.active { background: var(--accent-green); color: black; box-shadow: 0 0 15px var(--glow-green); }
+
         .dock-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(5, 10, 3, 0.98); border-top: 1px solid rgba(163, 230, 53, 0.15); display: flex; justify-content: space-around; padding: 18px 10px 40px 10px; z-index: 1000; backdrop-filter: blur(25px); }
         .dock-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #4b5563; flex: 1; transition: 0.3s; cursor: pointer; }
         .dock-btn.active { color: var(--accent-green); filter: drop-shadow(0 0 10px var(--glow-green)); }
@@ -62,9 +58,7 @@
 </head>
 <body>
     <div id="pc-only-blocker">
-        <div class="qr-frame">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://t.me/StarsDropOfficial_Bot" alt="QR">
-        </div>
+        <div class="qr-frame"><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://t.me/StarsDropOfficial_Bot" alt="QR"></div>
         <h1 class="text-2xl font-black italic uppercase tracking-tighter text-white">С ПК играть <span class="text-green-500">нельзя!</span></h1>
         <p class="text-gray-400 font-bold text-sm mt-2 max-w-[280px]">Отсканируйте QR код, чтобы играть с телефона</p>
     </div>
@@ -115,18 +109,22 @@
     <div id="vault-modal" class="modal-base" onclick="closeVault()">
         <div class="modal-sheet" onclick="event.stopPropagation()">
             <div class="w-16 h-1.5 bg-white/10 mx-auto mb-8 rounded-full"></div>
+            
             <div class="flex p-1.5 bg-black/50 rounded-2xl border border-white/5 mb-8">
-                <div id="tab-btn-ton" onclick="setTab('ton')" class="tab-trigger active">TON PAY</div>
-                <div id="tab-btn-stars" onclick="setTab('stars')" class="tab-trigger">STARS</div>
+                <div id="tab-btn-ton" onclick="setTab('ton')" class="tab-trigger active uppercase italic">Ton Pay</div>
+                <div id="tab-btn-stars" onclick="setTab('stars')" class="tab-trigger uppercase italic">Stars</div>
             </div>
+
             <div id="pane-ton" class="grid grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto pr-1"></div>
+
             <div id="pane-stars" class="hidden text-center py-4">
                 <div class="mb-6">
-                    <p class="text-gray-400 text-sm mb-4">Введите количество звёзд:</p>
+                    <p class="text-gray-400 text-sm mb-4 uppercase font-bold tracking-widest italic">Пополнение Stars</p>
                     <input type="number" id="stars-input" placeholder="Минимум 15" class="w-full bg-white/5 border border-white/10 py-5 px-6 rounded-2xl text-center text-2xl font-black text-white outline-none focus:border-yellow-500/50">
                 </div>
                 <button onclick="verifyGift()" class="w-full bg-yellow-500 text-black font-black py-5 rounded-2xl uppercase text-sm tracking-widest shadow-lg shadow-yellow-500/20 active:scale-95 transition-transform">Оплатить через Telegram</button>
             </div>
+
             <button onclick="closeVault()" class="w-full mt-8 py-2 text-gray-500 font-bold uppercase text-[11px] tracking-widest">Вернуться назад</button>
         </div>
     </div>
@@ -147,13 +145,15 @@
             }
         }
         checkPlatform();
-
         tg.expand();
 
         if (user) {
             document.getElementById('display-name').innerText = (user.username || user.first_name).toUpperCase();
             document.getElementById('display-id').innerText = `ID: ${user.id}`;
             document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?background=166534&color=fff&name=${user.first_name}`;
+            syncData();
+        } else {
+            // Для тестов без ТГ
             syncData();
         }
 
@@ -163,17 +163,28 @@
         }
 
         async function syncData() {
-            if (!user) return;
-            try {
-                const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}?t=${Date.now()}`);
-                const data = await res.json();
-                
-                document.getElementById('bal-ton').innerText = data.balance.toFixed(2);
-                document.getElementById('bal-stars').innerText = data.stars;
+            // Пытаемся получить данные с бэкенда, если нет - используем LocalStorage
+            let stars = parseInt(localStorage.getItem('user_stars') || '1000');
+            let ton = parseFloat(localStorage.getItem('user_ton') || '0.00');
 
-                // Сохраняем поинты в фоне для кликера
-                localStorage.setItem('user_points', data.points || 0);
-            } catch (e) { console.error("Sync error"); }
+            if (user) {
+                try {
+                    const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}?t=${Date.now()}`);
+                    const data = await res.json();
+                    
+                    const fakeStars = parseInt(localStorage.getItem('fake_stars') || '0');
+                    stars = data.stars + fakeStars;
+                    ton = data.balance;
+                } catch (e) { console.error("Sync error, using local"); }
+            }
+
+            // Обновляем UI
+            document.getElementById('bal-ton').innerText = ton.toFixed(2);
+            document.getElementById('bal-stars').innerText = stars.toLocaleString('ru-RU').replace(/\s/g, '.');
+
+            // Сохраняем актуальное состояние для других страниц
+            localStorage.setItem('user_stars', stars);
+            localStorage.setItem('user_ton', ton);
         }
 
         const PACKS = [1, 3, 5, 10, 20, 50, 100, 250];
@@ -217,6 +228,7 @@
 
         function openVault(tab) { document.getElementById('vault-modal').style.display = 'flex'; setTab(tab); }
         function closeVault() { document.getElementById('vault-modal').style.display = 'none'; }
+        
         function setTab(type) {
             const isTon = type === 'ton';
             document.getElementById('tab-btn-ton').classList.toggle('active', isTon);
@@ -225,6 +237,7 @@
             document.getElementById('pane-stars').classList.toggle('hidden', isTon);
         }
 
+        // Анимация звезд
         const canvas = document.getElementById('stars-canvas');
         if (canvas) {
             const ctx = canvas.getContext('2d');
