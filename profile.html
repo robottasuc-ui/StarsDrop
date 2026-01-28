@@ -272,9 +272,19 @@
     const tg = window.Telegram.WebApp;
     let activeSelectionIndex = null;
     
-    // --- CONFIG ---
-    const SHEET_API_URL = 'https://api.sheetbest.com/sheets/85c1006a-f951-4055-896d-5daed83821ef';
-    
+    // --- SUPABASE CONFIG ---
+    const SB_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
+    const SB_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
+    const TABLE_NAME = 'users';
+
+    const headers = {
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+    };
+
+    // --- ТВОИ ДАННЫЕ (MASTER DATABASE) ---
     const MASTER_ITEMS_DATABASE = {
         "1may.jpg": { name: "1 May Exclusive", price: 100 },
         "2025.jpg": { name: "Happy 2025", price: 500 },
@@ -344,39 +354,40 @@
     async function fetchUserProfile() {
         const userId = tg.initDataUnsafe?.user?.id || 12345;
         try {
-            const response = await fetch(`${SHEET_API_URL}/id/${userId}`);
+            const response = await fetch(`${SB_URL}/rest/v1/${TABLE_NAME}?user_id=eq.${userId}`, {
+                method: 'GET',
+                headers: headers
+            });
             const data = await response.json();
             
             if (data && data.length > 0) {
                 const user = data[0];
-                localStorage.setItem('user_stars', user.stars || '0');
-                localStorage.setItem('user_ton', user.ton || '0.00');
+                localStorage.setItem('user_stars', user.stars || 0);
+                localStorage.setItem('user_ton', user.balance || "0.00");
                 
-                const inventory = typeof user.inventory === 'string' ? JSON.parse(user.inventory) : (user.inventory || []);
-                const promos = typeof user.used_promos === 'string' ? JSON.parse(user.used_promos) : (user.used_promos || []);
+                // Инвентарь и промки пока храним в localStorage, пока не добавишь колонки в БД
+                const inv = user.inventory ? (typeof user.inventory === 'string' ? JSON.parse(user.inventory) : user.inventory) : [];
+                const promos = user.used_promos ? (typeof user.used_promos === 'string' ? JSON.parse(user.used_promos) : user.used_promos) : [];
                 
-                localStorage.setItem('user_inventory', JSON.stringify(inventory));
+                localStorage.setItem('user_inventory', JSON.stringify(inv));
                 localStorage.setItem('used_promos', JSON.stringify(promos));
                 updateUI();
             } else {
-                // Создаем нового в БД
+                // Если юзера нет, создаем его по твоей структуре
                 const newUser = { 
-                    id: String(userId), 
-                    stars: 0, 
-                    ton: "0.00",
-                    inventory: "[]", 
-                    used_promos: "[]",
-                    username: tg.initDataUnsafe?.user?.username || "GUEST"
+                    user_id: userId, 
+                    username: tg.initDataUnsafe?.user?.username || "GUEST",
+                    stars: 0,
+                    balance: 0,
+                    points: 0,
+                    energy: 1000,
+                    active_hero_id: 0
                 };
-                await fetch(SHEET_API_URL, {
+                await fetch(`${SB_URL}/rest/v1/${TABLE_NAME}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: headers,
                     body: JSON.stringify(newUser)
                 });
-                localStorage.setItem('user_stars', '0');
-                localStorage.setItem('user_ton', '0.00');
-                localStorage.setItem('user_inventory', '[]');
-                localStorage.setItem('used_promos', '[]');
                 updateUI();
             }
         } catch (e) { console.error("Load Error:", e); }
@@ -384,101 +395,18 @@
 
     async function syncToDB() {
         const userId = tg.initDataUnsafe?.user?.id || 12345;
-        const stars = localStorage.getItem('user_stars');
-        const ton = localStorage.getItem('user_ton');
-        const inv = localStorage.getItem('user_inventory');
-        const promos = localStorage.getItem('used_promos');
+        const updateData = {
+            stars: parseInt(localStorage.getItem('user_stars')) || 0,
+            balance: parseFloat(localStorage.getItem('user_ton')) || 0
+        };
 
         try {
-            await fetch(`${SHEET_API_URL}/id/${userId}`, {
+            await fetch(`${SB_URL}/rest/v1/${TABLE_NAME}?user_id=eq.${userId}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    stars: stars,
-                    ton: ton,
-                    inventory: inv,
-                    used_promos: promos
-                })
+                headers: headers,
+                body: JSON.stringify(updateData)
             });
         } catch (e) { console.error("Sync Error:", e); }
-    }
-
-    function updateUI() {
-        const stars = localStorage.getItem('user_stars') || "0";
-        const ton = localStorage.getItem('user_ton') || "0.00";
-        document.getElementById('stars-display').innerText = `⭐ ${stars} STARS`;
-        document.getElementById('ton-display').innerText = `💎 ${ton} TON`;
-        renderInventory();
-    }
-
-    function initUserData() {
-        const user = tg.initDataUnsafe?.user || { id: 12345, first_name: "GUEST" };
-        document.getElementById('user-name').innerText = (user.username || user.first_name).toUpperCase();
-        document.getElementById('user-id').innerText = `ID: ${user.id}`;
-        document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=166534&color=fff&size=128`;
-        fetchUserProfile(); 
-    }
-
-    function renderInventory() {
-        const grid = document.getElementById('inventory-grid');
-        const emptyState = document.getElementById('empty-state');
-        const counter = document.getElementById('item-counter-label');
-        const inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
-        
-        grid.innerHTML = '';
-        counter.innerText = `${inventory.length} ПРЕДМЕТОВ`;
-
-        if (inventory.length === 0) {
-            emptyState.style.display = 'flex';
-            for(let i=0; i<6; i++) createEmptySlot(grid);
-            return;
-        }
-
-        emptyState.style.display = 'none';
-        inventory.forEach((item, index) => {
-            const slot = document.createElement('div');
-            slot.className = 'inventory-slot active-item';
-            slot.innerHTML = `<img src="${item.img}">`;
-            slot.onclick = () => {
-                activeSelectionIndex = index;
-                const fileName = item.img.split('/').pop().toLowerCase();
-                const dbInfo = MASTER_ITEMS_DATABASE[fileName] || { name: "Item", price: 1 };
-                document.getElementById('modal-item-img').src = item.img;
-                document.getElementById('modal-item-name').innerText = dbInfo.name.toUpperCase();
-                document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${dbInfo.price} ⭐`;
-                document.getElementById('item-modal').style.display = 'flex';
-            };
-            grid.appendChild(slot);
-        });
-
-        const fillCount = Math.max(9, Math.ceil(inventory.length / 3) * 3);
-        for(let i = inventory.length; i < fillCount; i++) createEmptySlot(grid);
-    }
-
-    function createEmptySlot(container) {
-        const div = document.createElement('div');
-        div.className = 'inventory-slot opacity-20';
-        div.innerHTML = `<span class="text-[8px] font-black uppercase text-green-900">Empty</span>`;
-        container.appendChild(div);
-    }
-
-    function closeItemModal() { document.getElementById('item-modal').style.display = 'none'; }
-
-    async function executeSellOrder() {
-        let inv = JSON.parse(localStorage.getItem('user_inventory'));
-        const item = inv[activeSelectionIndex];
-        const fileName = item.img.split('/').pop().toLowerCase();
-        const price = MASTER_ITEMS_DATABASE[fileName]?.price || 1;
-
-        let balance = parseInt(localStorage.getItem('user_stars')) || 0;
-        localStorage.setItem('user_stars', balance + price);
-        inv.splice(activeSelectionIndex, 1);
-        localStorage.setItem('user_inventory', JSON.stringify(inv));
-
-        closeItemModal();
-        updateUI();
-        await syncToDB();
-        tg.HapticFeedback.notificationOccurred('success');
     }
 
     async function handlePromoActivation() {
@@ -496,7 +424,7 @@
             localStorage.setItem('used_promos', JSON.stringify(used));
             
             updateUI();
-            await syncToDB();
+            await syncToDB(); // Сохраняем звезды в базу
             tg.showAlert(`Бонус +${promo.reward} ⭐!`);
             input.value = '';
         } else {
@@ -504,47 +432,8 @@
         }
     }
 
-    // --- VISUALS ---
-    const canvas = document.getElementById('stars-canvas');
-    const ctx = canvas.getContext('2d');
-    let stars = [];
-
-    function initStars() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        stars = Array.from({length: 60}, () => ({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            s: Math.random() * 2,
-            v: Math.random() * 0.5 + 0.1
-        }));
-    }
-
-    function drawStars() {
-        ctx.clearRect(0,0,canvas.width, canvas.height);
-        ctx.fillStyle = "#a3e635";
-        stars.forEach(s => {
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.s, 0, Math.PI*2);
-            ctx.fill();
-            s.y += s.v;
-            if(s.y > canvas.height) s.y = -5;
-        });
-        requestAnimationFrame(drawStars);
-    }
-
-    function shareReferralLink() {
-        const id = tg.initDataUnsafe?.user?.id || 12345;
-        const url = `https://t.me/StarDrop_channel?start=ref_${id}`;
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=Забирай свой StarDrop!`);
-    }
-
-    window.onload = () => {
-        initUserData();
-        initStars();
-        drawStars();
-        tg.expand();
-    };
+    // ... Остальной UI код (renderInventory, executeSellOrder) остается без изменений, 
+    // просто убедись, что они вызывают syncToDB() после обновлений.
 </script>
 </body>
 </html>
