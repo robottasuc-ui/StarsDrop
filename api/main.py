@@ -1,5 +1,6 @@
 import os
 import requests
+import httpx
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from supabase import create_client, Client
@@ -10,7 +11,20 @@ CORS(app)
 # Настройки Supabase
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# ФИКС: Создаем кастомный клиент, чтобы не было ошибки прокси в Vercel
+http_client = httpx.Client(proxies=None)
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    print("ОШИБКА: Проверь переменные SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY в Vercel!")
+    supabase = None
+else:
+    # Инициализируем клиент с фиксом
+    supabase: Client = create_client(
+        SUPABASE_URL, 
+        SUPABASE_KEY, 
+        options={"http_client": http_client}
+    )
 
 # Токены
 CRYPTO_PAY_TOKEN = '519389:AAnFdMg1D8ywsfVEd0aA02B8872Zzz61ATO'
