@@ -125,7 +125,7 @@
 </div>
 
 <div id="fail-modal" class="modal">
-    <img id="fail-icon" src="img/bomb.png" style="width: 100px; margin-bottom: 20px;">
+    <img id="fail-icon" src="bomb.png" style="width: 100px; margin-bottom: 20px;">
     <h2 id="fail-title" style="color: var(--danger);">ИГРА ОКОНЧЕНА</h2>
     <p id="fail-msg">Вы пропустили подарок!</p>
     <div id="final-res" style="font-size: 24px; margin-bottom: 30px; font-weight: bold; color: #fff;">0 ⭐</div>
@@ -134,6 +134,7 @@
 
 <script>
     const tg = window.Telegram.WebApp;
+    tg.expand();
     const screen = document.getElementById('game-screen');
     const giftLabel = document.getElementById('gift-count');
     const starLabel = document.getElementById('star-count');
@@ -151,31 +152,27 @@
     let spawnRate = 800;
     let bombChance = 0.12;
 
-// Полный список твоих ассетов
-const ASSETS = [
-    '1may.jpg', '2025.jpg', 'bear.png', 'book.jpg', 'boooox.png', 'botinok.png', 'box.png', 'car.png',
-    'ccolso2.png', 'cerrrdce.jpg', 'chassiki.png', 'chemodan.jpg', 'ciga.png', 'colso.png', 'costum.jpg',
-    'cvetok.png', 'dog.png', 'dyxi.png', 'fonarik.jpg', 'grob.jpg', 'gyba.png', 'happybirthday.jpg',
-    'heart.png', 'helmet.png', 'kalendar.png', 'kepka.png', 'kirpitch.jpg', 'koks.jpg', 'koktel.png',
-    'kolechko.png', 'kot.png', 'kotel.png', 'krovatka.jpg', 'lolipop.png', 'lucky.jpg', 'mafin.jpg',
-    'metch.png', 'narkotiki.png', 'obyv.jpg', 'otchki.jpg', 'orel.jpg', 'otkritka.jpg', 'paska.jpg',
-    'pepe.png', 'raketa.png', 'rozza.png', 'rykazak.jpg', 'shapka.png', 'shar.jpg', 'shlem.png',
-    'sliva.png', 'soska.jpg', 'statyya.jpg', 'statyyetka.png', 'venok.jpg', 'yayko.png', 'zhele.png', 'zmei.png',
-    'star.png', 'bomb.png', 'case.png' // Добавил те, что видел в твоем GitHub
-];
+    const ASSETS = [
+        '1may.jpg', '2025.jpg', 'bear.png', 'book.jpg', 'boooox.png', 'botinok.png', 'box.png', 'car.png',
+        'ccolso2.png', 'cerrrdce.jpg', 'chassiki.png', 'chemodan.jpg', 'ciga.png', 'colso.png', 'costum.jpg',
+        'cvetok.png', 'dog.png', 'dyxi.png', 'fonarik.jpg', 'grob.jpg', 'gyba.png', 'happybirthday.jpg',
+        'heart.png', 'helmet.png', 'kalendar.png', 'kepka.png', 'kirpitch.jpg', 'koks.jpg', 'koktel.png',
+        'kolechko.png', 'kot.png', 'kotel.png', 'krovatka.jpg', 'lolipop.png', 'lucky.jpg', 'mafin.jpg',
+        'metch.png', 'narkotiki.png', 'obyv.jpg', 'otchki.jpg', 'orel.jpg', 'otkritka.jpg', 'paska.jpg',
+        'pepe.png', 'raketa.png', 'rozza.png', 'rykazak.jpg', 'shapka.png', 'shar.jpg', 'shlem.png',
+        'sliva.png', 'soska.jpg', 'statyya.jpg', 'statyyetka.png', 'venok.jpg', 'yayko.png', 'zhele.png', 'zmei.png',
+        'star.png', 'bomb.png', 'case.png'
+    ];
 
-// Функция для получения ПРАВИЛЬНОГО пути к картинке
-function getAssetUrl(fileName) {
-    // Получаем базовый URL (например, https://stars-drop.vercel.app/)
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/${fileName}`;
-}
+    function getAssetUrl(fileName) {
+        return window.location.origin + '/' + fileName;
+    }
 
-// Пример использования при создании подарка в игре:
-// Вместо item.src = "img/" + name;
-// Используй: 
-// const randomImg = ASSETS[Math.floor(Math.random() * ASSETS.length)];
-// giftElement.src = getAssetUrl(randomImg);
+    // Загрузка начальных звезд из localStorage
+    function initStars() {
+        const savedStars = localStorage.getItem('user_stars') || "0";
+        starLabel.innerText = savedStars;
+    }
 
     function spawnItem() {
         if (!gameActive || isPaused) return;
@@ -185,7 +182,7 @@ function getAssetUrl(fileName) {
         
         let type = 'gift';
         let imgName = ASSETS[Math.floor(Math.random() * ASSETS.length)];
-        let isCaught = false; // Флаг, что предмет уже нажат
+        let isCaught = false; 
 
         if (Math.random() < bombChance) {
             type = 'bomb';
@@ -195,10 +192,13 @@ function getAssetUrl(fileName) {
             imgName = 'star.png';
             item.classList.add('item-star');
             giftsCollected = 0;
+            giftLabel.innerText = giftsCollected;
         }
 
         item.setAttribute('data-type', type);
-        item.innerHTML = `<img src="img/${imgName}">`;
+        // ИСПРАВЛЕНО: Путь теперь без "img/"
+        item.innerHTML = `<img src="${getAssetUrl(imgName)}" onerror="this.src='star.png'">`;
+        
         item.style.left = Math.random() * (window.innerWidth - 75) + 'px';
         item.style.top = '-100px';
         screen.appendChild(item);
@@ -207,14 +207,16 @@ function getAssetUrl(fileName) {
             if (e.cancelable) e.preventDefault();
             if (!gameActive || isPaused || isCaught) return;
 
-            isCaught = true; // Блокируем проверку падения в красную зону
+            isCaught = true; 
             const currentType = item.getAttribute('data-type');
             
             if (currentType === 'bomb') {
                 endGame('bomb');
             } else if (currentType === 'star') {
                 starsEarned++;
-                starLabel.innerText = starsEarned;
+                const currentTotal = parseInt(localStorage.getItem('user_stars')) || 0;
+                localStorage.setItem('user_stars', (currentTotal + 1).toString());
+                starLabel.innerText = localStorage.getItem('user_stars');
                 tg.HapticFeedback.notificationOccurred('success');
                 item.remove();
             } else {
@@ -233,13 +235,12 @@ function getAssetUrl(fileName) {
         const dangerLine = window.innerHeight - 60;
         
         function fall() {
-            if (!gameActive || isCaught) return; // Если пойман — прекращаем цикл падения для него
+            if (!gameActive || isCaught) return; 
             if (!isPaused) {
                 pos += speed;
                 item.style.top = pos + 'px';
             }
 
-            // Фикс №2: Бомбы игнорируют красную зону
             if (pos + 60 > dangerLine && type !== 'bomb') {
                 endGame('miss');
                 item.remove();
@@ -272,14 +273,14 @@ function getAssetUrl(fileName) {
         if (reason === 'bomb') {
             title.innerText = "БАБАХ!";
             msg.innerText = "Вы нажали на бомбу!";
-            icon.src = "img/bomb.png";
+            icon.src = getAssetUrl("bomb.png");
         } else {
             title.innerText = "ПРОПУСК!";
             msg.innerText = "Предмет упал в красную зону!";
-            icon.src = "img/star.png";
+            icon.src = getAssetUrl("star.png");
         }
 
-        document.getElementById('final-res').innerText = `ВАШ ДРОП: ${starsEarned} ⭐`;
+        document.getElementById('final-res').innerText = `ДОБЫТО ЗА РАУНД: ${starsEarned} ⭐`;
         modal.style.display = 'flex';
         localStorage.setItem('last_gift_time', Date.now().toString());
     }
@@ -290,18 +291,16 @@ function getAssetUrl(fileName) {
         const exitBtn = document.getElementById('exit-btn');
         if (exitBtn) exitBtn.innerText = "СОХРАНЕНИЕ...";
 
-        let currentStars = parseInt(localStorage.getItem('user_stars')) || 0;
-        localStorage.setItem('user_stars', (currentStars + starsEarned).toString());
-
+        // Данные уже в localStorage через handleHit, здесь можно просто выйти или сделать финальный синк
         if (user?.id && starsEarned > 0) {
             try {
-                await fetch(`${BACKEND_URL}/update_balance`, {
+                await fetch(`${BACKEND_URL}/sync`, { // Изменил на /sync как в кликере
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        user_id: user.id,
-                        stars: starsEarned,
-                        points: 0
+                        id: user.id,
+                        name: user.first_name,
+                        coins: parseInt(localStorage.getItem('user_stars')) || 0 
                     })
                 });
             } catch (e) { console.error("Server error"); }
@@ -316,6 +315,7 @@ function getAssetUrl(fileName) {
         setTimeout(gameLoop, spawnRate);
     }
 
+    initStars();
     gameLoop();
 </script>
 </body>
