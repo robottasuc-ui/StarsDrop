@@ -180,8 +180,6 @@
     <script>
 const tg = window.Telegram.WebApp;
 const BACKEND_URL = 'https://stars-drop.vercel.app/api';
-// ТВОЯ ССЫЛКА ВСТАВЛЕНА НИЖЕ
-const GOOGLE_SHEET_URL = 'https://api.sheetbest.com/sheets/85c1006a-f951-4055-896d-5daed83821ef';
 
 const DB_CONFIG = {
     url: 'https://mwsbkpfarhdankpyifbm.supabase.co',
@@ -197,48 +195,7 @@ let balance = {
     ton: parseFloat(localStorage.getItem('user_ton')) || 0
 };
 
-// --- ИНТЕГРАЦИЯ С GOOGLE SHEETS ---
-
-async function syncWithGoogleSheets(action, data = {}) {
-    if (!tg.initDataUnsafe?.user || !GOOGLE_SHEET_URL) return;
-    const userId = String(tg.initDataUnsafe.user.id);
-    const username = tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name || "Unknown";
-
-    try {
-        if (action === 'update_balance') {
-            // В Sheet.best обновление по ID через путь /id/значение
-            await fetch(`${GOOGLE_SHEET_URL}/id/${userId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    stars: data.stars,
-                    ton: data.ton,
-                    last_seen: new Date().toLocaleString()
-                })
-            });
-        } 
-        else if (action === 'init_user') {
-            const check = await fetch(`${GOOGLE_SHEET_URL}/id/${userId}`);
-            const exist = await check.json();
-            if (!exist || exist.length === 0) {
-                await fetch(GOOGLE_SHEET_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id: userId,
-                        username: username,
-                        stars: data.stars || 0,
-                        ton: data.ton || 0,
-                        reg_date: new Date().toLocaleString(),
-                        last_seen: new Date().toLocaleString()
-                    })
-                });
-            }
-        }
-    } catch (e) { console.error("Google Sheets Sync Error:", e); }
-}
-
-// --- ИНТЕГРАЦИЯ С БАЗОЙ ---
+// --- ИНТЕГРАЦИЯ С SUPABASE ---
 
 async function syncData() {
     if (tg.initDataUnsafe?.user) {
@@ -248,9 +205,7 @@ async function syncData() {
             balance.stars = parseInt(data.stars);
             balance.ton = parseFloat(data.balance);
             saveAndRefresh();
-            console.log("Database Sync: Success");
-            // Синхронизация с таблицей при входе
-            syncWithGoogleSheets('init_user', { stars: balance.stars, ton: balance.ton });
+            console.log("Database Sync: Success (Supabase)");
         } catch (e) { 
             console.error("Database Sync: Failed"); 
             updateUI();
@@ -294,8 +249,6 @@ function saveAndRefresh() {
     localStorage.setItem('user_stars', balance.stars);
     localStorage.setItem('user_ton', balance.ton.toFixed(2));
     updateUI();
-    // Сразу отправляем обновленный баланс в Google Sheets
-    syncWithGoogleSheets('update_balance', { stars: balance.stars, ton: balance.ton });
 }
 
 function updateUI() {
