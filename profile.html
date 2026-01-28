@@ -275,7 +275,7 @@
     const SUPABASE_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCg0'; 
     
-    // ТВОЯ БАЗА ПОДАРКОВ (СОХРАНЕНА ПОЛНОСТЬЮ)
+    // ТВОЯ БАЗА ПОДАРКОВ (ПОЛНАЯ ВЕРСИЯ)
     const MASTER_ITEMS_DATABASE = {
         "1may.jpg": { name: "1 May Exclusive", price: 100 },
         "2025.jpg": { name: "Happy 2025", price: 500 },
@@ -373,11 +373,9 @@
             const data = await response.json();
             
             if (data.length > 0) {
-                // Если юзер есть — берем всё из базы
                 localStorage.setItem('user_stars', data[0].stars || 0);
                 localStorage.setItem('user_inventory', JSON.stringify(data[0].inventory || []));
             } else {
-                // Если юзера нет — создаем запись
                 await fetch(`${SUPABASE_URL}/rest/v1/users`, {
                     method: 'POST',
                     headers: {
