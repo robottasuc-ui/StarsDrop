@@ -74,7 +74,6 @@
         }
 
         .game-core { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-        
         .hero-platform {
             width: 280px; height: 80px; background: var(--neon);
             border-radius: 50%; filter: blur(60px); opacity: 0.15;
@@ -185,11 +184,7 @@
         }
         .btn-info-star { border-color: #facc15; color: #facc15; }
 
-        .info-content {
-            text-align: center;
-            padding: 20px 20px 80px; /* Увеличил отступ снизу */
-            overflow-y: auto;
-        }
+        .info-content { text-align: center; padding: 20px 20px 80px; overflow-y: auto; }
         .info-star-img { width: 120px; margin: 0 auto 20px; display: block; filter: drop-shadow(0 0 15px rgba(250, 204, 21, 0.4)); }
         .info-title { font-size: 24px; font-weight: 900; margin-bottom: 15px; color: #fff; }
         .info-text { font-size: 14px; line-height: 1.6; color: rgba(255,255,255,0.7); margin-bottom: 25px; }
@@ -199,9 +194,25 @@
             background: #0088cc; color: white; padding: 18px; border-radius: 18px;
             width: 90%; max-width: 300px; font-weight: 900; border: none; cursor: pointer;
             text-transform: uppercase; display: block; text-decoration: none;
-            margin: 20px auto 0; /* Центрирование */
+            margin: 20px auto 0;
             box-shadow: 0 10px 20px rgba(0, 136, 204, 0.3);
         }
+
+        /* Leaderboard Specific Styles */
+        .lb-promo {
+            text-align: center; padding: 15px; 
+            background: linear-gradient(135deg, rgba(74,222,128,0.1) 0%, rgba(250,204,21,0.1) 100%); 
+            border-radius: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .lb-row {
+            display: flex; align-items: center; gap: 15px; padding: 12px 18px;
+            background: rgba(255,255,255,0.03); border-radius: 18px; margin-bottom: 8px;
+            border: 1px solid transparent; transition: var(--trans);
+        }
+        .lb-row.me { border-color: var(--neon); background: rgba(74,222,128,0.05); }
+        .lb-rank { font-weight: 900; color: var(--neon); width: 25px; font-size: 16px; }
+        .lb-name { flex: 1; font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lb-points { font-weight: 800; font-size: 12px; color: #fff; opacity: 0.7; }
 
     </style>
 </head>
@@ -243,9 +254,8 @@
             <div class="info-title">Как получить Stars?</div>
             <p class="info-text">
                 В конце каждого месяца происходит глобальный обмен! <br><br>
-                Если ваш баланс превышает <span class="info-highlight">100 млрд Nova Token</span>, они автоматически конвертируются в <span class="info-highlight">Stars / Ton</span>. 
-                <br><br>
-                Актуальный курс обмена (1 млрд Nova = ? Stars) всегда доступен в нашем официальном канале.
+                Если ваш баланс превышает <span class="info-highlight">100 млрд Nova Token</span>, они автоматически конвертируются в <span class="info-highlight">Stars / Ton</span>. <br><br>
+                Актуальный курс обмена всегда доступен в нашем официальном канале.
             </p>
             <a href="https://t.me/StarDrop_channel" target="_blank" class="btn-telegram">ПЕРЕЙТИ В КАНАЛ</a>
         </div>
@@ -254,6 +264,18 @@
     <div class="drawer-wardrobe" id="market-panel">
         <div class="drawer-header"><h3>УСИЛЕНИЯ</h3><div class="close-btn" onclick="closeAllPanels()">ЗАКРЫТЬ</div></div>
         <div class="scroll-area" id="market-list"></div>
+    </div>
+
+    <div class="drawer-wardrobe" id="leaderboard-panel">
+        <div class="drawer-header"><h3>HALL OF FAME</h3><div class="close-btn" onclick="closeAllPanels()">ЗАКРЫТЬ</div></div>
+        <div class="lb-promo">
+            <div style="color: #facc15; font-weight: 900; font-size: 15px; margin-bottom: 5px;">🏆 ГРАН-ПРИ СЕЗОНА</div>
+            <div style="font-size: 11px; opacity: 0.9; line-height: 1.4;">
+                Каждый месяц <span class="info-highlight">ТОП-5</span> игрокам мы разыгрываем реальные <span style="color:#facc15;">Stars & Ton</span>! Стань легендой Nova.
+            </div>
+        </div>
+        <div class="scroll-area" id="leaderboard-list" style="display: flex; flex-direction: column; gap: 0;">
+            </div>
     </div>
 
     <div class="drawer-wardrobe" id="wardrobe-panel">
@@ -270,6 +292,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
             <div>ГЛАВНАЯ</div>
         </div>
+        <div class="nav-item" onclick="openPanel('leaderboard-panel', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <div>ТОП</div>
+        </div>
         <div class="nav-item" onclick="openPanel('wardrobe-panel', this)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"/></svg>
             <div>ГЕРОИ</div>
@@ -279,6 +305,7 @@
 
 <script>
     const tg = window.Telegram.WebApp;
+    const BACKEND_URL = 'https://stars-drop.vercel.app/api';
     tg.expand();
 
     const heroes = [
@@ -301,7 +328,7 @@
     ];
 
     let state = {
-        coins: 0,
+        points: 0, // Используем points согласно структуре базы
         energy: 1000,
         maxEnergy: 1000,
         ownedHeroes: [0],
@@ -311,14 +338,70 @@
         lastUnix: Date.now()
     };
 
-    function init() {
+    // Загрузка из базы
+    async function loadFromDB() {
+        const userId = tg.initDataUnsafe?.user?.id;
+        if (!userId) return;
+        try {
+            const res = await fetch(`${BACKEND_URL}/get_balance/${userId}?t=${Date.now()}`);
+            const data = await res.json();
+            if (data) {
+                state.points = parseInt(data.points || 0);
+                state.energy = parseInt(data.energy || 1000);
+                state.activeHeroId = parseInt(data.active_hero_id || 0);
+                updateUI();
+                applyHeroVisuals();
+            }
+        } catch (e) { console.error("Sync Error"); }
+    }
+
+    // Сохранение в базу
+    async function saveToDB() {
+        const userId = tg.initDataUnsafe?.user?.id;
+        if (!userId) return;
+        try {
+            await fetch(`${BACKEND_URL}/update_balance`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    user_id: userId,
+                    points: Math.floor(state.points),
+                    energy: Math.floor(state.energy),
+                    active_hero_id: state.activeHeroId
+                })
+            });
+        } catch (e) { console.error("Save Error"); }
+    }
+
+    // Получение ТОП-100 игроков
+    async function fetchLeaderboard() {
+        const list = document.getElementById('leaderboard-list');
+        list.innerHTML = '<div style="text-align:center; padding:30px; opacity:0.5;">Ищем легенд...</div>';
+        try {
+            const res = await fetch(`${BACKEND_URL}/get_leaderboard`);
+            const topUsers = await res.json();
+            list.innerHTML = '';
+            topUsers.forEach((user, index) => {
+                const isMe = user.user_id == tg.initDataUnsafe?.user?.id;
+                list.innerHTML += `
+                    <div class="lb-row ${isMe ? 'me' : ''}">
+                        <div class="lb-rank">${index + 1}</div>
+                        <div class="lb-name">${user.username || 'Anonymous'}</div>
+                        <div class="lb-points">${Math.floor(user.points).toLocaleString()}</div>
+                    </div>
+                `;
+            });
+        } catch (e) { list.innerHTML = '<div style="text-align:center; padding:30px; color:red;">Ошибка загрузки топа</div>'; }
+    }
+
+    async function init() {
         const saved = localStorage.getItem('nova_engine_save');
         if (saved) {
             state = { ...state, ...JSON.parse(saved) };
             const elapsed = Math.floor((Date.now() - state.lastUnix) / 1000);
             state.energy = Math.min(state.maxEnergy, state.energy + elapsed);
         }
-        applyHeroVisuals();
+        await loadFromDB();
         updateUI();
         startLoops();
     }
@@ -330,7 +413,7 @@
                 updateUI();
             }
         }, 1000);
-        setInterval(save, 5000);
+        setInterval(save, 10000); // Синхронизация каждые 10 сек
     }
 
     const tapZone = document.getElementById('tap-zone');
@@ -338,19 +421,18 @@
 
     function handleTapLogic(x, y) {
         if (state.energy < 1) return;
-        
-        // Добавляем вибрацию
-        if (tg.HapticFeedback) {
-            tg.HapticFeedback.impactOccurred('light');
-        }
+        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 
         heroImg.classList.add('tap-anim');
         setTimeout(() => heroImg.classList.remove('tap-anim'), 50);
+        
         const hero = heroes.find(h => h.id === state.activeHeroId);
-        const profit = state.clickPower * hero.x;
-        state.coins += profit;
+        const profit = state.clickPower * (hero ? hero.x : 1);
+        
+        state.points += profit;
         state.energy -= 1;
         state.lastUnix = Date.now();
+        
         showPop(x, y, profit);
         updateUI();
     }
@@ -378,14 +460,18 @@
             const lvl = state.marketLevels[item.id] || 0;
             const price = Math.floor(item.basePrice * Math.pow(1.6, lvl));
             const bonus = item.baseAdd * (lvl + 1);
+            const isMax = lvl >= 15; // ЛИМИТ 15 УРОВЕНЬ
+            
             container.innerHTML += `
                 <div class="card-item">
-                    <span class="lvl-badge">LVL ${lvl}</span>
+                    <span class="lvl-badge" style="${isMax ? 'background:#555;' : ''}">${isMax ? 'MAX' : 'LVL ' + lvl}</span>
                     <span class="card-icon">${item.icon}</span>
                     <div class="card-title">${item.name}</div>
                     <div class="card-desc">${item.type === 'click' ? '+' + bonus + ' к клику' : '+' + item.baseAdd + ' к лимиту'}</div>
-                    <button class="btn-action btn-buy" ${state.coins < price ? 'disabled' : ''} onclick="buyMarketItem(${item.id})">
-                        ${price.toLocaleString()}
+                    <button class="btn-action btn-buy" 
+                        ${(state.points < price || isMax) ? 'disabled' : ''} 
+                        onclick="buyMarketItem(${item.id})">
+                        ${isMax ? 'МАКСИМУМ' : price.toLocaleString()}
                     </button>
                 </div>`;
         });
@@ -394,9 +480,11 @@
     window.buyMarketItem = function(id) {
         const item = marketData.find(i => i.id === id);
         const lvl = state.marketLevels[item.id] || 0;
+        if (lvl >= 15) return;
+        
         const price = Math.floor(item.basePrice * Math.pow(1.6, lvl));
-        if (state.coins >= price) {
-            state.coins -= price;
+        if (state.points >= price) {
+            state.points -= price;
             state.marketLevels[id] = lvl + 1;
             if (item.type === 'click') state.clickPower += item.baseAdd;
             else { state.maxEnergy += item.baseAdd; state.energy += item.baseAdd; }
@@ -416,7 +504,7 @@
                     <div class="card-title">${h.name}</div>
                     <div class="card-desc">МНОЖИТЕЛЬ x${h.x}</div>
                     <button class="btn-action ${isOwned ? 'btn-owned' : 'btn-buy'}" 
-                            ${(!isOwned && state.coins < h.price) ? 'disabled' : ''} 
+                            ${(!isOwned && state.points < h.price) ? 'disabled' : ''} 
                             onclick="handleHero(${h.id})">
                         ${isOwned ? (isActive ? 'АКТИВЕН' : 'ВЫБРАТЬ') : h.price.toLocaleString()}
                     </button>
@@ -427,8 +515,8 @@
     window.handleHero = function(id) {
         const h = heroes.find(x => x.id === id);
         if (state.ownedHeroes.includes(id)) state.activeHeroId = id;
-        else if (state.coins >= h.price) {
-            state.coins -= h.price;
+        else if (state.points >= h.price) {
+            state.points -= h.price;
             state.ownedHeroes.push(id);
             state.activeHeroId = id;
         }
@@ -439,9 +527,11 @@
         document.querySelectorAll('.drawer-wardrobe').forEach(d => d.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        if (navEl.classList.contains('nav-item')) navEl.classList.add('active');
+        if (navEl && navEl.classList.contains('nav-item')) navEl.classList.add('active');
+        
         if (id === 'market-panel') renderMarket();
         if (id === 'wardrobe-panel') renderSkins();
+        if (id === 'leaderboard-panel') fetchLeaderboard();
     }
 
     function closeAllPanels() {
@@ -451,7 +541,7 @@
     }
 
     function updateUI() {
-        document.getElementById('balance-num').innerText = Math.floor(state.coins).toLocaleString();
+        document.getElementById('balance-num').innerText = Math.floor(state.points).toLocaleString();
         document.getElementById('energy-val').innerText = Math.floor(state.energy);
         document.getElementById('max-energy-val').innerText = state.maxEnergy;
         document.getElementById('energy-fill').style.width = (state.energy / state.maxEnergy * 100) + '%';
@@ -459,14 +549,17 @@
 
     function applyHeroVisuals() {
         const h = heroes.find(x => x.id === state.activeHeroId);
-        document.getElementById('hero-img').src = h.img;
-        document.documentElement.style.setProperty('--neon', h.color);
-        document.getElementById('main-bg').style.background = `radial-gradient(circle at 50% 50%, ${h.bg} 0%, #050505 100%)`;
+        if (h) {
+            document.getElementById('hero-img').src = h.img;
+            document.documentElement.style.setProperty('--neon', h.color);
+            document.getElementById('main-bg').style.background = `radial-gradient(circle at 50% 50%, ${h.bg} 0%, #050505 100%)`;
+        }
     }
 
     function save() {
         state.lastUnix = Date.now();
         localStorage.setItem('nova_engine_save', JSON.stringify(state));
+        saveToDB();
     }
 
     window.onload = init;
