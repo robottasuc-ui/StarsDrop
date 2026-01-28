@@ -31,7 +31,6 @@
             pointer-events: none; 
         }
 
-        /* Кнопка назад */
         .back-button { 
             position: absolute; 
             top: 20px; 
@@ -112,7 +111,6 @@
             justify-content: center; 
             border: 1px solid rgba(163, 230, 53, 0.1); 
             backdrop-filter: blur(10px); 
-            transition: 0.3s;
         }
 
         .item img { width: 80px; height: 80px; object-fit: contain; }
@@ -179,7 +177,7 @@
             <button id="spin-btn" class="w-full btn-main py-6 rounded-3xl text-lg uppercase tracking-widest active:scale-95 disabled:opacity-50 transition-all">
                 ЗАГРУЗКА...
             </button>
-            <div id="timer-display" class="status-text">СИНХРОНИЗАЦИЯ...</div>
+            <div id="timer-display" class="status-text">ПОДКЛЮЧЕНИЕ...</div>
         </div>
     </div>
 
@@ -188,24 +186,23 @@
             <img id="won-item-img" src="" class="w-28 h-28 mx-auto object-contain mb-6">
             <h2 class="text-3xl font-black mb-2 uppercase italic tracking-tighter">ВЫИГРЫШ!</h2>
             <p id="won-item-name" class="text-green-400 font-black mb-10 uppercase text-xs tracking-widest"></p>
-            
             <div class="flex flex-col gap-4">
-                <button id="sell-btn" class="w-full bg-green-500 text-black py-5 rounded-2xl font-black uppercase text-sm active:scale-95">
-                    Продать
-                </button>
-                <button id="keep-btn" class="w-full bg-white/5 border border-white/10 py-5 rounded-2xl font-bold uppercase text-xs text-white/70 active:scale-95">
-                    В инвентарь
-                </button>
+                <button id="sell-btn" class="w-full bg-green-500 text-black py-5 rounded-2xl font-black uppercase text-sm active:scale-95">Продать</button>
+                <button id="keep-btn" class="w-full bg-white/5 border border-white/10 py-5 rounded-2xl font-bold uppercase text-xs text-white/70 active:scale-95">В инвентарь</button>
             </div>
         </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        const API_URL = 'https://api.sheetbest.com/sheets/85c1006a-f951-4055-896d-5daed83821ef';
         const user = tg.initDataUnsafe?.user || { id: "12345" };
-        const SPIN_COST = 100;
 
+        // Supabase Config
+        const SUPABASE_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
+        const TABLE_NAME = 'users';
+
+        const SPIN_COST = 100;
         const ITEMS_DB = {
             1: { name: "1 May", img: "1may.jpg", price: 100 },
             2: { name: "2025", img: "2025.jpg", price: 500 },
@@ -226,68 +223,62 @@
 
         function goToMain() { window.location.href = 'index.html'; }
 
+        // Универсальный fetch для Supabase
+        async function supabaseCall(path, method = 'GET', body = null) {
+            const headers = {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            };
+            const config = { method, headers };
+            if (body) config.body = JSON.stringify(body);
+            const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, config);
+            return response.json();
+        }
+
         async function loadUserData() {
             try {
-                const res = await fetch(`${API_URL}/username/${user.id}`);
-                const data = await res.json();
+                // Ищем по username (ID телеги)
+                let data = await supabaseCall(`${TABLE_NAME}?username=eq.${user.id}`);
                 
-                if (data.length === 0) {
-                    const newUser = { ton: 500, inventory: "", username: user.id.toString() };
-                    await fetch(API_URL, {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(newUser)
-                    });
-                    userRowData = newUser;
+                if (!data || data.length === 0) {
+                    const newUser = { username: user.id.toString(), ton: 500, inventory: "" };
+                    const created = await supabaseCall(TABLE_NAME, 'POST', newUser);
+                    userRowData = created[0];
                 } else {
                     userRowData = data[0];
                 }
                 updateUI();
             } catch (e) {
-                document.getElementById('timer-display').innerText = "ОШИБКА СЕТИ";
+                document.getElementById('timer-display').innerText = "ОШИБКА БАЗЫ";
             }
         }
 
         function updateUI() {
             const balance = parseInt(userRowData.ton) || 0;
-            document.getElementById('timer-display').innerText = `ВАШ БАЛАНС: ${balance} ⭐`;
+            document.getElementById('timer-display').innerText = `БАЛАНС: ${balance} ⭐`;
             const btn = document.getElementById('spin-btn');
-            
-            if (balance < SPIN_COST) {
-                btn.disabled = true;
-                btn.innerText = `НУЖНО ${SPIN_COST} ⭐`;
-            } else {
-                btn.disabled = false;
-                btn.innerText = `КРУТИТЬ ЗА ${SPIN_COST} ⭐`;
-            }
+            btn.disabled = balance < SPIN_COST;
+            btn.innerText = balance < SPIN_COST ? `НУЖНО ${SPIN_COST} ⭐` : `КРУТИТЬ ЗА ${SPIN_COST} ⭐`;
         }
 
         document.getElementById('spin-btn').onclick = async () => {
             if (isSpinning) return;
-            
-            const currentBalance = parseInt(userRowData.ton);
-            if (currentBalance < SPIN_COST) return;
-
             isSpinning = true;
-            document.getElementById('spin-btn').disabled = true;
 
-            // 1. Списываем баланс сразу в таблице (защита от абуза)
-            const newBalance = currentBalance - SPIN_COST;
+            // 1. Списание баланса
+            const newBalance = parseInt(userRowData.ton) - SPIN_COST;
             try {
-                await fetch(`${API_URL}/username/${user.id}`, {
-                    method: 'PATCH',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ ton: newBalance })
-                });
+                await supabaseCall(`${TABLE_NAME}?username=eq.${user.id}`, 'PATCH', { ton: newBalance });
                 userRowData.ton = newBalance;
                 updateUI();
             } catch (e) {
-                alert("Ошибка соединения");
                 isSpinning = false;
                 return;
             }
 
-            // 2. Определяем приз (10% на редкий, иначе Golden Star)
+            // 2. Рандом
             const winId = Math.random() > 0.9 ? itemIds[Math.floor(Math.random() * itemIds.length)] : "65";
             winningItem = { id: winId, ...ITEMS_DB[winId] };
             
@@ -300,9 +291,9 @@
             wheel.style.transition = 'none';
             wheel.style.transform = 'translateX(0)';
             
-            const totalItems = 60; 
-            for (let i = 0; i < totalItems + 5; i++) {
-                const id = (i === totalItems) ? winId : itemIds[Math.floor(Math.random() * itemIds.length)];
+            const count = 60; 
+            for (let i = 0; i < count + 5; i++) {
+                const id = (i === count) ? winId : itemIds[Math.floor(Math.random() * itemIds.length)];
                 const div = document.createElement('div');
                 div.className = 'item';
                 div.innerHTML = `<img src="img/${ITEMS_DB[id].img}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1828/1828884.png'">`;
@@ -310,54 +301,32 @@
             }
 
             setTimeout(() => {
-                const itemWidth = 136; // 120 + 8*2
-                const shift = (totalItems * itemWidth) - (window.innerWidth / 2) + (itemWidth / 2);
+                const itemWidth = 136;
+                const shift = (count * itemWidth) - (window.innerWidth / 2) + (itemWidth / 2);
                 wheel.style.transition = 'transform 8s cubic-bezier(0.1, 0, 0.05, 1)';
                 wheel.style.transform = `translateX(-${shift}px)`;
                 tg.HapticFeedback.impactOccurred('medium');
             }, 50);
 
             setTimeout(() => {
-                showModal();
+                document.getElementById('won-item-img').src = `img/${winningItem.img}`;
+                document.getElementById('won-item-name').innerText = winningItem.name;
+                document.getElementById('sell-btn').innerText = `ПРОДАТЬ ЗА ${winningItem.price} ⭐`;
+                document.getElementById('win-modal').style.display = 'flex';
+                tg.HapticFeedback.notificationOccurred('success');
             }, 8500);
         }
 
-        function showModal() {
-            document.getElementById('won-item-img').src = `img/${winningItem.img}`;
-            document.getElementById('won-item-name').innerText = winningItem.name;
-            document.getElementById('sell-btn').innerText = `ПРОДАТЬ ЗА ${winningItem.price} ⭐`;
-            document.getElementById('win-modal').style.display = 'flex';
-            tg.HapticFeedback.notificationOccurred('success');
-        }
-
-        // Кнопка ПРОДАТЬ
         document.getElementById('sell-btn').onclick = async () => {
-            const btn = document.getElementById('sell-btn');
-            btn.disabled = true;
-            btn.innerText = "ОБРАБОТКА...";
-            
             const finalBalance = parseInt(userRowData.ton) + winningItem.price;
-            await fetch(`${API_URL}/username/${user.id}`, {
-                method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ ton: finalBalance })
-            });
+            await supabaseCall(`${TABLE_NAME}?username=eq.${user.id}`, 'PATCH', { ton: finalBalance });
             location.reload();
         };
 
-        // Кнопка В ИНВЕНТАРЬ
         document.getElementById('keep-btn').onclick = async () => {
-            const btn = document.getElementById('keep-btn');
-            btn.disabled = true;
-            
             const currentInv = userRowData.inventory || "";
             const newInv = currentInv ? `${currentInv}, ${winningItem.name}` : winningItem.name;
-            
-            await fetch(`${API_URL}/username/${user.id}`, {
-                method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ inventory: newInv })
-            });
+            await supabaseCall(`${TABLE_NAME}?username=eq.${user.id}`, 'PATCH', { inventory: newInv });
             location.reload();
         };
 
