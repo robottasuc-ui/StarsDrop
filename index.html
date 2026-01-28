@@ -349,6 +349,32 @@
     }
 
     window.onload = initApp;
+
+    // --- КРОСС-СТРАНИЧНАЯ СИНХРОНИЗАЦИЯ ---
+window.addEventListener('storage', (event) => {
+    // Если на другой странице изменили звезды или тон
+    if (event.key === 'user_stars' || event.key === 'user_ton') {
+        balance.stars = parseInt(localStorage.getItem('user_stars')) || 0;
+        balance.ton = parseFloat(localStorage.getItem('user_ton')) || 0;
+        
+        // Вызываем функцию обновления UI, которая уже есть в твоих файлах
+        if (typeof updateUI === 'function') updateUI();
+        console.log("Система: Баланс синхронизирован с другой страницы");
+    }
+    
+    // Если изменился инвентарь
+    if (event.key === 'user_inventory') {
+        console.log("Система: Инвентарь обновлен на другой странице");
+        // Если на странице есть рендер инвентаря, можно вызвать его тут
+    }
+});
+
+// Функция для принудительного уведомления других страниц об изменениях
+function broadcastData() {
+    localStorage.setItem('user_stars', balance.stars);
+    localStorage.setItem('user_ton', balance.ton);
+    // Это событие 'storage' сработает во всех других вкладках
+}
 </script>
 </body>
 </html>
