@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <script>
+    (function() {
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isTelegramMobile = window.Telegram && window.Telegram.WebApp && 
+                                 (window.Telegram.WebApp.platform === 'android' || 
+                                  window.Telegram.WebApp.platform === 'ios');
+
+        // Если это НЕ мобилка и экран широкий — гоу на pc.html
+        if (!isMobile && window.innerWidth > 1024) {
+            window.location.href = 'pc.html';
+        }
+    })();
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>StarsDrop Ultimate Green Edition</title>
