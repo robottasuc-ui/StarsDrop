@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>StarsDrop Ultimate Green Edition</title>
+    <title>StarsDrop Ultimate Green Edition (Supabase Only)</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -177,8 +177,7 @@
                 <div id="tab-btn-stars" onclick="setTab('stars')" class="tab-trigger flex-1 text-center py-3 rounded-xl font-black uppercase italic cursor-pointer transition-all">Stars</div>
             </div>
 
-            <div id="pane-ton" class="grid grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto">
-                </div>
+            <div id="pane-ton" class="grid grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto"></div>
 
             <div id="pane-stars" class="hidden text-center py-4">
                 <p class="text-gray-400 text-sm mb-4 uppercase font-bold tracking-widest italic">Пополнение Stars</p>
@@ -192,7 +191,9 @@
 
 <script>
     const tg = window.Telegram.WebApp;
-    const API_URL = 'https://api.sheetbest.com/sheets/85c1006a-f951-4055-896d-5daed83821ef';
+    // URL вашего бэкенда Supabase (Vercel прокси)
+    const BACKEND_URL = 'https://stars-drop.vercel.app/api'; 
+    
     const user = tg.initDataUnsafe?.user;
     let isProcessing = false;
 
@@ -201,6 +202,7 @@
         document.body.classList.add('loaded');
         const platform = tg.platform;
         
+        // Блокировка десктопа
         if (['desktop', 'tdesktop', 'macos', 'web'].includes(platform) || window.innerWidth > 1024) {
             document.getElementById('pc-only-blocker').style.display = 'flex';
             const main = document.querySelector('.main-wrapper');
@@ -227,12 +229,12 @@
                     <div class="text-[10px] text-blue-400 font-black uppercase mb-1">Пополнить</div>
                     <div class="font-black text-white text-xl">${amt} TON</div>
                 `;
-                btn.onclick = () => updateTonBalance(amt); // Тестовая функция пополнения
+                btn.onclick = () => updateBalanceInDB('ton', amt); 
                 tonBox.appendChild(btn);
             });
         }
         
-        syncData();
+        loadDataFromSupabase();
     }
 
     function hideLoader() {
@@ -243,7 +245,8 @@
         }
     }
 
-    // --- СИНХРОНИЗАЦИЯ С ТАБЛИЦЕЙ ---
+    // --- ЛОГИКА SUPABASE ---
+    
     function updateBalanceUI() {
         const stars = localStorage.getItem('user_stars') || '0';
         const ton = localStorage.getItem('user_ton') || '0.00';
@@ -252,76 +255,63 @@
         document.getElementById('header-stars').innerText = parseInt(stars).toLocaleString('ru-RU').replace(/\s/g, '.');
     }
 
-    async function syncData() {
+    async function loadDataFromSupabase() {
         if (!user) return updateBalanceUI();
         try {
-            const res = await fetch(`${API_URL}/id/${user.id}`);
+            // Вызов вашего API для получения данных из Supabase
+            const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}?t=${Date.now()}`);
             const data = await res.json();
             
-            if (data && data.length > 0) {
-                const cloud = data[0];
-                localStorage.setItem('user_stars', cloud.stars || '0');
-                localStorage.setItem('user_ton', cloud.ton || '0.00');
-                console.log("Sync: Данные получены из таблицы");
+            if (data && data.balance !== undefined) {
+                localStorage.setItem('user_stars', data.stars || '0');
+                localStorage.setItem('user_ton', data.balance || '0.00');
+                console.log("Supabase: Данные синхронизированы");
             } else {
-                await registerNewUser();
+                console.log("Supabase: Пользователь не найден, создаем...");
+                // Здесь можно вызвать регистрацию нового юзера через бэкенд
             }
             updateBalanceUI();
         } catch (e) { 
-            console.error("Sync Error:", e); 
+            console.error("Supabase Load Error:", e); 
             updateBalanceUI();
         }
     }
 
-    async function registerNewUser() {
-        const newUser = {
-            id: String(user.id),
-            stars: 0,
-            ton: 0.00,
-            inventory: '[]',
-            used_promos: '[]',
-            username: user.username || user.first_name || "Unknown"
-        };
-        try {
-            await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newUser)
-            });
-            localStorage.setItem('user_stars', '0');
-            localStorage.setItem('user_ton', '0.00');
-        } catch (err) { console.error("Reg Error:", err); }
-    }
-
-    // --- ФУНКЦИЯ ОБНОВЛЕНИЯ TON (ДЛЯ ТВОЕЙ ТАБЛИЦЫ) ---
-    async function updateTonBalance(amount) {
-        if (isProcessing) return;
+    async function updateBalanceInDB(type, amount) {
+        if (isProcessing || !user) return;
         isProcessing = true;
         tg.HapticFeedback.impactOccurred('heavy');
 
-        const currentTon = parseFloat(localStorage.getItem('user_ton') || '0');
-        const newTon = (currentTon + amount).toFixed(2);
+        const currentVal = parseFloat(localStorage.getItem(type === 'ton' ? 'user_ton' : 'user_stars') || '0');
+        const newVal = currentVal + amount;
 
-        // Мгновенно обновляем в UI для скорости
-        localStorage.setItem('user_ton', newTon);
+        // Оптимистичное обновление в UI
+        localStorage.setItem(type === 'ton' ? 'user_ton' : 'user_stars', type === 'ton' ? newVal.toFixed(2) : Math.floor(newVal));
         updateBalanceUI();
 
         try {
-            // Отправляем в Google Sheets через PATCH
-            await fetch(`${API_URL}/id/${user.id}`, {
-                method: 'PATCH',
+            // Отправка на ваш бэкенд
+            const res = await fetch(`${BACKEND_URL}/update_balance`, {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ton: newTon })
+                body: JSON.stringify({
+                    user_id: user.id,
+                    [type === 'ton' ? 'balance' : 'stars']: newVal
+                })
             });
-            tg.showScanQrPopup({ text: "Оплата TON симулирована успешно!" });
+
+            if (res.ok) {
+                tg.showScanQrPopup({ text: `Успешно начислено ${amount} ${type.toUpperCase()}` });
+                setTimeout(() => tg.closeScanQrPopup(), 2000);
+            }
         } catch (e) {
-            console.error("Update TON error:", e);
+            console.error("Supabase Update Error:", e);
         } finally {
             isProcessing = false;
         }
     }
 
-    // --- ВЕРСТКА И МОДАЛКИ ---
+    // --- ИНТЕРФЕЙС ---
     function setTab(type) {
         const isTon = type === 'ton';
         const btnTon = document.getElementById('tab-btn-ton');
@@ -349,7 +339,7 @@
         window.location.href = url; 
     }
 
-    // Анимация звезд
+    // Анимация звезд фона
     const canvas = document.getElementById('stars-canvas');
     if (canvas) {
         const ctx = canvas.getContext('2d');
@@ -386,7 +376,9 @@
     async function verifyGift() {
         const val = document.getElementById('stars-input').value;
         if (!val || val < 15) return tg.showAlert('Минимум 15 Stars');
-        tg.showAlert('Инвойс Stars отправлен!');
+        
+        // Симуляция оплаты Stars через Supabase
+        updateBalanceInDB('stars', parseInt(val));
     }
 </script>
 </body>
