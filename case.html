@@ -181,24 +181,23 @@
 const tg = window.Telegram.WebApp;
 const BACKEND_URL = 'https://stars-drop.vercel.app/api';
 
+// Для интеграции с базой (Supabase)
+const DB_CONFIG = {
+    url: 'https://mwsbkpfarhdankpyifbm.supabase.co',
+    key: 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA'
+};
+
 let currentWinners = [];
 let mul = 1;
 let activeCase = null;
 
-// Единый объект баланса
 let balance = {
     stars: parseInt(localStorage.getItem('user_stars')) || 0,
     ton: parseFloat(localStorage.getItem('user_ton')) || 0
 };
 
-// Функция для сохранения и обновления UI
-function saveAndRefresh() {
-    localStorage.setItem('user_stars', balance.stars);
-    localStorage.setItem('user_ton', balance.ton.toFixed(2));
-    updateUI();
-}
+// --- ИНТЕГРАЦИЯ С БАЗОЙ ---
 
-// Функция синхронизации с сервером (твоя проблема решена здесь)
 async function syncData() {
     if (tg.initDataUnsafe?.user) {
         try {
@@ -207,32 +206,62 @@ async function syncData() {
             balance.stars = parseInt(data.stars);
             balance.ton = parseFloat(data.balance);
             saveAndRefresh();
-            console.log("Balance updated from server");
+            console.log("Database Sync: Success");
         } catch (e) { 
-            console.error("Sync error"); 
+            console.error("Database Sync: Failed"); 
             updateUI();
         }
     }
 }
 
-function updateUI() {
-    const formattedStars = Math.floor(balance.stars).toLocaleString('ru-RU').replace(/\s/g, '.');
-    const headerStars = document.getElementById('header-stars');
-    const headerTon = document.getElementById('header-ton');
-    
-    if (headerStars) headerStars.innerText = formattedStars;
-    if (headerTon) headerTon.innerText = balance.ton.toFixed(2);
+async function updateStarsOnServer(amount) {
+    if (!tg.initDataUnsafe?.user) return;
+    try {
+        await fetch(`${BACKEND_URL}/update_balance`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                user_id: tg.initDataUnsafe.user.id,
+                stars: amount
+            })
+        });
+    } catch (e) { console.error("Update stars error"); }
 }
 
-// Обновление, если изменилось в другой вкладке
-window.addEventListener('storage', () => {
-    balance.stars = parseInt(localStorage.getItem('user_stars')) || 0;
-    balance.ton = parseFloat(localStorage.getItem('user_ton')) || 0;
-    updateUI();
-});
+async function saveInventoryToDB(items) {
+    if (!tg.initDataUnsafe?.user) return;
+    // Пример PATCH запроса в таблицу пользователей Supabase
+    try {
+        await fetch(`${DB_CONFIG.url}/rest/v1/users?id=eq.${tg.initDataUnsafe.user.id}`, {
+            method: 'PATCH',
+            headers: {
+                'apikey': DB_CONFIG.key,
+                'Authorization': `Bearer ${DB_CONFIG.key}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ inventory: items })
+        });
+    } catch (e) { console.error("Inventory DB error"); }
+}
 
-// Синхронизация при возврате на страницу
-window.addEventListener('pageshow', syncData);
+// --- ЛОГИКА UI ---
+
+function saveAndRefresh() {
+    localStorage.setItem('user_stars', balance.stars);
+    localStorage.setItem('user_ton', balance.ton.toFixed(2));
+    updateUI();
+}
+
+function updateUI() {
+    const formattedStars = Math.floor(balance.stars).toLocaleString('ru-RU').replace(/\s/g, '.');
+    const hStars = document.getElementById('header-stars');
+    const hTon = document.getElementById('header-ton');
+    if (hStars) hStars.innerText = formattedStars;
+    if (hTon) hTon.innerText = balance.ton.toFixed(2);
+}
+
+// --- ДАННЫЕ ---
 
 const ITEMS = {
     1: { name: "1 May", img: "1may.jpg", price: 100 },
@@ -299,8 +328,10 @@ const CASES = [
     { name: "Пиратский Клад", stars: 3500, ton: 35, img: "case5.png", loot: [[55, 0], [27, 0], [63, 30], [59, 65], [20, 5]] },
     { name: "Детективный", stars: 5000, ton: 50, img: "case7.png", loot: [[30, 0], [41, 1], [18, 5], [16, 70], [27, 25]] },
     { name: "Технологический", stars: 7500, ton: 70, img: "case8.png", loot: [[40, 0], [41, 0], [24, 0], [63, 10], [59, 90]] },
-    { name: "Лимонный", stars: 25000, ton: 150, img: "case9.png", loot: [[40, 0], [66, 0], [55, 0], [21, 50], [18, 40], [4, 10]] }, 
+    { name: "Лимонный", stars: 25000, ton: 150, img: "case9.png", loot: [[40, 0], [66, 0], [55, 0], [21, 50], [18, 40], [4, 10]] }
 ];
+
+// --- ГЕЙМПЛЕЙ ---
 
 function render() {
     document.getElementById('main-grid').innerHTML = CASES.map((c, i) => `
@@ -357,6 +388,9 @@ function startRoll(type) {
     
     balance[type] -= cost;
     saveAndRefresh();
+    
+    // Интеграция: списываем баланс в базе сразу при начале прокрута
+    if (type === 'stars') updateStarsOnServer(balance.stars);
 
     document.getElementById('view-preview').style.display = 'none';
     document.getElementById('view-roulette').style.display = 'flex';
@@ -429,16 +463,22 @@ function showWin(winners) {
     document.getElementById('sell-btn').onclick = () => {
         balance.stars += totalSellPrice;
         saveAndRefresh();
+        // Интеграция: обновляем базу при продаже
+        updateStarsOnServer(balance.stars);
         closeModal();
     };
 }
 
-function saveToInventoryAndClose() {
+async function saveToInventoryAndClose() {
     let inventory = JSON.parse(localStorage.getItem('user_inventory') || '[]');
     currentWinners.forEach(item => {
         inventory.push({ name: item.name, img: `img/${item.img}`, price: item.price });
     });
     localStorage.setItem('user_inventory', JSON.stringify(inventory));
+    
+    // Интеграция: сохраняем в базу данных
+    await saveInventoryToDB(inventory);
+    
     closeModal();
     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
 }
@@ -477,7 +517,7 @@ function closeModal() {
 }
 
 window.onload = () => {
-    syncData(); // Важно: синхронизируем сразу при входе
+    syncData(); 
     render(); 
     initLive(); 
 };
