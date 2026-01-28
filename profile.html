@@ -271,11 +271,11 @@
     const tg = window.Telegram.WebApp;
     let activeSelectionIndex = null;
     
-    // --- НАСТРОЙКИ SUPABASE ---
-    const SUPABASE_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
+    // --- SUPABASE CONFIGURATION ---
+    // ЗАМЕНИ 'твоё_id' на реальный ID проекта из Supabase Dashboard
+    const SUPABASE_URL = 'https://cljffghytfvcxzsedrty.supabase.co'; 
     const SUPABASE_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCg0'; 
     
-    // ТВОЯ БАЗА ПОДАРКОВ (ПОЛНАЯ ВЕРСИЯ)
     const MASTER_ITEMS_DATABASE = {
         "1may.jpg": { name: "1 May Exclusive", price: 100 },
         "2025.jpg": { name: "Happy 2025", price: 500 },
@@ -338,63 +338,69 @@
         { code: "ST1FIX", reward: 1000 },
         { code: "ADMIN", reward: 500000 },
         { code: "DIMA_XUYLAN", reward: 1000000 },
-        { code: "GIFT2026", reward: 50000000 }
+        { code: "GIFT2026", reward: 5000 }
     ];
 
-    // --- СИНХРОНИЗАЦИЯ С БАЗОЙ ---
-    async function syncWithServer(newStars, newInventory = null) {
-        const userId = tg.initDataUnsafe?.user?.id || 12345;
-        const updateData = { stars: newStars };
-        if (newInventory) updateData.inventory = newInventory;
-
+    // --- СЕРВИСНЫЕ ФУНКЦИИ ---
+    async function apiRequest(method, query, body = null) {
+        const url = `${SUPABASE_URL}/rest/v1/${query}`;
+        const options = {
+            method: method,
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            }
+        };
+        if (body) options.body = JSON.stringify(body);
+        
         try {
-            const response = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
-                method: 'PATCH',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(updateData)
-            });
-            return response.ok;
+            const response = await fetch(url, options);
+            if (!response.ok) throw new Error(await response.text());
+            return await response.json();
         } catch (e) {
-            console.error("Sync Error:", e);
-            return false;
+            console.error("Supabase Error:", e);
+            return null;
         }
     }
 
     async function fetchUserProfile() {
         const userId = tg.initDataUnsafe?.user?.id || 12345;
-        try {
-            const response = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=*`, {
-                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-            });
-            const data = await response.json();
-            
-            if (data.length > 0) {
-                localStorage.setItem('user_stars', data[0].stars || 0);
-                localStorage.setItem('user_inventory', JSON.stringify(data[0].inventory || []));
-            } else {
-                await fetch(`${SUPABASE_URL}/rest/v1/users`, {
-                    method: 'POST',
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ id: userId, stars: 0, inventory: [] })
-                });
-                localStorage.setItem('user_stars', "0");
-                localStorage.setItem('user_inventory', "[]");
+        const data = await apiRequest('GET', `users?id=eq.${userId}&select=*`);
+        
+        if (data && data.length > 0) {
+            saveToLocal(data[0]);
+            updateUI();
+        } else {
+            // Регистрация нового юзера
+            const newUser = { 
+                id: userId, 
+                stars: 0, 
+                inventory: [], 
+                used_promos: [],
+                username: tg.initDataUnsafe?.user?.username || "GUEST"
+            };
+            const created = await apiRequest('POST', 'users', newUser);
+            if (created) {
+                saveToLocal(newUser);
+                updateUI();
             }
-            refreshFinancialStatus();
-            renderInfiniteInventory();
-        } catch (e) { 
-            console.error("Load Error:", e); 
         }
     }
 
+    function saveToLocal(data) {
+        localStorage.setItem('user_stars', data.stars);
+        localStorage.setItem('user_inventory', JSON.stringify(data.inventory || []));
+        localStorage.setItem('used_promos', JSON.stringify(data.used_promos || []));
+    }
+
+    function updateUI() {
+        refreshFinancialStatus();
+        renderInfiniteInventory();
+    }
+
+    // --- ЛОГИКА ПРОФИЛЯ ---
     function initUserData() {
         const user = tg.initDataUnsafe?.user || { id: 12345, first_name: "GUEST", username: "guest" };
         document.getElementById('user-name').innerText = (user.username || user.first_name).toUpperCase();
@@ -462,6 +468,7 @@
     }
 
     async function executeSellOrder() {
+        const userId = tg.initDataUnsafe?.user?.id || 12345;
         let inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
         const item = inventory[activeSelectionIndex];
         const fileName = item.img.split('/').pop().toLowerCase();
@@ -471,42 +478,51 @@
         const newBalance = wallet + reward;
         inventory.splice(activeSelectionIndex, 1);
 
-        const success = await syncWithServer(newBalance, inventory);
-        if(success) {
-            localStorage.setItem('user_stars', newBalance.toString());
+        // Синхронизация с сервером (PATCH)
+        const updated = await apiRequest('PATCH', `users?id=eq.${userId}`, {
+            stars: newBalance,
+            inventory: inventory
+        });
+
+        if (updated) {
+            localStorage.setItem('user_stars', newBalance);
             localStorage.setItem('user_inventory', JSON.stringify(inventory));
             closeItemModal();
-            renderInfiniteInventory();
-            refreshFinancialStatus();
+            updateUI();
             tg.HapticFeedback.notificationOccurred('success');
         } else {
-            tg.showAlert("Ошибка синхронизации!");
+            tg.showAlert("Сбой синхронизации с базой!");
         }
     }
 
     async function handlePromoActivation() {
+        const userId = tg.initDataUnsafe?.user?.id || 12345;
         const input = document.getElementById('promo-input');
-        const enteredCode = input.value.trim().toUpperCase();
-        if (!enteredCode) return;
+        const code = input.value.trim().toUpperCase();
+        if (!code) return;
 
         let usedPromos = JSON.parse(localStorage.getItem('used_promos')) || [];
-        if (usedPromos.includes(enteredCode)) {
-            tg.showAlert("Уже активирован!");
+        if (usedPromos.includes(code)) {
+            tg.showAlert("Уже активировано!");
             return;
         }
 
-        const promoData = PROMO_CONFIG.find(p => p.code === enteredCode);
-        if (promoData) {
+        const promo = PROMO_CONFIG.find(p => p.code === code);
+        if (promo) {
             let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
-            const newBalance = wallet + promoData.reward;
+            const newBalance = wallet + promo.reward;
+            usedPromos.push(code);
 
-            const success = await syncWithServer(newBalance);
-            if(success) {
-                localStorage.setItem('user_stars', newBalance.toString());
-                usedPromos.push(enteredCode);
+            const updated = await apiRequest('PATCH', `users?id=eq.${userId}`, {
+                stars: newBalance,
+                used_promos: usedPromos
+            });
+
+            if (updated) {
+                localStorage.setItem('user_stars', newBalance);
                 localStorage.setItem('used_promos', JSON.stringify(usedPromos));
-                tg.showAlert(`УСПЕШНО: +${promoData.reward} ⭐`);
-                refreshFinancialStatus();
+                tg.showAlert(`+${promo.reward} ⭐ начислено!`);
+                updateUI();
                 input.value = '';
             }
         } else {
@@ -514,7 +530,7 @@
         }
     }
 
-    // --- ЭФФЕКТЫ ---
+    // --- ВИЗУАЛ (ЗВЕЗДЫ) ---
     const starContainer = document.getElementById('stars-canvas');
     const starCtx = starContainer.getContext('2d');
     let starArray = [];
@@ -546,6 +562,12 @@
             if(dot.y > starContainer.height) dot.y = -10;
         });
         requestAnimationFrame(animateStarfield);
+    }
+
+    function shareReferralLink() {
+        const userId = tg.initDataUnsafe?.user?.id || 12345;
+        const link = `https://t.me/StarDrop_channel?start=ref_${userId}`;
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent("Залетай в StarsDrop! Получай подарки!")}`);
     }
 
     window.onload = function() {
