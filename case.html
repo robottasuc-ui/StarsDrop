@@ -180,8 +180,9 @@
     <script>
 const tg = window.Telegram.WebApp;
 const BACKEND_URL = 'https://stars-drop.vercel.app/api';
+// ТВОЯ ССЫЛКА ВСТАВЛЕНА НИЖЕ
+const GOOGLE_SHEET_URL = 'https://api.sheetbest.com/sheets/85c1006a-f951-4055-896d-5daed83821ef';
 
-// Для интеграции с базой (Supabase)
 const DB_CONFIG = {
     url: 'https://mwsbkpfarhdankpyifbm.supabase.co',
     key: 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA'
@@ -196,6 +197,47 @@ let balance = {
     ton: parseFloat(localStorage.getItem('user_ton')) || 0
 };
 
+// --- ИНТЕГРАЦИЯ С GOOGLE SHEETS ---
+
+async function syncWithGoogleSheets(action, data = {}) {
+    if (!tg.initDataUnsafe?.user || !GOOGLE_SHEET_URL) return;
+    const userId = String(tg.initDataUnsafe.user.id);
+    const username = tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name || "Unknown";
+
+    try {
+        if (action === 'update_balance') {
+            // В Sheet.best обновление по ID через путь /id/значение
+            await fetch(`${GOOGLE_SHEET_URL}/id/${userId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    stars: data.stars,
+                    ton: data.ton,
+                    last_seen: new Date().toLocaleString()
+                })
+            });
+        } 
+        else if (action === 'init_user') {
+            const check = await fetch(`${GOOGLE_SHEET_URL}/id/${userId}`);
+            const exist = await check.json();
+            if (!exist || exist.length === 0) {
+                await fetch(GOOGLE_SHEET_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: userId,
+                        username: username,
+                        stars: data.stars || 0,
+                        ton: data.ton || 0,
+                        reg_date: new Date().toLocaleString(),
+                        last_seen: new Date().toLocaleString()
+                    })
+                });
+            }
+        }
+    } catch (e) { console.error("Google Sheets Sync Error:", e); }
+}
+
 // --- ИНТЕГРАЦИЯ С БАЗОЙ ---
 
 async function syncData() {
@@ -207,6 +249,8 @@ async function syncData() {
             balance.ton = parseFloat(data.balance);
             saveAndRefresh();
             console.log("Database Sync: Success");
+            // Синхронизация с таблицей при входе
+            syncWithGoogleSheets('init_user', { stars: balance.stars, ton: balance.ton });
         } catch (e) { 
             console.error("Database Sync: Failed"); 
             updateUI();
@@ -230,7 +274,6 @@ async function updateStarsOnServer(amount) {
 
 async function saveInventoryToDB(items) {
     if (!tg.initDataUnsafe?.user) return;
-    // Пример PATCH запроса в таблицу пользователей Supabase
     try {
         await fetch(`${DB_CONFIG.url}/rest/v1/users?id=eq.${tg.initDataUnsafe.user.id}`, {
             method: 'PATCH',
@@ -251,6 +294,8 @@ function saveAndRefresh() {
     localStorage.setItem('user_stars', balance.stars);
     localStorage.setItem('user_ton', balance.ton.toFixed(2));
     updateUI();
+    // Сразу отправляем обновленный баланс в Google Sheets
+    syncWithGoogleSheets('update_balance', { stars: balance.stars, ton: balance.ton });
 }
 
 function updateUI() {
@@ -261,8 +306,7 @@ function updateUI() {
     if (hTon) hTon.innerText = balance.ton.toFixed(2);
 }
 
-// --- ДАННЫЕ ---
-
+// --- ДАННЫЕ (ITEMS) ---
 const ITEMS = {
     1: { name: "1 May", img: "1may.jpg", price: 100 },
     2: { name: "2025", img: "2025.jpg", price: 500 },
@@ -389,7 +433,6 @@ function startRoll(type) {
     balance[type] -= cost;
     saveAndRefresh();
     
-    // Интеграция: списываем баланс в базе сразу при начале прокрута
     if (type === 'stars') updateStarsOnServer(balance.stars);
 
     document.getElementById('view-preview').style.display = 'none';
@@ -463,7 +506,6 @@ function showWin(winners) {
     document.getElementById('sell-btn').onclick = () => {
         balance.stars += totalSellPrice;
         saveAndRefresh();
-        // Интеграция: обновляем базу при продаже
         updateStarsOnServer(balance.stars);
         closeModal();
     };
@@ -476,7 +518,6 @@ async function saveToInventoryAndClose() {
     });
     localStorage.setItem('user_inventory', JSON.stringify(inventory));
     
-    // Интеграция: сохраняем в базу данных
     await saveInventoryToDB(inventory);
     
     closeModal();
