@@ -222,6 +222,8 @@
 
     <script>
         const tg = window.Telegram.WebApp;
+        const BACKEND_URL = 'https://stars-drop.vercel.app/api';
+        const user = tg.initDataUnsafe?.user;
         tg.expand();
 
         const wheel = document.getElementById('wheel');
@@ -245,31 +247,43 @@
 
         const itemIds = Object.keys(ITEMS_DB);
         let winningItem = null;
+        let isSpinning = false;
 
         function goToMain() { window.location.href = 'index.html'; }
 
-        function updateStatus() {
-            const lastSpin = localStorage.getItem('last_free_spin');
-            const now = Date.now();
-            // Получаем актуальные звезды из памяти
-            const stars = parseInt(localStorage.getItem('user_stars')) || 0;
-            const cooldown = 86400000;
+        // ИНТЕГРАЦИЯ: Получаем баланс и время последнего спина из БД
+        async function updateStatus() {
+            if (!user) return;
+            try {
+                const res = await fetch(`${BACKEND_URL}/get_user_state/${user.id}`);
+                const data = await res.json();
+                
+                // Сохраняем в локал для мгновенного доступа
+                localStorage.setItem('user_stars', data.stars);
+                
+                const now = Date.now();
+                const lastSpin = data.last_free_spin || 0; 
+                const cooldown = 86400000;
 
-            if (!lastSpin || (now - lastSpin) >= cooldown) {
-                spinBtn.innerHTML = "КРУТИТЬ БЕСПЛАТНО";
-                spinBtn.disabled = false;
-                timerDisplay.innerText = "ЕЖЕДНЕВНЫЙ БОНУС ДОСТУПЕН!";
-                return "free";
-            } else {
-                spinBtn.innerHTML = `КРУТИТЬ ЗА 100 <img src="img/star.png" class="star-icon">`;
-                if (stars < SPIN_COST) {
-                    spinBtn.disabled = true;
-                    timerDisplay.innerText = `НУЖНО ${SPIN_COST} ⭐ (У ВАС ${stars})`;
-                } else {
+                if ((now - lastSpin) >= cooldown) {
+                    spinBtn.innerHTML = "КРУТИТЬ БЕСПЛАТНО";
                     spinBtn.disabled = false;
-                    timerDisplay.innerText = `ПЛАТНЫЙ ПРОКРУТ (БАЛАНС: ${stars} ⭐)`;
+                    timerDisplay.innerText = "ЕЖЕДНЕВНЫЙ БОНУС ДОСТУПЕН!";
+                    return "free";
+                } else {
+                    spinBtn.innerHTML = `КРУТИТЬ ЗА 100 <img src="img/star.png" class="star-icon">`;
+                    if (data.stars < SPIN_COST) {
+                        spinBtn.disabled = true;
+                        timerDisplay.innerText = `НУЖНО ${SPIN_COST} ⭐ (У ВАС ${data.stars})`;
+                    } else {
+                        spinBtn.disabled = false;
+                        timerDisplay.innerText = `ПЛАТНЫЙ ПРОКРУТ (БАЛАНС: ${data.stars} ⭐)`;
+                    }
+                    return "paid";
                 }
-                return "paid";
+            } catch (e) {
+                console.error("Ошибка синхронизации:", e);
+                timerDisplay.innerText = "ОШИБКА ПОДКЛЮЧЕНИЯ";
             }
         }
 
@@ -291,28 +305,30 @@
             }
         }
 
-        spinBtn.addEventListener('click', () => {
-            const mode = updateStatus();
-            let stars = parseInt(localStorage.getItem('user_stars')) || 0;
-
-            // Логика списания
-            if (mode === "paid") {
-                if (stars < SPIN_COST) {
-                    alert("Недостаточно звезд!");
+        spinBtn.addEventListener('click', async () => {
+            if (isSpinning) return;
+            const mode = await updateStatus();
+            
+            // ИНТЕГРАЦИЯ: Запрос на сервер для начала прокрута (списание валюты в БД)
+            try {
+                const res = await fetch(`${BACKEND_URL}/start_spin`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: user?.id, mode: mode })
+                });
+                const result = await res.json();
+                
+                if (!result.success) {
+                    tg.showAlert(result.error || "Ошибка старта");
                     return;
                 }
-                // УМЕНЬШАЕМ БАЛАНС
-                const newBalance = stars - SPIN_COST;
-                localStorage.setItem('user_stars', newBalance.toString());
-                console.log("Списано 100 звезд. Новый баланс:", newBalance);
-            } else {
-                localStorage.setItem('last_free_spin', Date.now().toString());
+            } catch (e) {
+                tg.showAlert("Сервер недоступен");
+                return;
             }
 
-            // Блокируем кнопку и обновляем текст, чтобы сразу было видно списание
+            isSpinning = true;
             spinBtn.disabled = true;
-            updateStatus(); 
-
             initWheel();
             
             const itemWidth = 136; 
@@ -321,7 +337,6 @@
             wheel.style.transition = 'transform 8s cubic-bezier(0.1, 0, 0.05, 1)';
             wheel.style.transform = `translateX(-${finalPosition}px)`;
 
-            // Вибрация (оставляем, так как это не звук)
             tg.HapticFeedback.impactOccurred('medium');
 
             setTimeout(() => { 
@@ -330,22 +345,50 @@
                 document.getElementById('sell-btn').innerText = `ПРОДАТЬ ЗА ${winningItem.price} ⭐`;
                 winModal.style.display = 'flex'; 
                 tg.HapticFeedback.notificationOccurred('success');
+                isSpinning = false;
             }, 8200);
         });
 
-        document.getElementById('sell-btn').onclick = () => {
-            let s = parseInt(localStorage.getItem('user_stars')) || 0;
-            localStorage.setItem('user_stars', (s + winningItem.price).toString());
-            goToMain();
+        // ИНТЕГРАЦИЯ: Продажа предмета через БД
+        document.getElementById('sell-btn').onclick = async () => {
+            document.getElementById('sell-btn').disabled = true;
+            try {
+                await fetch(`${BACKEND_URL}/sell_item`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        user_id: user?.id, 
+                        price: winningItem.price,
+                        item_id: winningItem.id 
+                    })
+                });
+                goToMain();
+            } catch (e) {
+                tg.showAlert("Ошибка при продаже");
+            }
         };
 
-        document.getElementById('keep-btn').onclick = () => {
-            let inv = JSON.parse(localStorage.getItem('user_inventory')) || [];
-            inv.push({ id: winningItem.id, name: winningItem.name, img: `img/${winningItem.img}` });
-            localStorage.setItem('user_inventory', JSON.stringify(inv));
-            goToMain();
+        // ИНТЕГРАЦИЯ: Добавление в инвентарь в БД
+        document.getElementById('keep-btn').onclick = async () => {
+            document.getElementById('keep-btn').disabled = true;
+            try {
+                await fetch(`${BACKEND_URL}/add_inventory`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        user_id: user?.id, 
+                        item_id: winningItem.id,
+                        item_name: winningItem.name,
+                        item_img: winningItem.img
+                    })
+                });
+                goToMain();
+            } catch (e) {
+                tg.showAlert("Ошибка сохранения");
+            }
         };
 
+        // Запуск при загрузке
         initWheel();
         updateStatus();
     </script>
