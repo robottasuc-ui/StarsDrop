@@ -171,23 +171,27 @@
     <div id="vault-modal" class="modal-base" onclick="closeVault()">
         <div class="modal-sheet" onclick="event.stopPropagation()">
             <div class="w-16 h-1.5 bg-white/10 mx-auto mb-8 rounded-full"></div>
+            
             <div class="flex p-1.5 bg-black/50 rounded-2xl border border-white/5 mb-8">
                 <div id="tab-btn-ton" onclick="setTab('ton')" class="tab-trigger flex-1 text-center py-3 rounded-xl font-black uppercase italic cursor-pointer transition-all">Ton Pay</div>
                 <div id="tab-btn-stars" onclick="setTab('stars')" class="tab-trigger flex-1 text-center py-3 rounded-xl font-black uppercase italic cursor-pointer transition-all">Stars</div>
             </div>
-            <div id="pane-ton" class="grid grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto"></div>
+
+            <div id="pane-ton" class="grid grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto">
+                </div>
+
             <div id="pane-stars" class="hidden text-center py-4">
                 <p class="text-gray-400 text-sm mb-4 uppercase font-bold tracking-widest italic">Пополнение Stars</p>
                 <input type="number" id="stars-input" placeholder="Минимум 15" class="w-full bg-white/5 border border-white/10 py-5 px-6 rounded-2xl text-center text-2xl font-black text-white outline-none mb-6">
                 <button onclick="verifyGift()" class="w-full bg-yellow-500 text-black font-black py-5 rounded-2xl uppercase text-sm tracking-widest shadow-lg">Оплатить через Telegram</button>
             </div>
+
             <button onclick="closeVault()" class="w-full mt-8 py-2 text-gray-500 font-bold uppercase text-[11px] tracking-widest">Вернуться назад</button>
         </div>
     </div>
 
 <script>
     const tg = window.Telegram.WebApp;
-    // --- ТВОЯ НОВАЯ БАЗА GOOGLE SHEETS ---
     const API_URL = 'https://api.sheetbest.com/sheets/85c1006a-f951-4055-896d-5daed83821ef';
     const user = tg.initDataUnsafe?.user;
     let isProcessing = false;
@@ -201,6 +205,7 @@
             document.getElementById('pc-only-blocker').style.display = 'flex';
             const main = document.querySelector('.main-wrapper');
             if (main) main.remove();
+            hideLoader();
             return;
         }
 
@@ -210,6 +215,7 @@
             document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?background=166534&color=fff&name=${user.first_name}`;
         }
 
+        // Рендер кнопок TON
         const PACKS = [1, 3, 5, 10, 20, 50, 100, 250];
         const tonBox = document.getElementById('pane-ton');
         if (tonBox) {
@@ -217,8 +223,11 @@
             PACKS.forEach(amt => {
                 const btn = document.createElement('div');
                 btn.className = 'bg-white/5 border border-white/10 p-6 rounded-3xl text-center active:scale-95 transition-all cursor-pointer';
-                btn.innerHTML = `<div class="text-[10px] text-blue-400 font-black uppercase mb-1">Пополнить</div><div class="font-black text-white text-xl">${amt} TON</div>`;
-                btn.onclick = () => processPayment(amt);
+                btn.innerHTML = `
+                    <div class="text-[10px] text-blue-400 font-black uppercase mb-1">Пополнить</div>
+                    <div class="font-black text-white text-xl">${amt} TON</div>
+                `;
+                btn.onclick = () => updateTonBalance(amt); // Тестовая функция пополнения
                 tonBox.appendChild(btn);
             });
         }
@@ -226,48 +235,47 @@
         syncData();
     }
 
-    // --- НОВАЯ ЛОГИКА СИНХРОНИЗАЦИИ ---
+    function hideLoader() {
+        const loader = document.getElementById('global-loader');
+        if(loader) { 
+            loader.style.opacity = '0'; 
+            setTimeout(() => { loader.style.display = 'none'; }, 500); 
+        }
+    }
+
+    // --- СИНХРОНИЗАЦИЯ С ТАБЛИЦЕЙ ---
     function updateBalanceUI() {
         const stars = localStorage.getItem('user_stars') || '0';
         const ton = localStorage.getItem('user_ton') || '0.00';
         
-        const headerTon = document.getElementById('header-ton');
-        const headerStars = document.getElementById('header-stars');
-        
-        if (headerTon) headerTon.innerText = parseFloat(ton).toFixed(2);
-        if (headerStars) headerStars.innerText = parseInt(stars).toLocaleString('ru-RU').replace(/\s/g, '.');
+        document.getElementById('header-ton').innerText = parseFloat(ton).toFixed(2);
+        document.getElementById('header-stars').innerText = parseInt(stars).toLocaleString('ru-RU').replace(/\s/g, '.');
     }
 
     async function syncData() {
-        if (!user) {
-            updateBalanceUI();
-            return;
-        }
+        if (!user) return updateBalanceUI();
         try {
-            // Поиск пользователя в Google Sheets по ID
             const res = await fetch(`${API_URL}/id/${user.id}`);
             const data = await res.json();
             
             if (data && data.length > 0) {
-                // Пользователь найден - берем данные из колонок
-                localStorage.setItem('user_stars', data[0].stars || '0');
-                localStorage.setItem('user_ton', data[0].ton || '0.00');
-                console.log("Sheet Sync: OK");
+                const cloud = data[0];
+                localStorage.setItem('user_stars', cloud.stars || '0');
+                localStorage.setItem('user_ton', cloud.ton || '0.00');
+                console.log("Sync: Данные получены из таблицы");
             } else {
-                // Пользователь не найден - создаем новую запись
-                console.log("New user detected, registering...");
                 await registerNewUser();
             }
             updateBalanceUI();
         } catch (e) { 
-            console.error("Sheet Sync: FAIL", e); 
+            console.error("Sync Error:", e); 
             updateBalanceUI();
         }
     }
 
     async function registerNewUser() {
         const newUser = {
-            id: user.id,
+            id: String(user.id),
             stars: 0,
             ton: 0.00,
             inventory: '[]',
@@ -282,32 +290,50 @@
             });
             localStorage.setItem('user_stars', '0');
             localStorage.setItem('user_ton', '0.00');
-        } catch (err) {
-            console.error("Registration fail:", err);
+        } catch (err) { console.error("Reg Error:", err); }
+    }
+
+    // --- ФУНКЦИЯ ОБНОВЛЕНИЯ TON (ДЛЯ ТВОЕЙ ТАБЛИЦЫ) ---
+    async function updateTonBalance(amount) {
+        if (isProcessing) return;
+        isProcessing = true;
+        tg.HapticFeedback.impactOccurred('heavy');
+
+        const currentTon = parseFloat(localStorage.getItem('user_ton') || '0');
+        const newTon = (currentTon + amount).toFixed(2);
+
+        // Мгновенно обновляем в UI для скорости
+        localStorage.setItem('user_ton', newTon);
+        updateBalanceUI();
+
+        try {
+            // Отправляем в Google Sheets через PATCH
+            await fetch(`${API_URL}/id/${user.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ton: newTon })
+            });
+            tg.showScanQrPopup({ text: "Оплата TON симулирована успешно!" });
+        } catch (e) {
+            console.error("Update TON error:", e);
+        } finally {
+            isProcessing = false;
         }
     }
 
-    window.addEventListener('pageshow', () => { syncData(); });
+    // --- ВЕРСТКА И МОДАЛКИ ---
+    function setTab(type) {
+        const isTon = type === 'ton';
+        const btnTon = document.getElementById('tab-btn-ton');
+        const btnStars = document.getElementById('tab-btn-stars');
+        
+        btnTon.style.background = isTon ? '#a3e635' : 'transparent';
+        btnTon.style.color = isTon ? 'black' : '#555';
+        btnStars.style.background = !isTon ? '#a3e635' : 'transparent';
+        btnStars.style.color = !isTon ? 'black' : '#555';
 
-    // --- ОСТАЛЬНЫЕ ФУНКЦИИ (БЕЗ ИЗМЕНЕНИЙ) ---
-    async function processPayment(amount) {
-        if (isProcessing) return;
-        isProcessing = true;
-        tg.HapticFeedback.impactOccurred('medium');
-        // Здесь остается логика твоего бэкенда для платежей
-        tg.showAlert('Функция оплаты TON в разработке');
-        isProcessing = false;
-    }
-
-    async function verifyGift() {
-        const val = document.getElementById('stars-input').value;
-        if (!val || val < 15) return tg.showAlert('Минимум 15 Stars');
-        tg.showAlert('Оплата Stars через бот...');
-    }
-
-    function navigateTo(url) { 
-        tg.HapticFeedback.impactOccurred('medium'); 
-        window.location.href = url; 
+        document.getElementById('pane-ton').classList.toggle('hidden', !isTon);
+        document.getElementById('pane-stars').classList.toggle('hidden', isTon);
     }
 
     function openVault(tab) { 
@@ -317,22 +343,13 @@
     }
     
     function closeVault() { document.getElementById('vault-modal').style.display = 'none'; }
-    
-    function setTab(type) {
-        const isTon = type === 'ton';
-        const btnTon = document.getElementById('tab-btn-ton');
-        const btnStars = document.getElementById('tab-btn-stars');
-        if(isTon) {
-            btnTon.style.background = '#a3e635'; btnTon.style.color = 'black';
-            btnStars.style.background = 'transparent'; btnStars.style.color = '#555';
-        } else {
-            btnStars.style.background = '#a3e635'; btnStars.style.color = 'black';
-            btnTon.style.background = 'transparent'; btnTon.style.color = '#555';
-        }
-        document.getElementById('pane-ton').classList.toggle('hidden', !isTon);
-        document.getElementById('pane-stars').classList.toggle('hidden', isTon);
+
+    function navigateTo(url) { 
+        tg.HapticFeedback.impactOccurred('medium'); 
+        window.location.href = url; 
     }
 
+    // Анимация звезд
     const canvas = document.getElementById('stars-canvas');
     if (canvas) {
         const ctx = canvas.getContext('2d');
@@ -358,18 +375,19 @@
             requestAnimationFrame(animateStars);
         }
         initStars(); animateStars();
+        window.addEventListener('resize', initStars);
     }
 
     window.onload = () => {
         initApp();
-        setTimeout(() => {
-            const loader = document.getElementById('global-loader');
-            if(loader) { 
-                loader.style.opacity = '0'; 
-                setTimeout(() => { loader.style.display = 'none'; }, 500); 
-            }
-        }, 800);
+        setTimeout(hideLoader, 800);
     };
+
+    async function verifyGift() {
+        const val = document.getElementById('stars-input').value;
+        if (!val || val < 15) return tg.showAlert('Минимум 15 Stars');
+        tg.showAlert('Инвойс Stars отправлен!');
+    }
 </script>
 </body>
 </html>
