@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>StarDrop Nova - Deluxe Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --neon: #4ade80;
@@ -36,7 +37,6 @@
             position: relative;
         }
 
-        /* --- UI HEADER --- */
         .header-ui { padding: 40px 20px 10px; text-align: center; z-index: 10; }
         
         .balance-card {
@@ -73,7 +73,6 @@
             letter-spacing: 1px;
         }
 
-        /* --- GAME CORE --- */
         .game-core { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
         
         .hero-platform {
@@ -91,7 +90,6 @@
         }
         .tap-anim { transform: scale(0.92) rotate(1deg) !important; }
 
-        /* --- DRAWER SYSTEM --- */
         .drawer-wardrobe {
             position: absolute; bottom: 90px; left: 0; width: 100%; height: 75%;
             background: rgba(5, 5, 5, 0.98); backdrop-filter: blur(40px);
@@ -121,9 +119,8 @@
         }
         .scroll-area::-webkit-scrollbar { display: none; }
 
-        #quest-list { grid-template-columns: 1fr; }
+        .leader-list-container { grid-template-columns: 1fr !important; }
 
-        /* --- CARDS --- */
         .card-item {
             background: rgba(255,255,255,0.03); border-radius: 24px;
             padding: 20px 15px; text-align: center; border: 1px solid rgba(255,255,255,0.05);
@@ -131,6 +128,17 @@
             justify-content: space-between; min-height: 180px;
         }
         .card-item.active-item { border-color: var(--neon); background: rgba(74,222,128,0.05); }
+
+        .leader-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 15px 20px; background: rgba(255,255,255,0.03);
+            border-radius: 18px; border: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 8px;
+        }
+        .leader-row.me { border-color: var(--neon); background: rgba(74,222,128,0.1); }
+        .leader-rank { font-weight: 900; color: var(--neon); width: 30px; }
+        .leader-name { flex: 1; text-align: left; font-weight: 700; font-size: 14px; margin-left: 10px; }
+        .leader-score { font-weight: 800; font-size: 12px; opacity: 0.8; }
         
         .lvl-badge {
             position: absolute; top: 12px; right: 12px;
@@ -140,7 +148,6 @@
 
         .card-icon { font-size: 40px; margin-bottom: 10px; display: block; }
         .card-img { width: 80px; height: 80px; border-radius: 18px; object-fit: cover; margin: 0 auto 10px; }
-
         .card-title { font-size: 13px; font-weight: 800; margin-bottom: 5px; opacity: 0.9; }
         .card-desc { font-size: 10px; color: var(--neon); font-weight: 700; margin-bottom: 15px; }
 
@@ -153,7 +160,6 @@
         .btn-buy:disabled { background: #222; color: #555; box-shadow: none; cursor: not-allowed; }
         .btn-owned { background: #1a1a1a; color: white; border: 1px solid var(--border); }
 
-        /* --- NAVBAR --- */
         .nav-bar {
             position: fixed; bottom: 0; width: 100%; max-width: 430px;
             height: 90px; background: rgba(0,0,0,0.95);
@@ -163,16 +169,11 @@
         }
         .nav-item { color: #555; font-size: 10px; font-weight: 800; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: var(--trans); }
         .nav-item.active { color: var(--neon); transform: translateY(-5px); }
-        .nav-item svg { width: 24px; height: 24px; }
+        .nav-item svg { width: 22px; height: 22px; }
 
-        /* --- ANIMATIONS (ИСПРАВЛЕНО) --- */
         .click-pop {
-            position: absolute;
-            pointer-events: none;
-            z-index: 9999;
-            font-weight: 900;
-            font-size: 32px;
-            color: #fff;
+            position: absolute; pointer-events: none; z-index: 9999;
+            font-weight: 900; font-size: 32px; color: #fff;
             text-shadow: 0 0 10px rgba(0,0,0,0.5);
             animation: float-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
             will-change: transform, opacity;
@@ -183,32 +184,47 @@
             20% { opacity: 1; transform: translate(-50%, -20px) scale(1.2); }
             100% { transform: translate(-50%, -120px) scale(1); opacity: 0; }
         }
-        /* --- BACK BUTTON --- */
-        .back-nav {
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            z-index: 200;
-        }
+
+        .back-nav { padding: 15px 20px; display: flex; align-items: center; z-index: 200; }
         .btn-back {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            display: flex; align-items: center; gap: 8px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border);
-            padding: 8px 16px;
-            border-radius: 12px;
-            color: white;
-            text-decoration: none;
-            font-size: 12px;
-            font-weight: 800;
-            transition: var(--trans);
+            padding: 8px 16px; border-radius: 12px;
+            color: white; text-decoration: none;
+            font-size: 12px; font-weight: 800; transition: var(--trans);
             backdrop-filter: blur(10px);
         }
-        .btn-back:active {
-            transform: scale(0.95);
-            border-color: var(--neon);
+
+        /* --- НОВЫЕ СТИЛИ ДЛЯ ОБМЕНА --- */
+        .exchange-container {
+            background: rgba(255,255,255,0.03); border-radius: 30px; padding: 25px;
+            border: 1px solid var(--border); text-align: center;
         }
+        .exchange-input-group { margin-bottom: 20px; text-align: left; }
+        .exchange-input-group label { display: block; font-size: 12px; font-weight: 900; margin-bottom: 10px; opacity: 0.6; }
+        .ex-input {
+            width: 100%; background: rgba(0,0,0,0.3); border: 2px solid var(--border);
+            border-radius: 15px; padding: 15px; color: white; font-family: 'Montserrat';
+            font-weight: 900; font-size: 18px; outline: none; box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        .ex-input:focus { border-color: var(--neon); }
+        .exchange-arrow { font-size: 24px; color: var(--neon); margin: 15px 0; display: block; }
+        .exchange-result {
+            background: rgba(74,222,128,0.1); border-radius: 15px; padding: 20px;
+            border: 1px solid rgba(74,222,128,0.2); margin-bottom: 25px;
+        }
+        .ex-res-val { font-size: 32px; font-weight: 900; color: var(--neon); display: block; }
+        .ex-res-label { font-size: 10px; font-weight: 800; opacity: 0.7; }
+        .btn-confirm-ex {
+            background: var(--neon); color: black; padding: 18px; border-radius: 18px;
+            width: 100%; font-weight: 900; border: none; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 0 10px 20px rgba(74,222,128,0.2);
+        }
+        .btn-confirm-ex:disabled { background: #222; color: #555; box-shadow: none; }
+        .min-info { font-size: 10px; color: #ef4444; margin-top: 10px; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -239,13 +255,39 @@
         <img src="hero.png" id="hero-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1144/1144760.png'">
     </div>
 
+    <div class="drawer-wardrobe" id="exchange-panel">
+        <div class="drawer-header"><h3>ОБМЕН ВАЛЮТЫ</h3><div class="close-btn" onclick="closeAllPanels()">ЗАКРЫТЬ</div></div>
+        <div class="exchange-container">
+            <div class="exchange-input-group">
+                <label>ОТДАЕТЕ (Nova Tokens)</label>
+                <input type="number" id="ex-input-amount" class="ex-input" placeholder="0" oninput="updateExchangeResult()">
+                <div class="min-info">Минимум: 5,000,000,000</div>
+            </div>
+            
+            <span class="exchange-arrow">↓</span>
+
+            <div class="exchange-result">
+                <span class="ex-res-label">ПОЛУЧИТЕ ЗВЕЗД</span>
+                <span class="ex-res-val" id="ex-stars-res">0</span>
+            </div>
+
+            <button class="btn-confirm-ex" id="btn-ex-confirm" disabled onclick="confirmExchange()">ПОДТВЕРДИТЬ ОБМЕН</button>
+        </div>
+    </div>
+
     <div class="drawer-wardrobe" id="market-panel">
         <div class="drawer-header"><h3>УСИЛЕНИЯ</h3><div class="close-btn" onclick="closeAllPanels()">ЗАКРЫТЬ</div></div>
         <div class="scroll-area" id="market-list"></div>
     </div>
+
     <div class="drawer-wardrobe" id="wardrobe-panel">
         <div class="drawer-header"><h3>ГЕРОИ</h3><div class="close-btn" onclick="closeAllPanels()">ЗАКРЫТЬ</div></div>
         <div class="scroll-area" id="skin-list"></div>
+    </div>
+
+    <div class="drawer-wardrobe" id="leader-panel">
+        <div class="drawer-header"><h3>ТОП 100 ИГРОКОВ</h3><div class="close-btn" onclick="closeAllPanels()">ЗАКРЫТЬ</div></div>
+        <div class="scroll-area leader-list-container" id="leader-list"></div>
     </div>
 
     <div class="nav-bar">
@@ -253,9 +295,17 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
             <div>МАРКЕТ</div>
         </div>
+        <div class="nav-item" onclick="openPanel('exchange-panel', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4l4 4m9 4v12m0 0l4-4m-4 4l-4-4"/></svg>
+            <div>ОБМЕН</div>
+        </div>
         <div class="nav-item active" id="nav-main" onclick="closeAllPanels()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
             <div>ГЛАВНАЯ</div>
+        </div>
+        <div class="nav-item" onclick="openPanel('leader-panel', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <div>ТОП 100</div>
         </div>
         <div class="nav-item" onclick="openPanel('wardrobe-panel', this)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"/></svg>
@@ -265,7 +315,11 @@
 </div>
 
 <script>
-    // --- ДАННЫЕ ИГРЫ ---
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+const BACKEND_URL = "https://stars-drop.vercel.app";
+
     const heroes = [
         { id: 0, name: "Новичок", x: 1, price: 0, img: "hero.png", color: "#4ade80", bg: "#0f2a1a" },
         { id: 1, name: "Путешественник", x: 5, price: 500000, img: "img/hero1.jpg", color: "#facc15", bg: "#2a250f" },
@@ -285,12 +339,6 @@
         { id: 5, name: "Мега-Батарея", baseAdd: 500, basePrice: 50000, icon: "🔋", type: "energy" }
     ];
 
-    const questsData = [
-        { id: 'q1', name: "Подписка на канал", reward: 25000, link: "@StarDrop_Chanel", icon: "📢" },
-        { id: 'q2', name: "Вступить в группу", reward: 75000, link: "@ChatStarDropa", icon: "👥" },
-        { id: 'q3', name: "Секретный чат", reward: 100000, link: "https://t.me/secret", icon: "🔐" }
-    ];
-
     let state = {
         coins: 0,
         energy: 1000,
@@ -303,16 +351,28 @@
         lastUnix: Date.now()
     };
 
-    function init() {
-        const saved = localStorage.getItem('nova_engine_save');
-        if (saved) {
-            const data = JSON.parse(saved);
-            state = { ...state, ...data };
-        }
-        applyHeroVisuals();
-        updateUI();
-        startLoops();
+function init() {
+    const saved = localStorage.getItem('nova_engine_save');
+    if (saved) {
+        const data = JSON.parse(saved);
+        state = { ...state, ...data };
+
+        // --- ЛОГИКА ОФФЛАЙН ЭНЕРГИИ ---
+        const now = Date.now();
+        const elapsedMs = now - state.lastUnix; // Сколько миллисекунд прошло
+        const elapsedSeconds = Math.floor(elapsedMs / 1000);
+        
+        // Допустим, скорость восстановления: 1 единица энергии в секунду
+        // (Можешь изменить число 1 на любое другое)
+        const energyToRestore = elapsedSeconds * 1; 
+        
+        state.energy = Math.min(state.maxEnergy, state.energy + energyToRestore);
+        // ------------------------------
     }
+    applyHeroVisuals();
+    updateUI();
+    startLoops();
+}
 
     function startLoops() {
         setInterval(() => {
@@ -324,21 +384,20 @@
         setInterval(save, 10000);
     }
 
-    // --- ЛОГИКА КЛИКА (ИСПРАВЛЕНО) ---
     const tapZone = document.getElementById('tap-zone');
     const heroImg = document.getElementById('hero-img');
 
-    function handleTapLogic(x, y) {
+function handleTapLogic(x, y) {
         if (state.energy < 1) return;
-
         heroImg.classList.add('tap-anim');
         setTimeout(() => heroImg.classList.remove('tap-anim'), 50);
-
         const hero = heroes.find(h => h.id === state.activeHeroId);
         const profit = state.clickPower * hero.x;
-
         state.coins += profit;
         state.energy -= 1;
+
+        // ДОБАВЬ ЭТУ СТРОКУ НИЖЕ:
+        state.lastUnix = Date.now(); 
 
         showPop(x, y, profit);
         updateUI();
@@ -351,10 +410,6 @@
         }
     }, { passive: false });
 
-    tapZone.addEventListener('mousedown', (e) => {
-        if(e.button === 0) handleTapLogic(e.clientX, e.clientY);
-    });
-
     function showPop(x, y, val) {
         const p = document.createElement('div');
         p.className = 'click-pop';
@@ -365,7 +420,51 @@
         setTimeout(() => p.remove(), 800);
     }
 
-    // --- МАГАЗИН И ГЕРОИ ---
+    // --- НОВАЯ ЛОГИКА ОБМЕНА ---
+    window.updateExchangeResult = function() {
+        const input = document.getElementById('ex-input-amount');
+        const resLabel = document.getElementById('ex-stars-res');
+        const btn = document.getElementById('btn-ex-confirm');
+        const amount = parseFloat(input.value) || 0;
+        
+        // Курс 1 млрд = 1 звезда
+        const stars = Math.floor(amount / 1000000000);
+        resLabel.innerText = stars.toLocaleString();
+
+        // Проверка: баланс >= введенного И введенное >= 5 млрд
+        if (state.coins >= amount && amount >= 5000000000 && stars > 0) {
+            btn.disabled = false;
+        } else {
+            btn.disabled = true;
+        }
+    }
+
+    window.confirmExchange = function() {
+        const input = document.getElementById('ex-input-amount');
+        const amount = parseFloat(input.value) || 0;
+        const starsToGet = Math.floor(amount / 1000000000);
+
+        if (state.coins >= amount && amount >= 5000000000) {
+            // 1. Снимаем баланс в кликере
+            state.coins -= amount;
+            
+            // 2. Начисляем звезды (сохраняем в ключ, который понимает index.html)
+            let currentStars = parseInt(localStorage.getItem('user_stars')) || 0;
+            localStorage.setItem('user_stars', (currentStars + starsToGet).toString());
+
+            // 3. Сохраняем состояние кликера
+            save();
+            updateUI();
+            
+            // Сброс поля
+            input.value = '';
+            updateExchangeResult();
+            
+            tg.HapticFeedback.notificationOccurred('success');
+            alert(`Успешный обмен! Вы получили ${starsToGet} ⭐`);
+        }
+    }
+
     function renderMarket() {
         const container = document.getElementById('market-list');
         container.innerHTML = '';
@@ -399,7 +498,6 @@
         }
     }
 
-    // --- ГЕРОИ И КВЕСТЫ ---
     function renderSkins() {
         const container = document.getElementById('skin-list');
         container.innerHTML = '';
@@ -431,39 +529,36 @@
         applyHeroVisuals(); renderSkins(); updateUI(); save();
     }
 
-    function renderQuests() {
-        const container = document.getElementById('quest-list');
-        container.innerHTML = '';
-        questsData.forEach(q => {
-            const isDone = state.completedQuests.includes(q.id);
-            container.innerHTML += `
-                <div class="card-item" style="min-height: 80px; flex-direction: row; align-items: center; justify-content: space-between; padding: 15px;">
-                    <div style="display:flex; align-items:center; gap:15px">
-                        <span style="font-size:24px">${q.icon}</span>
-                        <div style="text-align:left">
-                            <div class="card-title" style="margin:0">${q.name}</div>
-                            <div class="card-desc" style="margin:0">+${q.reward.toLocaleString()}</div>
-                        </div>
-                    </div>
-                    <button class="btn-action ${isDone ? 'btn-owned' : 'btn-buy'}" style="width:90px" onclick="handleQuest('${q.id}', '${q.link}')" ${isDone ? 'disabled' : ''}>
-                        ${isDone ? 'OK' : 'Начать'}
-                    </button>
-                </div>`;
-        });
+    async function loadRealLeaderboard() {
+        const list = document.getElementById('leader-list');
+        list.innerHTML = '<div style="grid-column: 1/-1; padding: 20px; opacity: 0.5;">Загрузка живых игроков...</div>';
+        try {
+            await fetch(`${BACKEND_URL}/api/sync`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: tg.initDataUnsafe?.user?.id || "local_user",
+                    name: tg.initDataUnsafe?.user?.first_name || "Игрок",
+                    coins: state.coins
+                })
+            });
+            const res = await fetch(`${BACKEND_URL}/api/leaderboard`);
+            const topData = await res.json();
+            list.innerHTML = '';
+            topData.forEach((p, i) => {
+                const isMe = p.id == (tg.initDataUnsafe?.user?.id || "0");
+                list.innerHTML += `
+                    <div class="leader-row ${isMe ? 'me' : ''}">
+                        <div class="leader-rank">#${i+1}</div>
+                        <div class="leader-name">${p.name} ${isMe ? '(ВЫ)' : ''}</div>
+                        <div class="leader-score">${Math.floor(p.coins).toLocaleString()} ⭐</div>
+                    </div>`;
+            });
+        } catch (e) {
+            list.innerHTML = '<div style="grid-column: 1/-1; padding: 20px; color: #ff4444;">Нужен сервер для ТОП-100</div>';
+        }
     }
 
-    window.handleQuest = function(id, link) {
-        window.open(link, '_blank');
-        setTimeout(() => {
-            if (!state.completedQuests.includes(id)) {
-                state.coins += questsData.find(x => x.id === id).reward;
-                state.completedQuests.push(id);
-                renderQuests(); updateUI(); save();
-            }
-        }, 2000);
-    }
-
-    // --- СИСТЕМА ---
     function openPanel(id, navEl) {
         document.querySelectorAll('.drawer-wardrobe').forEach(d => d.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -471,7 +566,8 @@
         navEl.classList.add('active');
         if (id === 'market-panel') renderMarket();
         if (id === 'wardrobe-panel') renderSkins();
-        if (id === 'quest-panel') renderQuests();
+        if (id === 'leader-panel') loadRealLeaderboard();
+        if (id === 'exchange-panel') updateExchangeResult();
     }
 
     function closeAllPanels() {
@@ -494,10 +590,10 @@
         document.getElementById('main-bg').style.background = `radial-gradient(circle at 50% 50%, ${h.bg} 0%, #050505 100%)`;
     }
 
-    function save() {
-        state.lastUnix = Date.now();
-        localStorage.setItem('nova_engine_save', JSON.stringify(state));
-    }
+function save() {
+    state.lastUnix = Date.now(); // Записываем время сохранения
+    localStorage.setItem('nova_engine_save', JSON.stringify(state));
+}
 
     window.onload = init;
 </script>
