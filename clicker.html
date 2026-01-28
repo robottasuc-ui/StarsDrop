@@ -187,19 +187,22 @@
 
         .info-content {
             text-align: center;
-            padding: 20px;
+            padding: 20px 20px 80px; /* Увеличил отступ снизу */
+            overflow-y: auto;
         }
-        .info-star-img { width: 120px; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(250, 204, 21, 0.4)); }
+        .info-star-img { width: 120px; margin: 0 auto 20px; display: block; filter: drop-shadow(0 0 15px rgba(250, 204, 21, 0.4)); }
         .info-title { font-size: 24px; font-weight: 900; margin-bottom: 15px; color: #fff; }
         .info-text { font-size: 14px; line-height: 1.6; color: rgba(255,255,255,0.7); margin-bottom: 25px; }
         .info-highlight { color: var(--neon); font-weight: 700; }
         
         .btn-telegram {
-            background: #0088cc; color: white; padding: 16px; border-radius: 18px;
-            width: 100%; font-weight: 900; border: none; cursor: pointer;
+            background: #0088cc; color: white; padding: 18px; border-radius: 18px;
+            width: 90%; max-width: 300px; font-weight: 900; border: none; cursor: pointer;
             text-transform: uppercase; display: block; text-decoration: none;
+            margin: 20px auto 0; /* Центрирование */
             box-shadow: 0 10px 20px rgba(0, 136, 204, 0.3);
         }
+
     </style>
 </head>
 <body>
@@ -335,6 +338,12 @@
 
     function handleTapLogic(x, y) {
         if (state.energy < 1) return;
+        
+        // Добавляем вибрацию
+        if (tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
         heroImg.classList.add('tap-anim');
         setTimeout(() => heroImg.classList.remove('tap-anim'), 50);
         const hero = heroes.find(h => h.id === state.activeHeroId);
