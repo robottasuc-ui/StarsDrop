@@ -246,6 +246,22 @@
         const itemIds = Object.keys(ITEMS_DB);
         let winningItem = null;
 
+        // --- ДОБАВЛЕНО: Генератор звука тиканья ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTickSound() {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        }
+        // ------------------------------------------
+
         function goToMain() { window.location.href = 'index.html'; }
 
         function updateStatus() {
@@ -273,7 +289,6 @@
         }
 
         function initWheel() {
-            // Шансы: в 80% случаев падает Golden Star (ID 65)
             const isCheap = Math.random() > 0.2;
             const winId = isCheap ? "65" : itemIds[Math.floor(Math.random() * itemIds.length)];
             
@@ -283,7 +298,6 @@
             wheel.style.transition = 'none';
             wheel.style.transform = 'translateX(0)';
             
-            // Наполняем ленту (90 элементов для плавности)
             for (let i = 0; i < 95; i++) {
                 const id = (i === 80) ? winningItem.id : itemIds[Math.floor(Math.random() * itemIds.length)];
                 const div = document.createElement('div');
@@ -294,6 +308,8 @@
         }
 
         spinBtn.addEventListener('click', () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume(); // Активация аудио контекста
+
             const mode = updateStatus();
             let stars = parseInt(localStorage.getItem('user_stars')) || 0;
 
@@ -307,22 +323,37 @@
             spinBtn.disabled = true;
             initWheel();
             
-            const itemWidth = 136; // 120px + 16px margins
+            const itemWidth = 136; 
             const finalPosition = (80 * itemWidth) - (window.innerWidth / 2) + (itemWidth / 2);
             
             wheel.style.transition = 'transform 8s cubic-bezier(0.15, 0, 0.05, 1)';
             wheel.style.transform = `translateX(-${finalPosition}px)`;
 
-            // Звук/вибрация
-            let clicks = 0;
-            const interval = setInterval(() => {
-                clicks++;
-                if(clicks > 50) clearInterval(interval);
-                tg.HapticFeedback.impactOccurred('light');
-            }, 150);
+            // --- ОБНОВЛЕНО: Синхронизированный звук и вибрация ---
+            let startTime = null;
+            const duration = 8000;
+
+            function triggerTick(timestamp) {
+                if (!startTime) startTime = timestamp;
+                let progress = (timestamp - startTime) / duration;
+
+                if (progress < 1) {
+                    // Кривая замедления (аналогично CSS cubic-bezier)
+                    let currentSpeed = Math.pow(1 - progress, 2); 
+                    let nextTickDelay = 100 + (1000 * (1 - currentSpeed)); 
+
+                    playTickSound();
+                    tg.HapticFeedback.impactOccurred('light');
+
+                    setTimeout(() => {
+                        requestAnimationFrame(triggerTick);
+                    }, nextTickDelay / 10); // Делитель для настройки частоты
+                }
+            }
+            requestAnimationFrame(triggerTick);
+            // ----------------------------------------------------
 
             setTimeout(() => { 
-                clearInterval(interval);
                 document.getElementById('won-item-img').src = `img/${winningItem.img}`;
                 document.getElementById('won-item-name').innerText = winningItem.name;
                 document.getElementById('sell-btn').innerText = `ПРОДАТЬ ЗА ${winningItem.price} ⭐`;
