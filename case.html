@@ -187,8 +187,8 @@ let activeCase = null;
 
 // 1. Единая логика баланса
 let balance = {
-    stars: parseInt(localStorage.getItem('user_stars')) || 1000,
-    ton: parseFloat(localStorage.getItem('user_ton')) || 5.00
+    stars: parseInt(localStorage.getItem('user_stars')) || 0,
+    ton: parseFloat(localStorage.getItem('user_ton')) || 0
 };
 
 // Функция для сохранения и обновления UI на всех страницах
@@ -196,7 +196,21 @@ function saveAndRefresh() {
     localStorage.setItem('user_stars', balance.stars);
     localStorage.setItem('user_ton', balance.ton.toFixed(2));
     updateUI();
+
 }
+
+async function syncData() {
+    if (tg.initDataUnsafe?.user) {
+        try {
+            const res = await fetch(`${BACKEND_URL}/get_balance/${tg.initDataUnsafe.user.id}?t=${Date.now()}`);
+            const data = await res.json();
+            balance.stars = data.stars;
+            balance.ton = data.balance;
+            saveAndRefresh(); // Обновит и экран, и память
+        } catch (e) { console.error("Sync error"); }
+    }
+}
+
 
 function updateUI() {
     // Формат 1.000 вместо 1000
@@ -207,6 +221,13 @@ function updateUI() {
     if (headerStars) headerStars.innerText = formattedStars;
     if (headerTon) headerTon.innerText = balance.ton.toFixed(2);
 }
+
+window.onload = () => {
+    syncData(); // Добавь эту строку первой
+    updateUI(); 
+    render(); 
+    initLive(); 
+};
 
 // Слушатель изменений из других вкладок (чтобы баланс был везде одинаковый)
 window.addEventListener('storage', () => {
@@ -458,12 +479,6 @@ function closeModal() {
     document.getElementById('case-modal').style.display = 'none';
     currentWinners = [];
 }
-
-window.onload = () => {
-    updateUI(); // Инициализация баланса при старте
-    render(); 
-    initLive(); 
-};
     </script>
 </body>
 </html>
