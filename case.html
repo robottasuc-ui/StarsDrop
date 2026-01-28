@@ -200,14 +200,28 @@ let balance = {
 async function syncData() {
     if (tg.initDataUnsafe?.user) {
         try {
+            // 1. Синхронизация баланса через ваш API
             const res = await fetch(`${BACKEND_URL}/get_balance/${tg.initDataUnsafe.user.id}?t=${Date.now()}`);
             const data = await res.json();
             balance.stars = parseInt(data.stars);
             balance.ton = parseFloat(data.balance);
+            
+            // 2. Синхронизация инвентаря напрямую из Supabase (чтобы подгрузить старые данные)
+            const invRes = await fetch(`${DB_CONFIG.url}/rest/v1/users?id=eq.${tg.initDataUnsafe.user.id}&select=inventory`, {
+                headers: {
+                    'apikey': DB_CONFIG.key,
+                    'Authorization': `Bearer ${DB_CONFIG.key}`
+                }
+            });
+            const invData = await invRes.json();
+            if (invData && invData[0] && invData[0].inventory) {
+                localStorage.setItem('user_inventory', JSON.stringify(invData[0].inventory));
+            }
+
             saveAndRefresh();
-            console.log("Database Sync: Success (Supabase)");
+            console.log("Database Sync: Success");
         } catch (e) { 
-            console.error("Database Sync: Failed"); 
+            console.error("Database Sync: Failed", e); 
             updateUI();
         }
     }
@@ -240,7 +254,8 @@ async function saveInventoryToDB(items) {
             },
             body: JSON.stringify({ inventory: items })
         });
-    } catch (e) { console.error("Inventory DB error"); }
+        console.log("Inventory saved to DB");
+    } catch (e) { console.error("Inventory DB error", e); }
 }
 
 // --- ЛОГИКА UI ---
@@ -386,6 +401,7 @@ function startRoll(type) {
     balance[type] -= cost;
     saveAndRefresh();
     
+    // Обновляем баланс в базе при трате
     if (type === 'stars') updateStarsOnServer(balance.stars);
 
     document.getElementById('view-preview').style.display = 'none';
@@ -459,6 +475,7 @@ function showWin(winners) {
     document.getElementById('sell-btn').onclick = () => {
         balance.stars += totalSellPrice;
         saveAndRefresh();
+        // Обновляем баланс в базе после продажи
         updateStarsOnServer(balance.stars);
         closeModal();
     };
@@ -469,8 +486,11 @@ async function saveToInventoryAndClose() {
     currentWinners.forEach(item => {
         inventory.push({ name: item.name, img: `img/${item.img}`, price: item.price });
     });
+    
+    // Сохраняем локально
     localStorage.setItem('user_inventory', JSON.stringify(inventory));
     
+    // Сохраняем в Базу Данных
     await saveInventoryToDB(inventory);
     
     closeModal();
@@ -511,7 +531,7 @@ function closeModal() {
 }
 
 window.onload = () => {
-    syncData(); 
+    syncData(); // Загружает данные из базы при входе
     render(); 
     initLive(); 
 };
