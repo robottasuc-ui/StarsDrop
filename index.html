@@ -186,155 +186,208 @@
         </div>
     </div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        const BACKEND_URL = 'https://stars-drop.vercel.app/api';
-        const user = tg.initDataUnsafe?.user;
-        let isProcessing = false;
+<script>
+    const tg = window.Telegram.WebApp;
+    const BACKEND_URL = 'https://stars-drop.vercel.app/api';
+    const user = tg.initDataUnsafe?.user;
+    let isProcessing = false;
 
-        function initApp() {
-            document.body.classList.add('loaded');
-            const platform = tg.platform;
-            if (['desktop', 'tdesktop', 'macos', 'web'].includes(platform) || window.innerWidth > 1024) {
-                document.getElementById('pc-only-blocker').style.display = 'flex';
-                const main = document.querySelector('.main-wrapper');
-                if (main) main.remove();
-                return;
-            }
-
-            if (user) {
-                document.getElementById('display-name').innerText = (user.username || user.first_name).toUpperCase();
-                document.getElementById('display-id').innerText = `ID: ${user.id}`;
-                document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?background=166534&color=fff&name=${user.first_name}`;
-            }
-
-            const PACKS = [1, 3, 5, 10, 20, 50, 100, 250];
-            const tonBox = document.getElementById('pane-ton');
-            if (tonBox) {
-                tonBox.innerHTML = '';
-                PACKS.forEach(amt => {
-                    const btn = document.createElement('div');
-                    btn.className = 'bg-white/5 border border-white/10 p-6 rounded-3xl text-center active:scale-95 transition-all cursor-pointer';
-                    btn.innerHTML = `<div class="text-[10px] text-blue-400 font-black uppercase mb-1">Пополнить</div><div class="font-black text-white text-xl">${amt} TON</div>`;
-                    btn.onclick = () => processPayment(amt);
-                    tonBox.appendChild(btn);
-                });
-            }
-            
-            // ПРИНУДИТЕЛЬНАЯ СИНХРОНИЗАЦИЯ ПРИ СТАРТЕ
-            syncData();
-        }
-
-        function navigateTo(url) { 
-            tg.HapticFeedback.impactOccurred('medium'); 
-            window.location.href = url; 
-        }
-
-        function updateBalanceUI() {
-            const stars = localStorage.getItem('user_stars') || '0';
-            const ton = localStorage.getItem('user_ton') || '0.00';
-            document.getElementById('header-ton').innerText = parseFloat(ton).toFixed(2);
-            document.getElementById('header-stars').innerText = parseInt(stars).toLocaleString('ru-RU').replace(/\s/g, '.');
-        }
-
-        async function syncData() {
-            if (!user) return;
-            try {
-                // Всегда берем свежий баланс с сервера, чтобы профиль и индекс не врали
-                const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}?t=${Date.now()}`);
-                const data = await res.json();
-                localStorage.setItem('user_stars', data.stars);
-                localStorage.setItem('user_ton', data.balance);
-                updateBalanceUI();
-                console.log("Balance synced with server");
-            } catch (e) { 
-                console.error("Sync error"); 
-                updateBalanceUI(); // Если сервер упал, берем из локалки
-            }
-        }
-
-        // КРИТИЧЕСКИ ВАЖНО: обновлять баланс, когда пользователь вернулся из профиля/кейсов кнопкой "Назад"
-        window.addEventListener('pageshow', (event) => {
-            syncData();
-        });
-
-        async function processPayment(amount) {
-            if (isProcessing) return;
-            isProcessing = true;
-            try {
-                const res = await fetch(`${BACKEND_URL}/create_pay`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({user_id: user?.id, amount}) });
-                const data = await res.json();
-                if (data.pay_url) tg.openTelegramLink(data.pay_url);
-            } catch (e) { tg.showAlert('Ошибка платежа'); }
-            isProcessing = false;
-        }
-
-        async function verifyGift() {
-            const val = document.getElementById('stars-input').value;
-            if (!val || val < 1) return tg.showAlert('Укажите сумму');
-            isProcessing = true;
-            try {
-                const res = await fetch(`${BACKEND_URL}/create_stars_pay`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ user_id: user?.id, amount: val }) });
-                const data = await res.json();
-                if (data.pay_url) {
-                    tg.openInvoice(data.pay_url, (status) => { if (status === 'paid') syncData(); });
-                }
-            } catch (e) { tg.showAlert('Ошибка звезд'); }
-            isProcessing = false;
-        }
-
-        function openVault(tab) { 
-            tg.HapticFeedback.impactOccurred('light');
-            document.getElementById('vault-modal').style.display = 'flex'; 
-            setTab(tab); 
-        }
-        function closeVault() { document.getElementById('vault-modal').style.display = 'none'; }
+    // --- ИНИЦИАЛИЗАЦИЯ ---
+    function initApp() {
+        document.body.classList.add('loaded');
+        const platform = tg.platform;
         
-        function setTab(type) {
-            const isTon = type === 'ton';
-            const btnTon = document.getElementById('tab-btn-ton');
-            const btnStars = document.getElementById('tab-btn-stars');
-            if(isTon) {
-                btnTon.style.background = '#a3e635'; btnTon.style.color = 'black';
-                btnStars.style.background = 'transparent'; btnStars.style.color = '#555';
-            } else {
-                btnStars.style.background = '#a3e635'; btnStars.style.color = 'black';
-                btnTon.style.background = 'transparent'; btnTon.style.color = '#555';
-            }
-            document.getElementById('pane-ton').classList.toggle('hidden', !isTon);
-            document.getElementById('pane-stars').classList.toggle('hidden', isTon);
+        // Блокировка ПК
+        if (['desktop', 'tdesktop', 'macos', 'web'].includes(platform) || window.innerWidth > 1024) {
+            document.getElementById('pc-only-blocker').style.display = 'flex';
+            const main = document.querySelector('.main-wrapper');
+            if (main) main.remove();
+            return;
         }
 
-        const canvas = document.getElementById('stars-canvas');
-        if (canvas) {
-            const ctx = canvas.getContext('2d');
-            let starsArr = [];
-            function initStars() {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-                starsArr = Array.from({length: 80}, () => ({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: Math.random() * 2, speed: Math.random() * 0.5 + 0.1, opacity: Math.random() }));
-            }
-            function animateStars() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                starsArr.forEach(s => {
-                    ctx.beginPath(); ctx.globalAlpha = s.opacity; ctx.fillStyle = "#a3e635"; ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill();
-                    s.y += s.speed; if (s.y > canvas.height) s.y = -5;
+        // Данные пользователя
+        if (user) {
+            document.getElementById('display-name').innerText = (user.username || user.first_name).toUpperCase();
+            document.getElementById('display-id').innerText = `ID: ${user.id}`;
+            document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?background=166534&color=fff&name=${user.first_name}`;
+        }
+
+        // Генерация паков TON
+        const PACKS = [1, 3, 5, 10, 20, 50, 100, 250];
+        const tonBox = document.getElementById('pane-ton');
+        if (tonBox) {
+            tonBox.innerHTML = '';
+            PACKS.forEach(amt => {
+                const btn = document.createElement('div');
+                btn.className = 'bg-white/5 border border-white/10 p-6 rounded-3xl text-center active:scale-95 transition-all cursor-pointer';
+                btn.innerHTML = `<div class="text-[10px] text-blue-400 font-black uppercase mb-1">Пополнить</div><div class="font-black text-white text-xl">${amt} TON</div>`;
+                btn.onclick = () => processPayment(amt);
+                tonBox.appendChild(btn);
+            });
+        }
+        
+        syncData();
+    }
+
+    // --- РАБОТА С БАЗОЙ И UI ---
+    function updateBalanceUI() {
+        const stars = localStorage.getItem('user_stars') || '0';
+        const ton = localStorage.getItem('user_ton') || '0.00';
+        
+        const headerTon = document.getElementById('header-ton');
+        const headerStars = document.getElementById('header-stars');
+        
+        if (headerTon) headerTon.innerText = parseFloat(ton).toFixed(2);
+        if (headerStars) headerStars.innerText = parseInt(stars).toLocaleString('ru-RU').replace(/\s/g, '.');
+    }
+
+    async function syncData() {
+        if (!user) {
+            updateBalanceUI();
+            return;
+        }
+        try {
+            // Запрос к твоему API на Vercel
+            const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}?t=${Date.now()}`);
+            if (!res.ok) throw new Error('Server error');
+            
+            const data = await res.json();
+            
+            // Сохраняем актуалочку
+            localStorage.setItem('user_stars', data.stars);
+            localStorage.setItem('user_ton', data.balance); // в БД поле обычно называется balance для TON
+            
+            updateBalanceUI();
+            console.log("Database Sync: OK");
+        } catch (e) { 
+            console.error("Database Sync: FAIL, using local storage"); 
+            updateBalanceUI();
+        }
+    }
+
+    // Слушаем возврат на страницу (чтобы баланс обновлялся после кейсов)
+    window.addEventListener('pageshow', () => {
+        syncData();
+    });
+
+    // --- ПЛАТЕЖИ ---
+    async function processPayment(amount) {
+        if (isProcessing) return;
+        isProcessing = true;
+        tg.HapticFeedback.impactOccurred('medium');
+        
+        try {
+            const res = await fetch(`${BACKEND_URL}/create_pay`, { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({user_id: user?.id, amount}) 
+            });
+            const data = await res.json();
+            if (data.pay_url) tg.openTelegramLink(data.pay_url);
+        } catch (e) { 
+            tg.showAlert('Ошибка при создании счета TON'); 
+        } finally {
+            isProcessing = false;
+        }
+    }
+
+    async function verifyGift() {
+        const val = document.getElementById('stars-input').value;
+        if (!val || val < 15) return tg.showAlert('Минимум 15 Stars');
+        
+        if (isProcessing) return;
+        isProcessing = true;
+        
+        try {
+            const res = await fetch(`${BACKEND_URL}/create_stars_pay`, { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ user_id: user?.id, amount: parseInt(val) }) 
+            });
+            const data = await res.json();
+            if (data.pay_url) {
+                tg.openInvoice(data.pay_url, (status) => {
+                    if (status === 'paid') {
+                        tg.showAlert('Оплата прошла! Баланс обновится скоро.');
+                        setTimeout(syncData, 2000);
+                    }
+                    isProcessing = false;
                 });
-                requestAnimationFrame(animateStars);
             }
-            initStars(); animateStars();
+        } catch (e) { 
+            tg.showAlert('Ошибка Stars платежа'); 
+            isProcessing = false;
         }
+    }
 
-        window.onload = () => {
-            initApp();
-            setTimeout(() => {
-                const loader = document.getElementById('global-loader');
-                if(loader) { 
-                    loader.style.opacity = '0'; 
-                    setTimeout(() => { loader.style.display = 'none'; }, 500); 
-                }
-            }, 800);
-        };
-    </script>
+    // --- НАВИГАЦИЯ И МОДАЛКИ ---
+    function navigateTo(url) { 
+        tg.HapticFeedback.impactOccurred('medium'); 
+        window.location.href = url; 
+    }
+
+    function openVault(tab) { 
+        tg.HapticFeedback.impactOccurred('light');
+        document.getElementById('vault-modal').style.display = 'flex'; 
+        setTab(tab); 
+    }
+    
+    function closeVault() { document.getElementById('vault-modal').style.display = 'none'; }
+    
+    function setTab(type) {
+        const isTon = type === 'ton';
+        const btnTon = document.getElementById('tab-btn-ton');
+        const btnStars = document.getElementById('tab-btn-stars');
+        
+        if(isTon) {
+            btnTon.style.background = '#a3e635'; btnTon.style.color = 'black';
+            btnStars.style.background = 'transparent'; btnStars.style.color = '#555';
+        } else {
+            btnStars.style.background = '#a3e635'; btnStars.style.color = 'black';
+            btnTon.style.background = 'transparent'; btnTon.style.color = '#555';
+        }
+        document.getElementById('pane-ton').classList.toggle('hidden', !isTon);
+        document.getElementById('pane-stars').classList.toggle('hidden', isTon);
+    }
+
+    // --- ВИЗУАЛ (ЗВЕЗДЫ) ---
+    const canvas = document.getElementById('stars-canvas');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        let starsArr = [];
+        function initStars() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            starsArr = Array.from({length: 80}, () => ({ 
+                x: Math.random() * canvas.width, 
+                y: Math.random() * canvas.height, 
+                size: Math.random() * 2, 
+                speed: Math.random() * 0.5 + 0.1, 
+                opacity: Math.random() 
+            }));
+        }
+        function animateStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            starsArr.forEach(s => {
+                ctx.beginPath(); ctx.globalAlpha = s.opacity; ctx.fillStyle = "#a3e635"; 
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill();
+                s.y += s.speed; if (s.y > canvas.height) s.y = -5;
+            });
+            requestAnimationFrame(animateStars);
+        }
+        initStars(); animateStars();
+    }
+
+    window.onload = () => {
+        initApp();
+        setTimeout(() => {
+            const loader = document.getElementById('global-loader');
+            if(loader) { 
+                loader.style.opacity = '0'; 
+                setTimeout(() => { loader.style.display = 'none'; }, 500); 
+            }
+        }, 800);
+    };
+</script>
 </body>
 </html>
