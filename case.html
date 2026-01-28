@@ -178,283 +178,292 @@
     </div>
 
     <script>
-    const tg = window.Telegram.WebApp;
-    const BACKEND_URL = 'https://stars-drop.vercel.app/api';
-    const user = tg.initDataUnsafe?.user;
+const tg = window.Telegram.WebApp;
+const BACKEND_URL = 'https://stars-drop.vercel.app/api';
 
-    let currentWinners = [];
-    let balance = { stars: 1000, ton: 5.00 }; 
-    let mul = 1;
-    let activeCase = null;
+let currentWinners = [];
+let mul = 1;
+let activeCase = null;
 
-    const ITEMS = {
-        1: { name: "1 May", img: "1may.jpg", price: 100 },
-        2: { name: "2025", img: "2025.jpg", price: 500 },
-        3: { name: "Bear", img: "bear.png", price: 3500 },
-        4: { name: "Book", img: "book.jpg", price: 1000 },
-        5: { name: "Berry Box", img: "boooox.png", price: 700 },
-        6: { name: "Boot", img: "botinok.png", price: 400 },
-        7: { name: "Jack Box", img: "box.png", price: 600 },
-        8: { name: "Car", img: "car.png", price: 5000 },
-        9: { name: "Rocket", img: "raketa.png", price: 50 },
-        16: { name: "Star Ring", img: "ccolso2.png", price: 3000 },
-        17: { name: "Gingerbread", img: "cerrrdce.jpg", price: 500 },
-        18: { name: "Suitcase", img: "chemodan.jpg", price: 5000 },
-        19: { name: "Cigar", img: "ciga.png", price: 3000 },
-        20: { name: "Blue Ring", img: "colso.png", price: 2500 },
-        21: { name: "Costume", img: "costum.jpg", price: 10000 },
-        22: { name: "Flower", img: "cvetok.png", price: 1000 },
-        23: { name: "Rich Dog", img: "dog.png", price: 500 },
-        24: { name: "Perfume", img: "dyxi.png", price: 10000 },
-        25: { name: "Lantern", img: "fonarik.jpg", price: 100 },
-        26: { name: "Coffin", img: "grob.jpg", price: 5000 },
-        27: { name: "Lava Lips", img: "gyba.png", price: 5000 },
-        28: { name: "B-Day Cake", img: "happybirthday.jpg", price: 200 },
-        29: { name: "Heart Lock", img: "heart.png", price: 2000 },
-        30: { name: "Spartan", img: "helmet.png", price: 25000 },
-        39: { name: "Calendar", img: "kalendar.png", price: 400 },
-        40: { name: "Red Cap", img: "kepka.png", price: 100000 },
-        41: { name: "Brick", img: "kirpitch.jpg", price: 10000 },
-        42: { name: "Cocktail", img: "koks.jpg", price: 150 },
-        43: { name: "Green Mix", img: "koktel.png", price: 500 },
-        44: { name: "Atomic Cat", img: "kot.png", price: 10000 },
-        45: { name: "Cauldron", img: "kotel.png", price: 500 },
-        46: { name: "Bow Tie", img: "krovatka.jpg", price: 600 },
-        47: { name: "Lollipop", img: "lolipop.png", price: 500 },
-        48: { name: "Clover", img: "lucky.jpg", price: 500 },
-        49: { name: "Muffin", img: "mafin.jpg", price: 700 },
-        50: { name: "Lightsaber", img: "metch.png", price: 700 },
-        51: { name: "SD Token", img: "narkotiki.png", price: 600 },
-        53: { name: "Sneakers", img: "obyv.jpg", price: 10000 },
-        54: { name: "Glasses", img: "otchki.jpg", price: 30000 },
-        55: { name: "Eagle", img: "orel.jpg", price: 5000 },
-        56: { name: "Dove Post", img: "otkritka.jpg", price: 150 },
-        57: { name: "Easter Cake", img: "paska.jpg", price: 75 },
-        59: { name: "Rose", img: "rozza.png", price: 2000 },
-        60: { name: "Backpack", img: "rykzak.jpg", price: 500 },
-        61: { name: "Santa Hat", img: "shapka.png", price: 500 },
-        62: { name: "Crystal Ball", img: "shar.jpg", price: 1000 },
-        63: { name: "Helmet Biker", img: "shlem.png", price: 3500 },
-        64: { name: "Pacifier", img: "soska.jpg", price: 3000 },
-        65: { name: "Golden Star", img: "star.png", price: 15 },
-        66: { name: "Statue", img: "statyya.jpg", price: 41000 },
-        69: { name: "Wreath", img: "venok.jpg", price: 500 },
-        70: { name: "Spotted Egg", img: "yayko.png", price: 600 },
-        71: { name: "Green Slime", img: "zhele.png", price: 700 },
-        72: { name: "Snake", img: "zmei.png", price: 500 },
-        73: { name: "Ring", img: "kolechko.png", price: 100 }
-    };
+// 1. Единая логика баланса
+let balance = {
+    stars: parseInt(localStorage.getItem('user_stars')) || 1000,
+    ton: parseFloat(localStorage.getItem('user_ton')) || 5.00
+};
 
-    const CASES = [
-        { name: "Шкатулка Удачи", stars: 100, ton: 1, img: "case2.png", loot: [[9, 99], [70, 0.6], [1, 0.1], [56, 0.1], [57, 0.1], [28, 0.1]] },
-        { name: "Мистический", stars: 300, ton: 3, img: "case3.png", loot: [[73, 98], [42, 1], [9, 0.1], [7, 0.8], [62, 0.1]] },
-        { name: "Лесной Оазис", stars: 1000, ton: 12, img: "case4.png", loot: [[29, 0], [20, 0], [8, 0], [17, 99], [51, 1]] },
-        { name: "Пиратский Клад", stars: 3500, ton: 35, img: "case5.png", loot: [[55, 0], [27, 0], [63, 30], [59, 65], [20, 5]] },
-        { name: "Детективный", stars: 5000, ton: 50, img: "case7.png", loot: [[30, 0], [41, 1], [18, 5], [16, 70], [27, 25]] },
-        { name: "Технологический", stars: 7500, ton: 70, img: "case8.png", loot: [[40, 0], [41, 0], [24, 0], [63, 10], [59, 90]] },
-        { name: "Лимонный", stars: 25000, ton: 150, img: "case9.png", loot: [[40, 0], [66, 0], [55, 0], [21, 50], [18, 40], [4, 10]] }, 
-    ];
+// Функция для сохранения и обновления UI на всех страницах
+function saveAndRefresh() {
+    localStorage.setItem('user_stars', balance.stars);
+    localStorage.setItem('user_ton', balance.ton.toFixed(2));
+    updateUI();
+}
 
-    async function syncBalance() {
-        const savedStars = localStorage.getItem('user_stars');
-        if (savedStars !== null) {
-            balance.stars = parseInt(savedStars);
-        } else {
-            balance.stars = 1000;
-            localStorage.setItem('user_stars', 1000);
-        }
-        updateUI();
+function updateUI() {
+    // Формат 1.000 вместо 1000
+    const formattedStars = Math.floor(balance.stars).toLocaleString('ru-RU').replace(/\s/g, '.');
+    const headerStars = document.getElementById('header-stars');
+    const headerTon = document.getElementById('header-ton');
+    
+    if (headerStars) headerStars.innerText = formattedStars;
+    if (headerTon) headerTon.innerText = balance.ton.toFixed(2);
+}
+
+// Слушатель изменений из других вкладок (чтобы баланс был везде одинаковый)
+window.addEventListener('storage', () => {
+    balance.stars = parseInt(localStorage.getItem('user_stars')) || 0;
+    balance.ton = parseFloat(localStorage.getItem('user_ton')) || 0;
+    updateUI();
+});
+
+// ТВОИ ПРЕДМЕТЫ (БЕЗ ИЗМЕНЕНИЙ)
+const ITEMS = {
+    1: { name: "1 May", img: "1may.jpg", price: 100 },
+    2: { name: "2025", img: "2025.jpg", price: 500 },
+    3: { name: "Bear", img: "bear.png", price: 3500 },
+    4: { name: "Book", img: "book.jpg", price: 1000 },
+    5: { name: "Berry Box", img: "boooox.png", price: 700 },
+    6: { name: "Boot", img: "botinok.png", price: 400 },
+    7: { name: "Jack Box", img: "box.png", price: 600 },
+    8: { name: "Car", img: "car.png", price: 5000 },
+    9: { name: "Rocket", img: "raketa.png", price: 50 },
+    16: { name: "Star Ring", img: "ccolso2.png", price: 3000 },
+    17: { name: "Gingerbread", img: "cerrrdce.jpg", price: 500 },
+    18: { name: "Suitcase", img: "chemodan.jpg", price: 5000 },
+    19: { name: "Cigar", img: "ciga.png", price: 3000 },
+    20: { name: "Blue Ring", img: "colso.png", price: 2500 },
+    21: { name: "Costume", img: "costum.jpg", price: 10000 },
+    22: { name: "Flower", img: "cvetok.png", price: 1000 },
+    23: { name: "Rich Dog", img: "dog.png", price: 500 },
+    24: { name: "Perfume", img: "dyxi.png", price: 10000 },
+    25: { name: "Lantern", img: "fonarik.jpg", price: 100 },
+    26: { name: "Coffin", img: "grob.jpg", price: 5000 },
+    27: { name: "Lava Lips", img: "gyba.png", price: 5000 },
+    28: { name: "B-Day Cake", img: "happybirthday.jpg", price: 200 },
+    29: { name: "Heart Lock", img: "heart.png", price: 2000 },
+    30: { name: "Spartan", img: "helmet.png", price: 25000 },
+    39: { name: "Calendar", img: "kalendar.png", price: 400 },
+    40: { name: "Red Cap", img: "kepka.png", price: 100000 },
+    41: { name: "Brick", img: "kirpitch.jpg", price: 10000 },
+    42: { name: "Cocktail", img: "koks.jpg", price: 150 },
+    43: { name: "Green Mix", img: "koktel.png", price: 500 },
+    44: { name: "Atomic Cat", img: "kot.png", price: 10000 },
+    45: { name: "Cauldron", img: "kotel.png", price: 500 },
+    46: { name: "Bow Tie", img: "krovatka.jpg", price: 600 },
+    47: { name: "Lollipop", img: "lolipop.png", price: 500 },
+    48: { name: "Clover", img: "lucky.jpg", price: 500 },
+    49: { name: "Muffin", img: "mafin.jpg", price: 700 },
+    50: { name: "Lightsaber", img: "metch.png", price: 700 },
+    51: { name: "SD Token", img: "narkotiki.png", price: 600 },
+    53: { name: "Sneakers", img: "obyv.jpg", price: 10000 },
+    54: { name: "Glasses", img: "otchki.jpg", price: 30000 },
+    55: { name: "Eagle", img: "orel.jpg", price: 5000 },
+    56: { name: "Dove Post", img: "otkritka.jpg", price: 150 },
+    57: { name: "Easter Cake", img: "paska.jpg", price: 75 },
+    59: { name: "Rose", img: "rozza.png", price: 2000 },
+    60: { name: "Backpack", img: "rykzak.jpg", price: 500 },
+    61: { name: "Santa Hat", img: "shapka.png", price: 500 },
+    62: { name: "Crystal Ball", img: "shar.jpg", price: 1000 },
+    63: { name: "Helmet Biker", img: "shlem.png", price: 3500 },
+    64: { name: "Pacifier", img: "soska.jpg", price: 3000 },
+    65: { name: "Golden Star", img: "star.png", price: 15 },
+    66: { name: "Statue", img: "statyya.jpg", price: 41000 },
+    69: { name: "Wreath", img: "venok.jpg", price: 500 },
+    70: { name: "Spotted Egg", img: "yayko.png", price: 600 },
+    71: { name: "Green Slime", img: "zhele.png", price: 700 },
+    72: { name: "Snake", img: "zmei.png", price: 500 },
+    73: { name: "Ring", img: "kolechko.png", price: 100 }
+};
+
+const CASES = [
+    { name: "Шкатулка Удачи", stars: 100, ton: 1, img: "case2.png", loot: [[9, 99], [70, 0.6], [1, 0.1], [56, 0.1], [57, 0.1], [28, 0.1]] },
+    { name: "Мистический", stars: 300, ton: 3, img: "case3.png", loot: [[73, 98], [42, 1], [9, 0.1], [7, 0.8], [62, 0.1]] },
+    { name: "Лесной Оазис", stars: 1000, ton: 12, img: "case4.png", loot: [[29, 0], [20, 0], [8, 0], [17, 99], [51, 1]] },
+    { name: "Пиратский Клад", stars: 3500, ton: 35, img: "case5.png", loot: [[55, 0], [27, 0], [63, 30], [59, 65], [20, 5]] },
+    { name: "Детективный", stars: 5000, ton: 50, img: "case7.png", loot: [[30, 0], [41, 1], [18, 5], [16, 70], [27, 25]] },
+    { name: "Технологический", stars: 7500, ton: 70, img: "case8.png", loot: [[40, 0], [41, 0], [24, 0], [63, 10], [59, 90]] },
+    { name: "Лимонный", stars: 25000, ton: 150, img: "case9.png", loot: [[40, 0], [66, 0], [55, 0], [21, 50], [18, 40], [4, 10]] }, 
+];
+
+function render() {
+    document.getElementById('main-grid').innerHTML = CASES.map((c, i) => `
+        <div class="case-card p-6 flex flex-col items-center" onclick="openCase(${i})">
+            <img src="img/${c.img}" class="w-24 h-24 mb-4 object-contain">
+            <div class="orbitron text-[10px] text-green-500 font-black mb-1 uppercase">${c.name}</div>
+            <div class="text-[11px] font-bold opacity-40 uppercase">${c.stars === 0 ? 'Бесплатно' : '⭐ ' + c.stars}</div>
+        </div>
+    `).join('');
+}
+
+function openCase(i) {
+    activeCase = CASES[i];
+    setMul(1);
+    document.getElementById('case-modal').style.display = 'flex';
+    document.getElementById('view-preview').style.display = 'block';
+    document.getElementById('view-roulette').style.display = 'none';
+    document.getElementById('view-win').style.display = 'none';
+    
+    document.getElementById('m-img').src = `img/${activeCase.img}`;
+    document.getElementById('m-title').innerText = activeCase.name;
+
+    document.getElementById('loot-display').innerHTML = activeCase.loot.map(itemArr => {
+        const item = ITEMS[itemArr[0]];
+        return `
+        <div class="bg-white/5 border border-white/5 rounded-2xl p-2 flex flex-col items-center">
+            <img src="img/${item.img}" class="w-10 h-10 mb-1">
+            <div class="text-[8px] text-green-500">⭐ ${item.price}</div>
+        </div>`;
+    }).join('');
+}
+
+function setMul(n) {
+    mul = n;
+    document.querySelectorAll('.cnt-btn').forEach(b => b.classList.toggle('active', parseInt(b.innerText) === n));
+    document.getElementById('p-stars').innerText = activeCase.stars * n;
+    document.getElementById('p-ton').innerText = (activeCase.ton * n).toFixed(2);
+}
+
+function getWin() {
+    const pool = activeCase.loot.map(attr => ({ id: attr[0], weight: attr[1], ...ITEMS[attr[0]] }));
+    const totalWeight = pool.reduce((sum, item) => sum + item.weight, 0);
+    let rnd = Math.random() * totalWeight;
+    for (let item of pool) {
+        if (rnd < item.weight) return item;
+        rnd -= item.weight;
     }
+    return pool[0];
+}
 
-    function updateUI() {
-        const formattedStars = Math.floor(balance.stars).toLocaleString('ru-RU').replace(/\s/g, '.');
-        document.getElementById('header-stars').innerText = formattedStars;
-        document.getElementById('header-ton').innerText = balance.ton.toFixed(2);
+function startRoll(type) {
+    const cost = type === 'stars' ? activeCase.stars * mul : activeCase.ton * mul;
+    if (balance[type] < cost) return alert("Недостаточно средств");
+    
+    // Списание баланса
+    balance[type] -= cost;
+    saveAndRefresh(); // Сохраняем изменение
+
+    document.getElementById('view-preview').style.display = 'none';
+    document.getElementById('view-roulette').style.display = 'flex';
+    document.getElementById('roul-title').innerText = activeCase.name;
+    document.getElementById('roulette-rows').innerHTML = '';
+
+    document.getElementById('possible-loot').innerHTML = activeCase.loot.map(attr => `
+        <div class="loot-preview-card"><img src="img/${ITEMS[attr[0]].img}"></div>
+    `).join('');
+
+    const winners = [];
+    for (let i = 0; i < mul; i++) {
+        const win = getWin();
+        winners.push(win);
+        createRow(i, win);
     }
+    setTimeout(() => showWin(winners), 7200);
+}
 
-    function render() {
-        document.getElementById('main-grid').innerHTML = CASES.map((c, i) => `
-            <div class="case-card p-6 flex flex-col items-center" onclick="openCase(${i})">
-                <img src="img/${c.img}" class="w-24 h-24 mb-4 object-contain">
-                <div class="orbitron text-[10px] text-green-500 font-black mb-1 uppercase">${c.name}</div>
-                <div class="text-[11px] font-bold opacity-40 uppercase">${c.stars === 0 ? 'Бесплатно' : '⭐ ' + c.stars}</div>
-            </div>
-        `).join('');
+function createRow(idx, win) {
+    const row = document.createElement('div');
+    row.className = 'roulette-container mb-4';
+    row.innerHTML = `<div class="center-line"></div><div class="roulette-rail" id="rail-${idx}"></div>`;
+    document.getElementById('roulette-rows').appendChild(row);
+
+    const rail = document.getElementById(`rail-${idx}`);
+    const winIndex = 35;
+    const itemWidth = 140;
+    
+    let html = '';
+    for (let i = 0; i < 45; i++) {
+        const randomItem = activeCase.loot[Math.floor(Math.random() * activeCase.loot.length)];
+        const id = (i === winIndex) ? win.id : randomItem[0];
+        html += `<div class="roulette-item" id="item-${idx}-${i}"><img src="img/${ITEMS[id].img}"></div>`;
     }
+    rail.innerHTML = html;
 
-    function openCase(i) {
-        activeCase = CASES[i];
-        setMul(1);
-        document.getElementById('case-modal').style.display = 'flex';
-        document.getElementById('view-preview').style.display = 'block';
-        document.getElementById('view-roulette').style.display = 'none';
-        document.getElementById('view-win').style.display = 'none';
+    setTimeout(() => {
+        const center = window.innerWidth / 2;
+        const targetPos = (winIndex * itemWidth) + (itemWidth / 2) - center;
+        rail.style.transition = 'transform 6.5s cubic-bezier(0.15, 0, 0.05, 1)';
+        rail.style.transform = `translateX(-${targetPos}px)`;
         
-        document.getElementById('m-img').src = `img/${activeCase.img}`;
-        document.getElementById('m-title').innerText = activeCase.name;
-
-        document.getElementById('loot-display').innerHTML = activeCase.loot.map(itemArr => {
-            const item = ITEMS[itemArr[0]];
-            return `
-            <div class="bg-white/5 border border-white/5 rounded-2xl p-2 flex flex-col items-center">
-                <img src="img/${item.img}" class="w-10 h-10 mb-1">
-                <div class="text-[8px] text-green-500">⭐ ${item.price}</div>
-            </div>`;
-        }).join('');
-    }
-
-    function setMul(n) {
-        mul = n;
-        document.querySelectorAll('.cnt-btn').forEach(b => b.classList.toggle('active', parseInt(b.innerText) === n));
-        document.getElementById('p-stars').innerText = activeCase.stars * n;
-        document.getElementById('p-ton').innerText = (activeCase.ton * n).toFixed(2);
-    }
-
-    function getWin() {
-        const pool = activeCase.loot.map(attr => ({ id: attr[0], weight: attr[1], ...ITEMS[attr[0]] }));
-        const totalWeight = pool.reduce((sum, item) => sum + item.weight, 0);
-        let rnd = Math.random() * totalWeight;
-        for (let item of pool) {
-            if (rnd < item.weight) return item;
-            rnd -= item.weight;
-        }
-        return pool[0];
-    }
-
-    function startRoll(type) {
-        const cost = type === 'stars' ? activeCase.stars * mul : activeCase.ton * mul;
-        if (balance[type] < cost) return alert("Недостаточно средств");
-        
-        balance[type] -= cost;
-        // Сохраняем баланс сразу после траты
-        if(type === 'stars') localStorage.setItem('user_stars', balance.stars);
-        updateUI();
-
-        document.getElementById('view-preview').style.display = 'none';
-        document.getElementById('view-roulette').style.display = 'flex';
-        document.getElementById('roul-title').innerText = activeCase.name;
-        document.getElementById('roulette-rows').innerHTML = '';
-
-        document.getElementById('possible-loot').innerHTML = activeCase.loot.map(attr => `
-            <div class="loot-preview-card"><img src="img/${ITEMS[attr[0]].img}"></div>
-        `).join('');
-
-        const winners = [];
-        for (let i = 0; i < mul; i++) {
-            const win = getWin();
-            winners.push(win);
-            createRow(i, win);
-        }
-        setTimeout(() => showWin(winners), 7200);
-    }
-
-    function createRow(idx, win) {
-        const row = document.createElement('div');
-        row.className = 'roulette-container mb-4';
-        row.innerHTML = `<div class="center-line"></div><div class="roulette-rail" id="rail-${idx}"></div>`;
-        document.getElementById('roulette-rows').appendChild(row);
-
-        const rail = document.getElementById(`rail-${idx}`);
-        const winIndex = 35;
-        const itemWidth = 140;
-        
-        let html = '';
-        for (let i = 0; i < 45; i++) {
-            const randomItem = activeCase.loot[Math.floor(Math.random() * activeCase.loot.length)];
-            const id = (i === winIndex) ? win.id : randomItem[0];
-            html += `<div class="roulette-item" id="item-${idx}-${i}"><img src="img/${ITEMS[id].img}"></div>`;
-        }
-        rail.innerHTML = html;
-
         setTimeout(() => {
-            const center = window.innerWidth / 2;
-            const targetPos = (winIndex * itemWidth) + (itemWidth / 2) - center;
-            rail.style.transition = 'transform 6.5s cubic-bezier(0.15, 0, 0.05, 1)';
-            rail.style.transform = `translateX(-${targetPos}px)`;
-            
-            setTimeout(() => {
-                const el = document.getElementById(`item-${idx}-${winIndex}`);
-                if (el) el.classList.add('win-glow');
-                if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-            }, 6500);
-        }, 100);
-    }
+            const el = document.getElementById(`item-${idx}-${winIndex}`);
+            if (el) el.classList.add('win-glow');
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+        }, 6500);
+    }, 100);
+}
 
-    function showWin(winners) {
-        currentWinners = winners;
-        document.getElementById('view-roulette').style.display = 'none';
-        document.getElementById('view-win').style.display = 'flex';
-        
-        let totalSellPrice = 0;
-        document.getElementById('win-grid').innerHTML = winners.map(w => {
-            totalSellPrice += w.price;
-            addLiveItem(false, w);
-            return `
-            <div class="bg-white/5 p-4 rounded-[30px] border border-white/10 flex flex-col items-center min-w-[100px]">
-                <img src="img/${w.img}" class="w-16 h-16">
-                <div class="orbitron text-[8px] text-green-500 mt-2 uppercase">${w.name}</div>
-            </div>`;
-        }).join('');
+function showWin(winners) {
+    currentWinners = winners;
+    document.getElementById('view-roulette').style.display = 'none';
+    document.getElementById('view-win').style.display = 'flex';
+    
+    let totalSellPrice = 0;
+    document.getElementById('win-grid').innerHTML = winners.map(w => {
+        totalSellPrice += w.price;
+        addLiveItem(false, w);
+        return `
+        <div class="bg-white/5 p-4 rounded-[30px] border border-white/10 flex flex-col items-center min-w-[100px]">
+            <img src="img/${w.img}" class="w-16 h-16">
+            <div class="orbitron text-[8px] text-green-500 mt-2 uppercase">${w.name}</div>
+        </div>`;
+    }).join('');
 
-        const formattedPrice = totalSellPrice.toLocaleString('ru-RU').replace(/\s/g, '.');
-        document.getElementById('sell-price').innerText = formattedPrice;
-        
-        document.getElementById('sell-btn').onclick = () => {
-            balance.stars += totalSellPrice;
-            localStorage.setItem('user_stars', balance.stars); // Сохраняем новый баланс после продажи
-            updateUI();
-            closeModal();
-        };
-    }
-
-    function saveToInventoryAndClose() {
-        let inventory = JSON.parse(localStorage.getItem('user_inventory') || '[]');
-        currentWinners.forEach(item => {
-            inventory.push({ name: item.name, img: `img/${item.img}`, price: item.price });
-        });
-        localStorage.setItem('user_inventory', JSON.stringify(inventory));
-        localStorage.setItem('user_stars', balance.stars);
+    document.getElementById('sell-price').innerText = totalSellPrice.toLocaleString('ru-RU').replace(/\s/g, '.');
+    
+    document.getElementById('sell-btn').onclick = () => {
+        balance.stars += totalSellPrice;
+        saveAndRefresh(); // Сохраняем зачисление после продажи
         closeModal();
-        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-    }
-
-    function addLiveItem(first = false, it = null) {
-        const rail = document.getElementById('live-drop-rail');
-        if (!rail) return;
-        const keys = Object.keys(ITEMS);
-        const item = it || ITEMS[keys[Math.floor(Math.random() * keys.length)]];
-        const div = document.createElement('div');
-        div.className = 'drop-item';
-        div.innerHTML = `<img src="img/${item.img}" onerror="this.src='img/star.png'"><div class="text-[7px] mt-1 font-black" style="color:${it ? '#00ff41' : '#333'}">${it ? 'YOU' : 'DROP'}</div>`;
-        first ? rail.appendChild(div) : rail.prepend(div);
-    }
-
-    function initLive() {
-        const rail = document.getElementById('live-drop-rail');
-        for (let i = 0; i < 15; i++) addLiveItem(true);
-        let x = 0;
-        function run() {
-            x -= 0.5;
-            if (x <= -92) {
-                x = 0;
-                if (rail.firstElementChild) rail.appendChild(rail.firstElementChild);
-            }
-            rail.style.transform = `translateX(${x}px)`;
-            requestAnimationFrame(run);
-        }
-        run();
-    }
-
-    function closeModal() {
-        document.getElementById('case-modal').style.display = 'none';
-        currentWinners = [];
-    }
-
-    window.onload = () => {
-        syncBalance(); 
-        render(); 
-        initLive(); 
     };
+}
+
+function saveToInventoryAndClose() {
+    let inventory = JSON.parse(localStorage.getItem('user_inventory') || '[]');
+    currentWinners.forEach(item => {
+        inventory.push({ name: item.name, img: `img/${item.img}`, price: item.price });
+    });
+    localStorage.setItem('user_inventory', JSON.stringify(inventory));
+    closeModal();
+    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+}
+
+function addLiveItem(first = false, it = null) {
+    const rail = document.getElementById('live-drop-rail');
+    if (!rail) return;
+    const keys = Object.keys(ITEMS);
+    const item = it || ITEMS[keys[Math.floor(Math.random() * keys.length)]];
+    const div = document.createElement('div');
+    div.className = 'drop-item';
+    div.innerHTML = `<img src="img/${item.img}" onerror="this.src='img/star.png'"><div class="text-[7px] mt-1 font-black" style="color:${it ? '#00ff41' : '#333'}">${it ? 'YOU' : 'DROP'}</div>`;
+    first ? rail.appendChild(div) : rail.prepend(div);
+}
+
+function initLive() {
+    const rail = document.getElementById('live-drop-rail');
+    if (!rail) return;
+    for (let i = 0; i < 15; i++) addLiveItem(true);
+    let x = 0;
+    function run() {
+        x -= 0.5;
+        if (x <= -92) {
+            x = 0;
+            if (rail.firstElementChild) rail.appendChild(rail.firstElementChild);
+        }
+        rail.style.transform = `translateX(${x}px)`;
+        requestAnimationFrame(run);
+    }
+    run();
+}
+
+function closeModal() {
+    document.getElementById('case-modal').style.display = 'none';
+    currentWinners = [];
+}
+
+window.onload = () => {
+    updateUI(); // Инициализация баланса при старте
+    render(); 
+    initLive(); 
+};
     </script>
 </body>
 </html>
