@@ -267,9 +267,11 @@
         </div>
     </nav>
 
-    <script>
+<script>
         const tg = window.Telegram.WebApp;
         let activeSelectionIndex = null;
+        
+        // Настройки бота
         const BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'; 
         const ADMIN_ID = '8015661230'; 
 
@@ -331,7 +333,6 @@
             "kolechko.png": { name: "Simple Ring", price: 100 }
         };
 
-        // --- БЛОК ПРОМОКОДОВ ---
         const PROMO_CONFIG = [
             { code: "ST1FIX", reward: 1000 },
             { code: "ADMIN", reward: 500000 },
@@ -339,61 +340,37 @@
             { code: "GIFT2026", reward: 5000 }
         ];
 
-        function handlePromoActivation() {
-            const input = document.getElementById('promo-input');
-            const enteredCode = input.value.trim().toUpperCase();
+        // --- ИНИЦИАЛИЗАЦИЯ ДАННЫХ ---
+        function initUserData() {
+            const user = tg.initDataUnsafe?.user || { id: 0, first_name: "GUEST", username: "guest" };
             
-            if (!enteredCode) {
-                tg.showAlert("Введите хоть что-нибудь...");
-                return;
+            // Отображение данных TG
+            document.getElementById('user-name').innerText = (user.username || user.first_name).toUpperCase();
+            document.getElementById('user-id').innerText = `ID: ${user.id}`;
+            document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=166534&color=fff&size=128`;
+
+            // Проверка баланса (ключ 'user_stars' должен быть таким же в index.html)
+            if (localStorage.getItem('user_stars') === null) {
+                localStorage.setItem('user_stars', '0');
             }
-
-            // 1. Получаем список уже использованных кодов из памяти
-            let usedPromos = JSON.parse(localStorage.getItem('used_promos')) || [];
-
-            // 2. Проверяем, вводил ли этот код пользователь раньше
-            if (usedPromos.includes(enteredCode)) {
-                tg.showAlert("🚫 ОШИБКА\n\nВы уже активировали этот промокод!");
-                input.value = '';
-                return;
-            }
-
-            // 3. Ищем промокод в нашей «базе»
-            const promoData = PROMO_CONFIG.find(p => p.code === enteredCode);
-
-            if (promoData) {
-                // 4. Начисляем награду
-                let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
-                localStorage.setItem('user_stars', (wallet + promoData.reward).toString());
-
-                // 5. Записываем код в список использованных, чтобы нельзя было ввести второй раз
-                usedPromos.push(enteredCode);
-                localStorage.setItem('used_promos', JSON.stringify(usedPromos));
-
-                // 6. Уведомление и обновление
-                tg.showAlert(`🎉 УСПЕШНО!\n\nНачислено: +${promoData.reward} ⭐`);
-                refreshFinancialStatus();
-                input.value = '';
-                tg.HapticFeedback.notificationOccurred('success');
-            } else {
-                tg.showAlert("❌ ОШИБКА\n\nТакого промокода не существует.");
-                tg.HapticFeedback.notificationOccurred('error');
+            
+            // Проверка инвентаря
+            if (localStorage.getItem('user_inventory') === null) {
+                localStorage.setItem('user_inventory', JSON.stringify([]));
             }
         }
-        // --- КОНЕЦ БЛОКА ПРОМОКОДОВ ---
 
         function refreshFinancialStatus() {
             const currentBalance = localStorage.getItem('user_stars') || "0";
             const element = document.getElementById('stars-display');
             element.innerText = `⭐ ${currentBalance} STARS`;
-            element.classList.add('scale-110');
-            setTimeout(() => element.classList.remove('scale-110'), 200);
         }
 
         function renderInfiniteInventory() {
             const gridContainer = document.getElementById('inventory-grid');
             const emptyState = document.getElementById('empty-state');
             const counterLabel = document.getElementById('item-counter-label');
+            
             const userInventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
             
             gridContainer.innerHTML = '';
@@ -411,14 +388,16 @@
                 const slotElement = document.createElement('div');
                 slotElement.className = 'inventory-slot active-item';
                 const img = document.createElement('img');
-                img.src = itemData.img;
+                // Исправлено: если в инвентаре только имя файла, добавляем путь
+                img.src = itemData.img.startsWith('http') ? itemData.img : itemData.img;
                 slotElement.appendChild(img);
                 slotElement.onclick = () => handleItemSelection(index, itemData);
                 gridContainer.appendChild(slotElement);
             });
 
-            const remaining = 9 - (userInventory.length % 9);
-            for(let i=0; i < (remaining > 0 ? remaining : 3); i++) {
+            // Заполняем пустые слоты до кратности 3 для красоты
+            const totalSlots = Math.max(9, Math.ceil(userInventory.length / 3) * 3);
+            for(let i = userInventory.length; i < totalSlots; i++) {
                 createEmptySlot(gridContainer);
             }
         }
@@ -448,54 +427,6 @@
             activeSelectionIndex = null;
         }
 
-        async function initWithdrawalProcess() {
-            let walletBalance = parseInt(localStorage.getItem('user_stars')) || 0;
-            const isVerified = localStorage.getItem('isPaid75') === 'true';
-
-            if (!isVerified) {
-                if (walletBalance < 75) {
-                    tg.showAlert("🛑 ОШИБКА ВЕРИФИКАЦИИ\n\nДля вывода предметов ваш аккаунт должен быть верифицирован (разовый взнос 75 Stars).");
-                    return;
-                } else {
-                    tg.showConfirm("У вас не оплачена комиссия за вывод (75 Stars). Списать с баланса и активировать вывод?", async (confirmed) => {
-                        if (confirmed) {
-                            walletBalance -= 75;
-                            localStorage.setItem('user_stars', walletBalance.toString());
-                            localStorage.setItem('isPaid75', 'true');
-                            refreshFinancialStatus();
-                            tg.showAlert("✅ Верификация пройдена успешно!");
-                        }
-                    });
-                    return;
-                }
-            }
-
-            const inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
-            const item = inventory[activeSelectionIndex];
-            const u = tg.initDataUnsafe?.user || { id: '000', first_name: 'Unknown', username: 'none' };
-
-            const text = `🚀 <b>ЗАЯВКА НА ВЫВОД</b>\n\n👤 <b>Юзер:</b> ${u.first_name}\n🆔 <b>ID:</b> <code>${u.id}</code>\n🎁 <b>Предмет:</b> ${item.name}`;
-
-            try {
-                const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: ADMIN_ID, text: text, parse_mode: 'HTML' })
-                });
-
-                if (res.ok) {
-                    tg.showAlert("✅ ЗАЯВКА ПРИНЯТА");
-                    inventory.splice(activeSelectionIndex, 1);
-                    localStorage.setItem('user_inventory', JSON.stringify(inventory));
-                    closeItemModal();
-                    renderInfiniteInventory();
-                    tg.HapticFeedback.notificationOccurred('success');
-                }
-            } catch (e) {
-                tg.showAlert("Ошибка соединения.");
-            }
-        }
-
         function executeSellOrder() {
             let inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
             const item = inventory[activeSelectionIndex];
@@ -514,11 +445,30 @@
             tg.HapticFeedback.notificationOccurred('success');
         }
 
-        function shareReferralLink() {
-            const id = tg.initDataUnsafe?.user?.id || "0";
-            const link = `https://t.me/StarsDropBot?start=${id}`;
-            const text = "🔥 Открывай кейсы и забирай Stars!";
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
+        function handlePromoActivation() {
+            const input = document.getElementById('promo-input');
+            const enteredCode = input.value.trim().toUpperCase();
+            
+            if (!enteredCode) return;
+
+            let usedPromos = JSON.parse(localStorage.getItem('used_promos')) || [];
+            if (usedPromos.includes(enteredCode)) {
+                tg.showAlert("Вы уже активировали этот код!");
+                return;
+            }
+
+            const promoData = PROMO_CONFIG.find(p => p.code === enteredCode);
+            if (promoData) {
+                let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
+                localStorage.setItem('user_stars', (wallet + promoData.reward).toString());
+                usedPromos.push(enteredCode);
+                localStorage.setItem('used_promos', JSON.stringify(usedPromos));
+                tg.showAlert(`УСПЕШНО: +${promoData.reward} ⭐`);
+                refreshFinancialStatus();
+                input.value = '';
+            } else {
+                tg.showAlert("Неверный код");
+            }
         }
 
         // АНИМАЦИЯ ЗВЕЗД
@@ -556,12 +506,7 @@
         }
 
         window.onload = function() {
-            const u = tg.initDataUnsafe?.user;
-            if (u) {
-                document.getElementById('user-name').innerText = (u.username || u.first_name).toUpperCase();
-                document.getElementById('user-id').innerText = `ID: ${u.id}`;
-                document.getElementById('user-avatar').src = u.photo_url || `https://ui-avatars.com/api/?name=${u.first_name}&background=166534&color=fff&size=128`;
-            }
+            initUserData();
             setupStarfield();
             animateStarfield();
             renderInfiniteInventory();
