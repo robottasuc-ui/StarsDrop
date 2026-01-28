@@ -195,7 +195,8 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        const user = tg.initDataUnsafe?.user || { id: "12345" };
+        // Берём ID из телеги, либо используем твой реальный из таблицы для теста
+        const user = tg.initDataUnsafe?.user || { id: "5270341396" }; 
 
         // Supabase Config
         const SUPABASE_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
@@ -223,7 +224,6 @@
 
         function goToMain() { window.location.href = 'index.html'; }
 
-        // Универсальный fetch для Supabase
         async function supabaseCall(path, method = 'GET', body = null) {
             const headers = {
                 'apikey': SUPABASE_KEY,
@@ -239,11 +239,12 @@
 
         async function loadUserData() {
             try {
-                // Ищем по username (ID телеги)
-                let data = await supabaseCall(`${TABLE_NAME}?username=eq.${user.id}`);
+                // ИСПРАВЛЕНО: ищем по user_id
+                let data = await supabaseCall(`${TABLE_NAME}?user_id=eq.${user.id}`);
                 
                 if (!data || data.length === 0) {
-                    const newUser = { username: user.id.toString(), ton: 500, inventory: "" };
+                    // ИСПРАВЛЕНО: создаем с колонками user_id и stars
+                    const newUser = { user_id: user.id.toString(), stars: 500, inventory: "" };
                     const created = await supabaseCall(TABLE_NAME, 'POST', newUser);
                     userRowData = created[0];
                 } else {
@@ -256,7 +257,8 @@
         }
 
         function updateUI() {
-            const balance = parseInt(userRowData.ton) || 0;
+            // ИСПРАВЛЕНО: берем баланс из stars
+            const balance = parseInt(userRowData.stars) || 0;
             document.getElementById('timer-display').innerText = `БАЛАНС: ${balance} ⭐`;
             const btn = document.getElementById('spin-btn');
             btn.disabled = balance < SPIN_COST;
@@ -267,18 +269,19 @@
             if (isSpinning) return;
             isSpinning = true;
 
-            // 1. Списание баланса
-            const newBalance = parseInt(userRowData.ton) - SPIN_COST;
+            const currentBalance = parseInt(userRowData.stars) || 0;
+            const newBalance = currentBalance - SPIN_COST;
+            
             try {
-                await supabaseCall(`${TABLE_NAME}?username=eq.${user.id}`, 'PATCH', { ton: newBalance });
-                userRowData.ton = newBalance;
+                // ИСПРАВЛЕНО: обновляем stars по user_id
+                await supabaseCall(`${TABLE_NAME}?user_id=eq.${user.id}`, 'PATCH', { stars: newBalance });
+                userRowData.stars = newBalance;
                 updateUI();
             } catch (e) {
                 isSpinning = false;
                 return;
             }
 
-            // 2. Рандом
             const winId = Math.random() > 0.9 ? itemIds[Math.floor(Math.random() * itemIds.length)] : "65";
             winningItem = { id: winId, ...ITEMS_DB[winId] };
             
@@ -318,15 +321,17 @@
         }
 
         document.getElementById('sell-btn').onclick = async () => {
-            const finalBalance = parseInt(userRowData.ton) + winningItem.price;
-            await supabaseCall(`${TABLE_NAME}?username=eq.${user.id}`, 'PATCH', { ton: finalBalance });
+            const finalBalance = (parseInt(userRowData.stars) || 0) + winningItem.price;
+            // ИСПРАВЛЕНО: обновляем stars
+            await supabaseCall(`${TABLE_NAME}?user_id=eq.${user.id}`, 'PATCH', { stars: finalBalance });
             location.reload();
         };
 
         document.getElementById('keep-btn').onclick = async () => {
             const currentInv = userRowData.inventory || "";
             const newInv = currentInv ? `${currentInv}, ${winningItem.name}` : winningItem.name;
-            await supabaseCall(`${TABLE_NAME}?username=eq.${user.id}`, 'PATCH', { inventory: newInv });
+            // ИСПРАВЛЕНО: фильтр по user_id
+            await supabaseCall(`${TABLE_NAME}?user_id=eq.${user.id}`, 'PATCH', { inventory: newInv });
             location.reload();
         };
 
