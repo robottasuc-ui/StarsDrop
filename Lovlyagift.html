@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StarDrop - Catch Master</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --primary: #00ff41;
+            --danger: #ff4444;
+            --bg-dark: #040d04;
+        }
+        body { 
+            margin: 0; 
+            background: var(--bg-dark); 
+            color: white; 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            overflow: hidden; 
+            touch-action: none;
+        }
+        #game-screen { 
+            position: relative; 
+            width: 100vw; 
+            height: 100vh; 
+            background: radial-gradient(circle at center, #0a1a0a 0%, #000 100%);
+        }
+        
+        .ui-panel { 
+            position: absolute; 
+            top: 40px; 
+            width: 100%; 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 0 20px; 
+            box-sizing: border-box; 
+            z-index: 100; 
+        }
+        #score-cont { 
+            font-size: 18px; 
+            font-weight: 900; 
+            color: var(--primary); 
+            background: rgba(0,0,0,0.6); 
+            padding: 8px 15px; 
+            border-radius: 15px; 
+            border: 1px solid rgba(0,255,65,0.3);
+            box-shadow: 0 0 15px rgba(0,255,65,0.1);
+        }
+        #pause-btn { 
+            background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            color: white; 
+            padding: 8px 15px; 
+            border-radius: 12px; 
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+        }
+
+        #danger-zone {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(to top, rgba(255,68,68,0.3), transparent);
+            border-top: 2px solid var(--danger);
+            z-index: 10;
+            box-shadow: 0 -10px 20px rgba(255,68,68,0.1);
+        }
+
+        .falling-item { 
+            position: absolute; 
+            cursor: pointer; 
+            user-select: none; 
+            z-index: 50; 
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
+            will-change: transform;
+        }
+        .falling-item img { width: 65px; height: 65px; object-fit: contain; pointer-events: none; }
+
+        .modal { 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0,0,0,0.9); 
+            display: none; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 1000; 
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        .modal h2 { font-size: 32px; color: var(--primary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        .m-btn { 
+            width: 260px; 
+            padding: 20px; 
+            margin: 10px; 
+            border-radius: 30px; 
+            border: none; 
+            font-weight: 900; 
+            font-size: 16px; 
+            cursor: pointer; 
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+        .btn-green { background: var(--primary); color: black; box-shadow: 0 0 25px rgba(0,255,65,0.4); }
+        .btn-exit { background: #111; color: white; border: 1px solid #333; }
+        
+        .item-star { filter: drop-shadow(0 0 15px #ffd700); }
+    </style>
+</head>
+<body>
+
+<div id="game-screen">
+    <div class="ui-panel">
+        <button id="pause-btn" onclick="togglePause()">|| ПАУЗА</button>
+        <div id="score-cont">🎁 <span id="gift-count">0</span>/50 | ⭐ <span id="star-count">0</span></div>
+    </div>
+    <div id="danger-zone"></div>
+</div>
+
+<div id="pause-modal" class="modal">
+    <h2>ПАУЗА</h2>
+    <button class="m-btn btn-green" onclick="togglePause()">ПРОДОЛЖИТЬ</button>
+    <button class="m-btn btn-exit" onclick="saveAndExit()">ВЫЙТИ И СОХРАНИТЬ</button>
+</div>
+
+<div id="fail-modal" class="modal">
+    <img id="fail-icon" src="img/bomb.png" style="width: 100px; margin-bottom: 20px;">
+    <h2 id="fail-title" style="color: var(--danger);">ИГРА ОКОНЧЕНА</h2>
+    <p id="fail-msg">Вы пропустили подарок!</p>
+    <div id="final-res" style="font-size: 24px; margin-bottom: 30px; font-weight: bold; color: #fff;">0 ⭐</div>
+    <button id="exit-btn" class="m-btn btn-exit" onclick="saveAndExit()">ВЕРНУТЬСЯ В МЕНЮ</button>
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    const screen = document.getElementById('game-screen');
+    const giftLabel = document.getElementById('gift-count');
+    const starLabel = document.getElementById('star-count');
+
+    const BACKEND_URL = 'https://stars-drop.vercel.app/api';
+    const user = tg.initDataUnsafe?.user;
+
+    let giftsCollected = 0;
+    let starsEarned = 0;
+    let isPaused = false;
+    let gameActive = true;
+    let isSaving = false;
+
+    let baseSpeed = 2.5;
+    let spawnRate = 800;
+    let bombChance = 0.12;
+
+    const ASSETS = [
+        '1may.jpg', '2025.jpg', 'bear.png', 'book.jpg', 'boooox.png', 'botinok.png', 'box.png', 'car.png',
+        'ccolso2.png', 'cerrrdce.jpg', 'chassiki.png', 'chemodan.jpg', 'ciga.png', 'colso.png', 'costum.jpg',
+        'cvetok.png', 'dog.png', 'dyxi.png', 'fonarik.jpg', 'grob.jpg', 'gyba.png', 'happybirthday.jpg',
+        'heart.png', 'helmet.png', 'kalendar.png', 'kepka.png', 'kirpitch.jpg', 'koks.jpg', 'koktel.png',
+        'kolechko.png', 'kot.png', 'kotel.png', 'krovatka.jpg', 'lolipop.png', 'lucky.jpg', 'mafin.jpg',
+        'metch.png', 'narkotiki.png', 'obyv.jpg', 'otchki.jpg', 'orel.jpg', 'otkritka.jpg', 'paska.jpg',
+        'pepe.png', 'raketa.png', 'rozza.png', 'rykazak.jpg', 'shapka.png', 'shar.jpg', 'shlem.png',
+        'sliva.png', 'soska.jpg', 'statyya.jpg', 'statyyetka.png', 'venok.jpg', 'yayko.png', 'zhele.png', 'zmei.png'
+    ];
+
+    function spawnItem() {
+        if (!gameActive || isPaused) return;
+
+        const item = document.createElement('div');
+        item.className = 'falling-item';
+        
+        let type = 'gift';
+        let imgName = ASSETS[Math.floor(Math.random() * ASSETS.length)];
+        let isCaught = false; // Флаг, что предмет уже нажат
+
+        if (Math.random() < bombChance) {
+            type = 'bomb';
+            imgName = 'bomb.png';
+        } else if (giftsCollected >= 50) {
+            type = 'star';
+            imgName = 'star.png';
+            item.classList.add('item-star');
+            giftsCollected = 0;
+        }
+
+        item.setAttribute('data-type', type);
+        item.innerHTML = `<img src="img/${imgName}">`;
+        item.style.left = Math.random() * (window.innerWidth - 75) + 'px';
+        item.style.top = '-100px';
+        screen.appendChild(item);
+
+        const handleHit = (e) => {
+            if (e.cancelable) e.preventDefault();
+            if (!gameActive || isPaused || isCaught) return;
+
+            isCaught = true; // Блокируем проверку падения в красную зону
+            const currentType = item.getAttribute('data-type');
+            
+            if (currentType === 'bomb') {
+                endGame('bomb');
+            } else if (currentType === 'star') {
+                starsEarned++;
+                starLabel.innerText = starsEarned;
+                tg.HapticFeedback.notificationOccurred('success');
+                item.remove();
+            } else {
+                giftsCollected++;
+                giftLabel.innerText = giftsCollected;
+                if (giftsCollected % 10 === 0) baseSpeed += 0.3;
+                tg.HapticFeedback.impactOccurred('light');
+                item.remove();
+            }
+        };
+
+        item.onmousedown = item.ontouchstart = handleHit;
+
+        let pos = -100;
+        let speed = baseSpeed + Math.random() * 2;
+        const dangerLine = window.innerHeight - 60;
+        
+        function fall() {
+            if (!gameActive || isCaught) return; // Если пойман — прекращаем цикл падения для него
+            if (!isPaused) {
+                pos += speed;
+                item.style.top = pos + 'px';
+            }
+
+            // Фикс №2: Бомбы игнорируют красную зону
+            if (pos + 60 > dangerLine && type !== 'bomb') {
+                endGame('miss');
+                item.remove();
+                return;
+            }
+
+            if (pos > window.innerHeight) {
+                item.remove();
+            } else {
+                requestAnimationFrame(fall);
+            }
+        }
+        requestAnimationFrame(fall);
+    }
+
+    function togglePause() {
+        isPaused = !isPaused;
+        document.getElementById('pause-modal').style.display = isPaused ? 'flex' : 'none';
+    }
+
+    function endGame(reason) {
+        gameActive = false;
+        tg.HapticFeedback.notificationOccurred('error');
+        
+        const modal = document.getElementById('fail-modal');
+        const title = document.getElementById('fail-title');
+        const msg = document.getElementById('fail-msg');
+        const icon = document.getElementById('fail-icon');
+
+        if (reason === 'bomb') {
+            title.innerText = "БАБАХ!";
+            msg.innerText = "Вы нажали на бомбу!";
+            icon.src = "img/bomb.png";
+        } else {
+            title.innerText = "ПРОПУСК!";
+            msg.innerText = "Предмет упал в красную зону!";
+            icon.src = "img/star.png";
+        }
+
+        document.getElementById('final-res').innerText = `ВАШ ДРОП: ${starsEarned} ⭐`;
+        modal.style.display = 'flex';
+        localStorage.setItem('last_gift_time', Date.now().toString());
+    }
+
+    async function saveAndExit() {
+        if (isSaving) return;
+        isSaving = true;
+        const exitBtn = document.getElementById('exit-btn');
+        if (exitBtn) exitBtn.innerText = "СОХРАНЕНИЕ...";
+
+        let currentStars = parseInt(localStorage.getItem('user_stars')) || 0;
+        localStorage.setItem('user_stars', (currentStars + starsEarned).toString());
+
+        if (user?.id && starsEarned > 0) {
+            try {
+                await fetch(`${BACKEND_URL}/update_balance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: user.id,
+                        stars: starsEarned,
+                        points: 0
+                    })
+                });
+            } catch (e) { console.error("Server error"); }
+        }
+        window.location.href = 'index.html';
+    }
+
+    function gameLoop() {
+        if (gameActive && !isPaused) {
+            spawnItem();
+        }
+        setTimeout(gameLoop, spawnRate);
+    }
+
+    gameLoop();
+</script>
+</body>
+</html>
