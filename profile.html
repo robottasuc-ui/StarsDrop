@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>StarsDrop - Ultimate Infinite Profile Gold Edition</title>
+    <title>StarsDrop - Google Sheets Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -271,10 +271,8 @@
     const tg = window.Telegram.WebApp;
     let activeSelectionIndex = null;
     
-    // --- SUPABASE CONFIGURATION ---
-    // ЗАМЕНИ 'твоё_id' на реальный ID проекта из Supabase Dashboard
-    const SUPABASE_URL = 'https://cljffghytfvcxzsedrty.supabase.co'; 
-    const SUPABASE_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCg0'; 
+    // --- SHEETBEST CONFIGURATION ---
+    const SHEET_API_URL = 'https://api.sheetbest.com/sheets/85c1006a-f951-4055-896d-5daed83821ef';
     
     const MASTER_ITEMS_DATABASE = {
         "1may.jpg": { name: "1 May Exclusive", price: 100 },
@@ -337,62 +335,75 @@
     const PROMO_CONFIG = [
         { code: "ST1FIX", reward: 1000 },
         { code: "ADMIN", reward: 500000 },
-        { code: "DIMA_XUYLAN", reward: 1000000 },
-        { code: "GIFT2026", reward: 5000 }
+        { code: "GIFT2026", reward: 500000000 }
     ];
 
-    // --- СЕРВИСНЫЕ ФУНКЦИИ ---
-    async function apiRequest(method, query, body = null) {
-        const url = `${SUPABASE_URL}/rest/v1/${query}`;
-        const options = {
-            method: method,
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=representation'
-            }
-        };
-        if (body) options.body = JSON.stringify(body);
-        
-        try {
-            const response = await fetch(url, options);
-            if (!response.ok) throw new Error(await response.text());
-            return await response.json();
-        } catch (e) {
-            console.error("Supabase Error:", e);
-            return null;
-        }
-    }
+    // --- ФУНКЦИИ РАБОТЫ С ГУГЛ ТАБЛИЦЕЙ ---
 
     async function fetchUserProfile() {
         const userId = tg.initDataUnsafe?.user?.id || 12345;
-        const data = await apiRequest('GET', `users?id=eq.${userId}&select=*`);
-        
-        if (data && data.length > 0) {
-            saveToLocal(data[0]);
-            updateUI();
-        } else {
-            // Регистрация нового юзера
-            const newUser = { 
-                id: userId, 
-                stars: 0, 
-                inventory: [], 
-                used_promos: [],
-                username: tg.initDataUnsafe?.user?.username || "GUEST"
-            };
-            const created = await apiRequest('POST', 'users', newUser);
-            if (created) {
-                saveToLocal(newUser);
+        try {
+            // Ищем юзера по ID в таблице
+            const response = await fetch(`${SHEET_API_URL}/id/${userId}`);
+            const data = await response.json();
+            
+            if (data && data.length > 0) {
+                const user = data[0];
+                // Распаковываем данные (в таблице они хранятся как строки)
+                const inventory = typeof user.inventory === 'string' ? JSON.parse(user.inventory) : (user.inventory || []);
+                const promos = typeof user.used_promos === 'string' ? JSON.parse(user.used_promos) : (user.used_promos || []);
+                
+                saveToLocal({
+                    stars: user.stars,
+                    inventory: inventory,
+                    used_promos: promos
+                });
+                updateUI();
+            } else {
+                // Если юзера нет - создаем нового
+                const newUser = { 
+                    id: userId, 
+                    stars: 0, 
+                    inventory: JSON.stringify([]), 
+                    used_promos: JSON.stringify([]),
+                    username: tg.initDataUnsafe?.user?.username || "GUEST"
+                };
+                
+                await fetch(SHEET_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newUser)
+                });
+
+                saveToLocal({ stars: 0, inventory: [], used_promos: [] });
                 updateUI();
             }
+        } catch (e) {
+            console.error("Sheets Error:", e);
+        }
+    }
+
+    async function syncUserData(stars, inventory, promos) {
+        const userId = tg.initDataUnsafe?.user?.id || 12345;
+        try {
+            await fetch(`${SHEET_API_URL}/id/${userId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    stars: stars,
+                    inventory: JSON.stringify(inventory),
+                    used_promos: JSON.stringify(promos)
+                })
+            });
+        } catch (e) {
+            console.error("Sync Error:", e);
         }
     }
 
     function saveToLocal(data) {
         localStorage.setItem('user_stars', data.stars);
-        localStorage.setItem('user_inventory', JSON.stringify(data.inventory || []));
-        localStorage.setItem('used_promos', JSON.stringify(data.used_promos || []));
+        localStorage.setItem('user_inventory', JSON.stringify(data.inventory));
+        localStorage.setItem('used_promos', JSON.stringify(data.used_promos));
     }
 
     function updateUI() {
@@ -468,8 +479,8 @@
     }
 
     async function executeSellOrder() {
-        const userId = tg.initDataUnsafe?.user?.id || 12345;
         let inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
+        let usedPromos = JSON.parse(localStorage.getItem('used_promos')) || [];
         const item = inventory[activeSelectionIndex];
         const fileName = item.img.split('/').pop().toLowerCase();
         const reward = MASTER_ITEMS_DATABASE[fileName]?.price || 1;
@@ -478,25 +489,19 @@
         const newBalance = wallet + reward;
         inventory.splice(activeSelectionIndex, 1);
 
-        // Синхронизация с сервером (PATCH)
-        const updated = await apiRequest('PATCH', `users?id=eq.${userId}`, {
-            stars: newBalance,
-            inventory: inventory
-        });
+        // Обновляем локально
+        localStorage.setItem('user_stars', newBalance);
+        localStorage.setItem('user_inventory', JSON.stringify(inventory));
+        
+        // Синхрон с таблицей
+        await syncUserData(newBalance, inventory, usedPromos);
 
-        if (updated) {
-            localStorage.setItem('user_stars', newBalance);
-            localStorage.setItem('user_inventory', JSON.stringify(inventory));
-            closeItemModal();
-            updateUI();
-            tg.HapticFeedback.notificationOccurred('success');
-        } else {
-            tg.showAlert("Сбой синхронизации с базой!");
-        }
+        closeItemModal();
+        updateUI();
+        tg.HapticFeedback.notificationOccurred('success');
     }
 
     async function handlePromoActivation() {
-        const userId = tg.initDataUnsafe?.user?.id || 12345;
         const input = document.getElementById('promo-input');
         const code = input.value.trim().toUpperCase();
         if (!code) return;
@@ -510,21 +515,18 @@
         const promo = PROMO_CONFIG.find(p => p.code === code);
         if (promo) {
             let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
+            let inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
             const newBalance = wallet + promo.reward;
             usedPromos.push(code);
 
-            const updated = await apiRequest('PATCH', `users?id=eq.${userId}`, {
-                stars: newBalance,
-                used_promos: usedPromos
-            });
+            localStorage.setItem('user_stars', newBalance);
+            localStorage.setItem('used_promos', JSON.stringify(usedPromos));
+            
+            await syncUserData(newBalance, inventory, usedPromos);
 
-            if (updated) {
-                localStorage.setItem('user_stars', newBalance);
-                localStorage.setItem('used_promos', JSON.stringify(usedPromos));
-                tg.showAlert(`+${promo.reward} ⭐ начислено!`);
-                updateUI();
-                input.value = '';
-            }
+            tg.showAlert(`+${promo.reward} ⭐ начислено!`);
+            updateUI();
+            input.value = '';
         } else {
             tg.showAlert("Неверный код");
         }
