@@ -1,6 +1,5 @@
 import os
 import requests
-import httpx
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from supabase import create_client, Client
@@ -8,35 +7,36 @@ from supabase import create_client, Client
 app = Flask(__name__)
 CORS(app)
 
-# Настройки Supabase
+# Настройки Supabase из переменных окружения Vercel
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 
-# ФИКС: Создаем кастомный клиент, чтобы не было ошибки прокси в Vercel
-http_client = httpx.Client(proxies=None)
-
+# Простейшая инициализация без лишних параметров (так не будет ошибки AttributeError)
 if not SUPABASE_URL or not SUPABASE_KEY:
-    print("ОШИБКА: Проверь переменные SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY в Vercel!")
     supabase = None
 else:
-    # Инициализируем клиент с фиксом
-    supabase: Client = create_client(
-        SUPABASE_URL, 
-        SUPABASE_KEY, 
-        options={"http_client": http_client}
-    )
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Токены
+# Твои токены
 CRYPTO_PAY_TOKEN = '519389:AAnFdMg1D8ywsfVEd0aA02B8872Zzz61ATO'
 BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'
 
 def get_or_create_user(user_id):
-    res = supabase.table('users').select("*").eq('user_id', user_id).execute()
-    if res.data:
-        return res.data[0]
-    new_user = {"user_id": int(user_id), "balance": 0.0, "stars": 0, "points": 0}
-    supabase.table('users').insert(new_user).execute()
-    return new_user
+    # Если база не подключена, возвращаем пустую заглушку
+    if not supabase:
+        return {"user_id": int(user_id), "balance": 0.0, "stars": 0, "points": 0}
+    
+    try:
+        res = supabase.table('users').select("*").eq('user_id', user_id).execute()
+        if res.data:
+            return res.data[0]
+        
+        new_user = {"user_id": int(user_id), "balance": 0.0, "stars": 0, "points": 0}
+        supabase.table('users').insert(new_user).execute()
+        return new_user
+    except Exception as e:
+        print(f"Ошибка БД: {e}")
+        return {"user_id": int(user_id), "balance": 0.0, "stars": 0, "points": 0}
 
 @app.route('/api/create_pay', methods=['POST'])
 def create_pay():
@@ -55,7 +55,7 @@ def create_pay():
         r = requests.post(url, json=payload, headers=headers).json()
         if r.get('ok'):
             return jsonify({"pay_url": r['result']['bot_invoice_url']}), 200
-        return jsonify({"error": "crypto_bot_err", "details": r}), 400
+        return jsonify({"error": "crypto_bot_err"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -77,7 +77,7 @@ def create_stars_pay():
         r = requests.post(url, json=payload).json()
         if r.get('ok'):
             return jsonify({"pay_url": r['result']}), 200
-        return jsonify({"error": "telegram_api_err", "details": r}), 400
+        return jsonify({"error": "stars_err"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -95,12 +95,16 @@ def crypto_webhook():
 @app.route('/api/telegram-webhook', methods=['POST'])
 def telegram_webhook():
     update = request.json
+    # Подтверждение платежа
     if "pre_checkout_query" in update:
         requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/answerPreCheckoutQuery", 
                       json={"pre_checkout_query_id": update["pre_checkout_query"]["id"], "ok": True})
+    
+    # Зачисление
     if "message" in update and "successful_payment" in update["message"]:
         pay = update["message"]["successful_payment"]
-        uid, amt = pay.get('invoice_payload'), int(pay["total_amount"])
+        uid = pay.get('invoice_payload')
+        amt = int(pay["total_amount"])
         u = get_or_create_user(uid)
         new_stars = int(u.get('stars', 0)) + amt
         supabase.table('users').update({"stars": new_stars}).eq('user_id', uid).execute()
