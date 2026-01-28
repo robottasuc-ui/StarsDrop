@@ -179,6 +179,8 @@
 
     <script>
 const tg = window.Telegram.WebApp;
+tg.expand();
+
 const BACKEND_URL = 'https://stars-drop.vercel.app/api';
 
 const DB_CONFIG = {
@@ -194,85 +196,6 @@ let balance = {
     stars: parseInt(localStorage.getItem('user_stars')) || 0,
     ton: parseFloat(localStorage.getItem('user_ton')) || 0
 };
-
-// --- ИНТЕГРАЦИЯ С SUPABASE ---
-
-async function syncData() {
-    if (tg.initDataUnsafe?.user) {
-        try {
-            // 1. Синхронизация баланса через ваш API
-            const res = await fetch(`${BACKEND_URL}/get_balance/${tg.initDataUnsafe.user.id}?t=${Date.now()}`);
-            const data = await res.json();
-            balance.stars = parseInt(data.stars);
-            balance.ton = parseFloat(data.balance);
-            
-            // 2. Синхронизация инвентаря напрямую из Supabase (чтобы подгрузить старые данные)
-            const invRes = await fetch(`${DB_CONFIG.url}/rest/v1/users?id=eq.${tg.initDataUnsafe.user.id}&select=inventory`, {
-                headers: {
-                    'apikey': DB_CONFIG.key,
-                    'Authorization': `Bearer ${DB_CONFIG.key}`
-                }
-            });
-            const invData = await invRes.json();
-            if (invData && invData[0] && invData[0].inventory) {
-                localStorage.setItem('user_inventory', JSON.stringify(invData[0].inventory));
-            }
-
-            saveAndRefresh();
-            console.log("Database Sync: Success");
-        } catch (e) { 
-            console.error("Database Sync: Failed", e); 
-            updateUI();
-        }
-    }
-}
-
-async function updateStarsOnServer(amount) {
-    if (!tg.initDataUnsafe?.user) return;
-    try {
-        await fetch(`${BACKEND_URL}/update_balance`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                user_id: tg.initDataUnsafe.user.id,
-                stars: amount
-            })
-        });
-    } catch (e) { console.error("Update stars error"); }
-}
-
-async function saveInventoryToDB(items) {
-    if (!tg.initDataUnsafe?.user) return;
-    try {
-        await fetch(`${DB_CONFIG.url}/rest/v1/users?id=eq.${tg.initDataUnsafe.user.id}`, {
-            method: 'PATCH',
-            headers: {
-                'apikey': DB_CONFIG.key,
-                'Authorization': `Bearer ${DB_CONFIG.key}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({ inventory: items })
-        });
-        console.log("Inventory saved to DB");
-    } catch (e) { console.error("Inventory DB error", e); }
-}
-
-// --- ЛОГИКА UI ---
-
-function saveAndRefresh() {
-    localStorage.setItem('user_stars', balance.stars);
-    localStorage.setItem('user_ton', balance.ton.toFixed(2));
-    updateUI();
-}
-
-function updateUI() {
-    const formattedStars = Math.floor(balance.stars).toLocaleString('ru-RU').replace(/\s/g, '.');
-    const hStars = document.getElementById('header-stars');
-    const hTon = document.getElementById('header-ton');
-    if (hStars) hStars.innerText = formattedStars;
-    if (hTon) hTon.innerText = balance.ton.toFixed(2);
-}
 
 // --- ДАННЫЕ (ITEMS) ---
 const ITEMS = {
@@ -343,7 +266,80 @@ const CASES = [
     { name: "Лимонный", stars: 25000, ton: 150, img: "case9.png", loot: [[40, 0], [66, 0], [55, 0], [21, 50], [18, 40], [4, 10]] }
 ];
 
-// --- ГЕЙМПЛЕЙ ---
+// --- ИНТЕГРАЦИЯ ---
+
+async function syncData() {
+    if (tg.initDataUnsafe?.user) {
+        try {
+            const res = await fetch(`${BACKEND_URL}/get_balance/${tg.initDataUnsafe.user.id}?t=${Date.now()}`);
+            const data = await res.json();
+            balance.stars = parseInt(data.stars);
+            balance.ton = parseFloat(data.balance);
+            
+            const invRes = await fetch(`${DB_CONFIG.url}/rest/v1/users?id=eq.${tg.initDataUnsafe.user.id}&select=inventory`, {
+                headers: {
+                    'apikey': DB_CONFIG.key,
+                    'Authorization': `Bearer ${DB_CONFIG.key}`
+                }
+            });
+            const invData = await invRes.json();
+            if (invData && invData[0] && invData[0].inventory) {
+                localStorage.setItem('user_inventory', JSON.stringify(invData[0].inventory));
+            }
+
+            saveAndRefresh();
+        } catch (e) { 
+            console.error("Database Sync: Failed", e); 
+            updateUI();
+        }
+    }
+}
+
+async function updateStarsOnServer(amount) {
+    if (!tg.initDataUnsafe?.user) return;
+    try {
+        await fetch(`${BACKEND_URL}/update_balance`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                user_id: tg.initDataUnsafe.user.id,
+                stars: amount
+            })
+        });
+    } catch (e) { console.error("Update stars error"); }
+}
+
+async function saveInventoryToDB(items) {
+    if (!tg.initDataUnsafe?.user) return;
+    try {
+        await fetch(`${DB_CONFIG.url}/rest/v1/users?id=eq.${tg.initDataUnsafe.user.id}`, {
+            method: 'PATCH',
+            headers: {
+                'apikey': DB_CONFIG.key,
+                'Authorization': `Bearer ${DB_CONFIG.key}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ inventory: items })
+        });
+    } catch (e) { console.error("Inventory DB error", e); }
+}
+
+// --- ЛОГИКА UI ---
+
+function saveAndRefresh() {
+    localStorage.setItem('user_stars', balance.stars);
+    localStorage.setItem('user_ton', balance.ton.toFixed(2));
+    updateUI();
+}
+
+function updateUI() {
+    const formattedStars = Math.floor(balance.stars).toLocaleString('ru-RU').replace(/\s/g, '.');
+    const hStars = document.getElementById('header-stars');
+    const hTon = document.getElementById('header-ton');
+    if (hStars) hStars.innerText = formattedStars;
+    if (hTon) hTon.innerText = balance.ton.toFixed(2);
+}
 
 function render() {
     document.getElementById('main-grid').innerHTML = CASES.map((c, i) => `
@@ -400,8 +396,6 @@ function startRoll(type) {
     
     balance[type] -= cost;
     saveAndRefresh();
-    
-    // Обновляем баланс в базе при трате
     if (type === 'stars') updateStarsOnServer(balance.stars);
 
     document.getElementById('view-preview').style.display = 'none';
@@ -465,18 +459,17 @@ function showWin(winners) {
         addLiveItem(false, w);
         return `
         <div class="bg-white/5 p-4 rounded-[30px] border border-white/10 flex flex-col items-center min-w-[100px]">
-            <img src="img/${w.img}" class="w-16 h-16">
+            <img src="img/${w.img}" class="w-16 h-16 object-contain">
             <div class="orbitron text-[8px] text-green-500 mt-2 uppercase">${w.name}</div>
         </div>`;
     }).join('');
 
     document.getElementById('sell-price').innerText = totalSellPrice.toLocaleString('ru-RU').replace(/\s/g, '.');
     
-    document.getElementById('sell-btn').onclick = () => {
+    document.getElementById('sell-btn').onclick = async () => {
         balance.stars += totalSellPrice;
         saveAndRefresh();
-        // Обновляем баланс в базе после продажи
-        updateStarsOnServer(balance.stars);
+        await updateStarsOnServer(balance.stars);
         closeModal();
     };
 }
@@ -486,13 +479,8 @@ async function saveToInventoryAndClose() {
     currentWinners.forEach(item => {
         inventory.push({ name: item.name, img: `img/${item.img}`, price: item.price });
     });
-    
-    // Сохраняем локально
     localStorage.setItem('user_inventory', JSON.stringify(inventory));
-    
-    // Сохраняем в Базу Данных
     await saveInventoryToDB(inventory);
-    
     closeModal();
     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
 }
@@ -531,7 +519,7 @@ function closeModal() {
 }
 
 window.onload = () => {
-    syncData(); // Загружает данные из базы при входе
+    syncData(); 
     render(); 
     initLive(); 
 };
