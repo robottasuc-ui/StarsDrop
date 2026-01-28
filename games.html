@@ -3,122 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>StarsDrop Games - In Development</title>
+    <title>StarsGames Hub</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         
         body { 
-            background-color: #0a1205; 
+            background-color: #050a05; 
             color: white; 
             font-family: 'Inter', sans-serif; 
             margin: 0; 
+            height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+            flex-direction: column;
             overflow: hidden;
         }
 
-        .bg-glow {
-            position: absolute;
-            width: 300px; height: 300px;
-            background: radial-gradient(circle, rgba(163, 230, 53, 0.15) 0%, transparent 70%);
-            filter: blur(40px);
-            z-index: 0;
-            animation: pulse 4s infinite ease-in-out;
+        .game-card {
+            background: #111811;
+            border-radius: 24px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.2); opacity: 1; }
+        .game-card:active {
+            transform: scale(0.96);
+            background: #1a231a;
         }
 
-        .content {
-            position: relative;
-            z-index: 10;
-            text-align: center;
-            padding: 2rem;
+        .icon-container {
+            width: 60px;
+            height: 60px;
+            background: #1a231a;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+            border: 1px solid rgba(34, 197, 94, 0.2);
         }
 
-        .loader-dots {
-            display: inline-flex;
-            gap: 4px;
+        .icon-container img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
         }
 
-        .dot {
-            width: 8px; height: 8px;
-            background: #a3e635;
-            border-radius: 50%;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
-
-        .dot:nth-child(1) { animation-delay: -0.32s; }
-        .dot:nth-child(2) { animation-delay: -0.16s; }
-
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1.0); }
-        }
-
-        .btn-back {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 16px 32px;
-            border-radius: 20px;
-            font-weight: 900;
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 1px;
-            margin-top: 2rem;
-            transition: 0.3s;
-        }
-
-        .btn-back:active {
-            transform: scale(0.95);
-            background: rgba(163, 230, 53, 0.1);
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
         }
     </style>
 </head>
-<body>
+<body class="p-6">
 
-    <div class="bg-glow"></div>
+    <div class="max-w-md mx-auto w-full flex flex-col h-full">
+        <header class="mb-10 pt-4">
+            <h1 class="text-4xl font-black italic tracking-tighter uppercase">
+                STARS<span class="text-green-500">GAMES</span>
+            </h1>
+            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Arcade Hub System</p>
+        </header>
 
-    <div class="content">
-        <div class="flex justify-center mb-6">
-            <div class="relative">
-                <img src="mini.png" alt="Games" class="w-24 h-24 opacity-20 grayscale">
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
-                    </svg>
+        <div class="space-y-4">
+            
+            <div onclick="window.location.href='Lovlyagift.html'" class="game-card">
+                <div class="icon-container">
+                    <img src="img/pepe.png" alt="Pepe">
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-black uppercase text-sm tracking-tight">Ловля подарков</h3>
+                    <p id="gift-timer" class="text-gray-500 text-[10px] font-bold uppercase">Доступно раз в 24 часа</p>
+                </div>
+                <div class="text-green-500 opacity-50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </div>
             </div>
+
+            <div onclick="checkClickerAccess()" class="game-card">
+                <div class="icon-container">
+                    <img src="img/helmet.png" alt="Helmet">
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-black uppercase text-sm tracking-tight">StarClicker</h3>
+                    <p id="clicker-status" class="text-gray-500 text-[10px] font-bold uppercase">Купить доступ за 50 ⭐</p>
+                </div>
+                <div id="clicker-lock" class="text-gray-600">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"></path></svg>
+                </div>
+            </div>
+
         </div>
 
-        <h1 class="text-3xl font-black uppercase italic tracking-tighter mb-2">
-            Игры  в  <span class="text-green-500">разработке</span>
-        </h1>
-        
-        <p class="text-gray-500 text-sm font-medium mb-8">
-            Настраиваем алгоритмы удачи
-            <span class="loader-dots">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-            </span>
-        </p>
+        <div class="mt-auto pb-6">
+            <button onclick="window.location.href='index.html'" class="w-full bg-[#111811] text-gray-400 font-black py-5 rounded-3xl uppercase text-[11px] tracking-widest border border-white/5 active:bg-[#1a231a] transition-all">
+                Вернуться в главное меню
+            </button>
+        </div>
+    </div>
 
-        <button onclick="window.location.href='index.html'" class="btn-back">
-            Вернуться назад
-        </button>
+    <div id="buy-modal" class="modal">
+        <div class="bg-[#0f140f] border border-green-500/20 p-8 rounded-[40px] w-full max-w-xs text-center">
+            <img src="img/helmet.png" class="w-20 h-20 mx-auto mb-4" alt="Helmet">
+            <h2 class="text-2xl font-black uppercase mb-2 leading-none">Разблокировать</h2>
+            <p class="text-gray-400 text-sm mb-8 font-medium">Доступ к StarClicker навсегда за 50 звёзд</p>
+            
+            <button id="buy-btn" onclick="buyClicker()" class="w-full bg-green-500 text-black font-black py-4 rounded-2xl uppercase text-sm mb-4 shadow-[0_8px_20px_rgba(34,197,94,0.3)]">
+                Оплатить 50 ⭐
+            </button>
+            
+            <button onclick="closeModal()" class="text-gray-500 font-bold uppercase text-[10px] tracking-widest">Отмена</button>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.HapticFeedback.impactOccurred('medium');
+        const BACKEND_URL = 'https://stars-drop.vercel.app/api';
+        const user = tg.initDataUnsafe?.user;
+
+        let stars = parseInt(localStorage.getItem('user_stars') || '0');
+        let clickerAccess = localStorage.getItem('clicker_unlocked') === 'true';
+
+        function updateUI() {
+            if (clickerAccess) {
+                document.getElementById('clicker-status').innerText = "Доступ открыт";
+                document.getElementById('clicker-status').classList.replace('text-gray-500', 'text-green-500');
+                document.getElementById('clicker-lock').innerHTML = '🚀';
+            }
+
+            const lastGift = localStorage.getItem('last_gift_time');
+            if (lastGift) {
+                const timeLeft = (24 * 60 * 60 * 1000) - (Date.now() - parseInt(lastGift));
+                if (timeLeft > 0) {
+                    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                    document.getElementById('gift-timer').innerText = `Откат: ${hours}ч.`;
+                }
+            }
+        }
+
+        async function buyClicker() {
+            if (stars >= 50) {
+                if (user?.id) {
+                    try {
+                        await fetch(`${BACKEND_URL}/update_balance`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ user_id: user.id, stars: -50, points: 0 })
+                        });
+                        
+                        stars -= 50;
+                        localStorage.setItem('user_stars', stars);
+                        localStorage.setItem('clicker_unlocked', 'true');
+                        clickerAccess = true;
+                        
+                        closeModal();
+                        updateUI();
+                        tg.HapticFeedback.notificationOccurred('success');
+                        tg.showPopup({ message: "StarClicker разблокирован!" });
+                    } catch (e) {
+                        tg.showPopup({ message: "Ошибка связи с сервером" });
+                    }
+                }
+            } else {
+                tg.HapticFeedback.notificationOccurred('error');
+                tg.showPopup({ message: "Недостаточно звезд!" });
+            }
+        }
+
+        function checkClickerAccess() {
+            if (clickerAccess) window.location.href = 'clicker.html';
+            else document.getElementById('buy-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('buy-modal').style.display = 'none';
+        }
+
+        updateUI();
     </script>
 </body>
 </html>
