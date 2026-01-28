@@ -58,23 +58,36 @@
 <body>
     <div id="pc-only-blocker">
         <div class="qr-frame"><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://t.me/StarsDropOfficial_Bot" alt="QR"></div>
-        <h1 class="text-2xl font-black italic uppercase tracking-tighter text-white">С ПК играть <span class="text-green-500">нельзя!</span></h1>
+        <h1 class="text-2xl font-black italic uppercase tracking-tighter text-white">С   ПК   играть <span class="text-green-500">нельзя!</span></h1>
         <p class="text-gray-400 font-bold text-sm mt-2 max-w-[280px]">Отсканируйте QR код, чтобы играть с телефона</p>
     </div>
 
     <div id="global-loader"><div class="loader-ring"></div><div class="mt-4 text-green-500 font-black italic tracking-widest animate-pulse">STARS DROP</div></div>
     <canvas id="stars-canvas"></canvas>
     
-    <div class="main-wrapper">
+<div class="main-wrapper">
         <div class="p-6 pb-32">
             <div class="flex justify-between items-start">
                 <div class="flex items-center gap-4">
-                    <div class="relative"><img id="user-avatar" src="" class="w-16 h-16 rounded-full border-2 border-green-500/40 object-cover shadow-lg"><div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-2 border-black rounded-full shadow-inner"></div></div>
-                    <div><div id="display-name" class="text-[14px] font-black text-white tracking-wide uppercase italic">ЗАГРУЗКА...</div><div id="display-id" class="text-[11px] text-green-400 font-bold opacity-60">ID: 00000000</div></div>
+                    <div class="relative">
+                        <img id="user-avatar" src="" class="w-16 h-16 rounded-full border-2 border-green-500/40 object-cover shadow-lg">
+                        <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-2 border-black rounded-full shadow-inner"></div>
+                    </div>
+                    <div>
+                        <div id="display-name" class="text-[14px] font-black text-white tracking-wide uppercase italic">ЗАГРУЗКА...</div>
+                        <div id="display-id" class="text-[11px] text-green-400 font-bold opacity-60">ID: 00000000</div>
+                    </div>
                 </div>
+
                 <div class="balance-container-v2">
-                    <div onclick="openVault('ton')" class="balance-item-v2 text-blue-400"><span id="bal-ton">0.00</span><img src="ton.png" alt="TON"></div>
-                    <div onclick="openVault('stars')" class="balance-item-v2 text-yellow-400"><span id="bal-stars">0</span><img src="star.png" alt="STAR"></div>
+                    <div class="balance-item-v2 text-blue-400">
+                        <span id="header-ton">0.00</span>
+                        <img src="ton.png" alt="TON">
+                    </div>
+                    <div class="balance-item-v2 text-yellow-400">
+                        <span id="header-stars">0</span>
+                        <img src="star.png" alt="STAR">
+                    </div>
                 </div>
             </div>
 
@@ -134,16 +147,26 @@
         const user = tg.initDataUnsafe?.user;
         let isProcessing = false;
 
-        function checkPlatform() {
-            const platform = tg.platform;
-            const isPC = platform === 'desktop' || platform === 'tdesktop' || platform === 'macos' || platform === 'web';
-            if (isPC && window.innerWidth > 1024) {
-                document.getElementById('pc-only-blocker').style.display = 'flex';
-                document.querySelector('.main-wrapper').remove();
-                document.getElementById('global-loader').remove();
-            }
-        }
-        checkPlatform();
+function checkPlatform() {
+    const platform = tg.platform;
+    const isPC = ['desktop', 'tdesktop', 'macos', 'web'].includes(platform);
+    const isWideScreen = window.innerWidth > 1024;
+
+    if (isPC || isWideScreen) {
+        // 1. Показываем блокировщик
+        document.getElementById('pc-only-blocker').style.display = 'flex';
+        
+        // 2. Полностью удаляем игровой интерфейс, чтобы его нельзя было "откопать"
+        const main = document.querySelector('.main-wrapper');
+        if (main) main.remove();
+        
+        // 3. Убираем лоадер, чтобы он не крутился поверх баннера
+        const loader = document.getElementById('global-loader');
+        if (loader) loader.remove();
+    }
+}
+// Запускаем немедленно
+checkPlatform();
         tg.expand();
 
         if (user) {
