@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>StarDrop | System Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #080a08; color: #00ff41; font-family: monospace; padding: 20px; }
+        .log-box { background: rgba(0,255,65,0.05); border: 1px solid #00ff41; padding: 15px; border-radius: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1 class="text-2xl font-bold mb-4">HUB: СИНХРОНИЗАЦИЯ СИСТЕМЫ</h1>
+    
+    <div class="grid grid-cols-2 gap-4">
+        <div class="log-box">
+            <h3 class="border-b border-green-900 pb-2 mb-2">ТЕКУЩИЙ БАЛАНС</h3>
+            <p>STARS: <span id="hub-stars">0</span></p>
+            <p>TON: <span id="hub-ton">0.00</span></p>
+        </div>
+        <div class="log-box">
+            <h3 class="border-b border-green-900 pb-2 mb-2">ИНВЕНТАРЬ</h3>
+            <p>Предметов: <span id="hub-inv-count">0</span></p>
+        </div>
+    </div>
+
+    <div class="log-box h-64 overflow-y-auto" id="logs">
+        <p class="text-gray-500">[System] Ожидание сигналов от страниц...</p>
+    </div>
+
+    <script>
+        function updateHub() {
+            const stars = localStorage.getItem('user_stars') || '0';
+            const ton = localStorage.getItem('user_ton') || '0.00';
+            const inv = JSON.parse(localStorage.getItem('user_inventory') || '[]');
+
+            document.getElementById('hub-stars').innerText = stars;
+            document.getElementById('hub-ton').innerText = ton;
+            document.getElementById('hub-inv-count').innerText = inv.length;
+            
+            const log = document.createElement('p');
+            log.innerText = `[${new Date().toLocaleTimeString()}] Синхронизация: Balance & Inventory updated`;
+            const logs = document.getElementById('logs');
+            logs.prepend(log);
+        }
+
+        // Следим за изменениями из других вкладок
+        window.addEventListener('storage', (event) => {
+            if (['user_stars', 'user_ton', 'user_inventory'].includes(event.key)) {
+                updateHub();
+            }
+        });
+
+        updateHub();
+    </script>
+</body>
+</html>
