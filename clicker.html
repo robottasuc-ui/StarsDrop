@@ -576,12 +576,17 @@ function handleTapLogic(x, y) {
         document.getElementById('nav-main').classList.add('active');
     }
 
-    function updateUI() {
-        document.getElementById('balance-num').innerText = Math.floor(state.coins).toLocaleString();
-        document.getElementById('energy-val').innerText = Math.floor(state.energy);
-        document.getElementById('max-energy-val').innerText = state.maxEnergy;
-        document.getElementById('energy-fill').style.width = (state.energy / state.maxEnergy * 100) + '%';
-    }
+function updateUI() {
+    document.getElementById('balance-num').innerText = Math.floor(state.coins).toLocaleString();
+    document.getElementById('energy-val').innerText = Math.floor(state.energy);
+    document.getElementById('max-energy-val').innerText = state.maxEnergy;
+    document.getElementById('energy-fill').style.width = (state.energy / state.maxEnergy * 100) + '%';
+    
+    // СИНХРОНИЗАЦИЯ ЗВЕЗД (чтобы видеть те самые 1310)
+    const stars = localStorage.getItem('user_stars') || "0";
+    // Если у тебя есть элемент для звезд в хедере, обнови его:
+    // document.getElementById('stars-display').innerText = stars; 
+}
 
     function applyHeroVisuals() {
         const h = heroes.find(x => x.id === state.activeHeroId);
