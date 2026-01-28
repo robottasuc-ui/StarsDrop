@@ -180,12 +180,15 @@
     const user = tg.initDataUnsafe?.user;
     let isProcessing = false;
 
+    // Инициализация приложения
     async function initApp() {
         document.body.classList.add('loaded');
         
+        // Проверка на ПК
         if (['desktop', 'tdesktop', 'macos', 'web'].includes(tg.platform) || window.innerWidth > 1024) {
             document.getElementById('pc-only-blocker').style.display = 'flex';
-            document.querySelector('.main-wrapper')?.remove();
+            const wrapper = document.querySelector('.main-wrapper');
+            if (wrapper) wrapper.remove();
             hideLoader();
             return;
         }
@@ -203,6 +206,7 @@
         setTimeout(hideLoader, 1000);
     }
 
+    // Синхронизация с БД
     async function syncUserWithSupabase() {
         if (!user) return;
         try {
@@ -243,6 +247,7 @@
         }
     }
 
+    // Обновление баланса (запрос к апи)
     async function updateBalanceInDB(type, amount) {
         if (isProcessing || !user) return;
         isProcessing = true;
@@ -271,11 +276,16 @@
         }
     }
 
+    // Обновление интерфейса баланса
     function updateBalanceUI() {
         const stars = localStorage.getItem('user_stars') || '0';
         const ton = localStorage.getItem('user_ton') || '0.00';
-        document.getElementById('header-ton').innerText = parseFloat(ton).toFixed(2);
-        document.getElementById('header-stars').innerText = parseInt(stars).toLocaleString('ru-RU');
+        
+        const tonEl = document.getElementById('header-ton');
+        const starsEl = document.getElementById('header-stars');
+        
+        if(tonEl) tonEl.innerText = parseFloat(ton).toFixed(2);
+        if(starsEl) starsEl.innerText = parseInt(stars).toLocaleString('ru-RU');
     }
 
     function renderTonPacks() {
@@ -292,27 +302,47 @@
 
     function hideLoader() {
         const loader = document.getElementById('global-loader');
-        if(loader) { loader.style.opacity = '0'; setTimeout(() => { loader.style.display = 'none'; }, 500); }
+        if(loader) { 
+            loader.style.opacity = '0'; 
+            setTimeout(() => { loader.style.display = 'none'; }, 500); 
+        }
     }
 
     function setTab(type) {
         const isTon = type === 'ton';
-        document.getElementById('tab-btn-ton').style.background = isTon ? '#a3e635' : 'transparent';
-        document.getElementById('tab-btn-ton').style.color = isTon ? 'black' : '#555';
-        document.getElementById('tab-btn-stars').style.background = !isTon ? '#a3e635' : 'transparent';
-        document.getElementById('tab-btn-stars').style.color = !isTon ? 'black' : '#555';
-        document.getElementById('pane-ton').classList.toggle('hidden', !isTon);
-        document.getElementById('pane-stars').classList.toggle('hidden', isTon);
+        const btnTon = document.getElementById('tab-btn-ton');
+        const btnStars = document.getElementById('tab-btn-stars');
+        const paneTon = document.getElementById('pane-ton');
+        const paneStars = document.getElementById('pane-stars');
+
+        if(btnTon) {
+            btnTon.style.background = isTon ? '#a3e635' : 'transparent';
+            btnTon.style.color = isTon ? 'black' : '#555';
+        }
+        if(btnStars) {
+            btnStars.style.background = !isTon ? '#a3e635' : 'transparent';
+            btnStars.style.color = !isTon ? 'black' : '#555';
+        }
+        if(paneTon) paneTon.classList.toggle('hidden', !isTon);
+        if(paneStars) paneStars.classList.toggle('hidden', isTon);
     }
 
     function openVault(tab) { 
         tg.HapticFeedback.impactOccurred('light');
-        document.getElementById('vault-modal').style.display = 'flex'; 
+        const modal = document.getElementById('vault-modal');
+        if(modal) modal.style.display = 'flex'; 
         setTab(tab); 
     }
     
-    function closeVault() { document.getElementById('vault-modal').style.display = 'none'; }
-    function navigateTo(url) { tg.HapticFeedback.impactOccurred('medium'); window.location.href = url; }
+    function closeVault() { 
+        const modal = document.getElementById('vault-modal');
+        if(modal) modal.style.display = 'none'; 
+    }
+
+    function navigateTo(url) { 
+        tg.HapticFeedback.impactOccurred('medium'); 
+        window.location.href = url; 
+    }
 
     async function verifyGift() {
         const val = document.getElementById('stars-input').value;
@@ -320,6 +350,7 @@
         updateBalanceInDB('stars', parseInt(val));
     }
 
+    // Анимация звезд
     const canvas = document.getElementById('stars-canvas');
     if (canvas) {
         const ctx = canvas.getContext('2d');
@@ -350,31 +381,14 @@
 
     window.onload = initApp;
 
-    // --- КРОСС-СТРАНИЧНАЯ СИНХРОНИЗАЦИЯ ---
-window.addEventListener('storage', (event) => {
-    // Если на другой странице изменили звезды или тон
-    if (event.key === 'user_stars' || event.key === 'user_ton') {
-        balance.stars = parseInt(localStorage.getItem('user_stars')) || 0;
-        balance.ton = parseFloat(localStorage.getItem('user_ton')) || 0;
-        
-        // Вызываем функцию обновления UI, которая уже есть в твоих файлах
-        if (typeof updateUI === 'function') updateUI();
-        console.log("Система: Баланс синхронизирован с другой страницы");
-    }
-    
-    // Если изменился инвентарь
-    if (event.key === 'user_inventory') {
-        console.log("Система: Инвентарь обновлен на другой странице");
-        // Если на странице есть рендер инвентаря, можно вызвать его тут
-    }
-});
+    // Синхронизация между вкладками
+    window.addEventListener('storage', (event) => {
+        if (event.key === 'user_stars' || event.key === 'user_ton') {
+            updateBalanceUI();
+            console.log("Система: Баланс синхронизирован");
+        }
+    });
 
-// Функция для принудительного уведомления других страниц об изменениях
-function broadcastData() {
-    localStorage.setItem('user_stars', balance.stars);
-    localStorage.setItem('user_ton', balance.ton);
-    // Это событие 'storage' сработает во всех других вкладках
-}
 </script>
 </body>
 </html>
