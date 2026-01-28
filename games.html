@@ -123,7 +123,7 @@
             <p class="text-gray-400 text-sm mb-8 font-medium">Доступ к StarClicker навсегда за 50 звёзд</p>
             
             <button id="buy-btn" onclick="buyClicker()" class="w-full bg-green-500 text-black font-black py-4 rounded-2xl uppercase text-sm mb-4 shadow-[0_8px_20px_rgba(34,197,94,0.3)]">
-                Оплатить 50 ⭐
+                Оплатить 0 ⭐
             </button>
             
             <button onclick="closeModal()" class="text-gray-500 font-bold uppercase text-[10px] tracking-widest">Отмена</button>
@@ -156,7 +156,7 @@
         }
 
         async function buyClicker() {
-            if (stars >= 50) {
+            if (stars >= 0) {
                 if (user?.id) {
                     try {
                         await fetch(`${BACKEND_URL}/update_balance`, {
@@ -165,7 +165,7 @@
                             body: JSON.stringify({ user_id: user.id, stars: -50, points: 0 })
                         });
                         
-                        stars -= 50;
+                        stars -= 0;
                         localStorage.setItem('user_stars', stars);
                         localStorage.setItem('clicker_unlocked', 'true');
                         clickerAccess = true;
