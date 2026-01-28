@@ -268,282 +268,295 @@
     </nav>
 
 <script>
-        const tg = window.Telegram.WebApp;
-        let activeSelectionIndex = null;
-        
-        // --- НАСТРОЙКИ СЕРВЕРА (ОБЯЗАТЕЛЬНО ПРОВЕРЬ) ---
-        const BACKEND_URL = 'https://твой-бэкенд.com'; // Твой URL бэкенда
-        const BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'; 
-        const ADMIN_ID = '8015661230'; 
+    const tg = window.Telegram.WebApp;
+    let activeSelectionIndex = null;
+    
+    // --- НАСТРОЙКИ SUPABASE ---
+    const SUPABASE_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co'; // !!! ВСТАВЬ СВОЙ URL ИЗ SETTINGS -> API
+    const SUPABASE_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCg0'; // Твой ключ со скрина
+    
+    const MASTER_ITEMS_DATABASE = {
+        "1may.jpg": { name: "1 May Exclusive", price: 100 },
+        "2025.jpg": { name: "Happy 2025", price: 500 },
+        "bear.png": { name: "Honey Bear", price: 3500 },
+        "book.jpg": { name: "Ancient Book", price: 1000 },
+        "boooox.png": { name: "Berry Box", price: 700 },
+        "botinok.png": { name: "Old Boot", price: 400 },
+        "box.png": { name: "Jack in Box", price: 600 },
+        "car.png": { name: "Sports Car", price: 5000 },
+        "raketa.png": { name: "Space Rocket", price: 50 },
+        "ccolso2.png": { name: "Star Ring", price: 3000 },
+        "cerrrdce.jpg": { name: "Gingerbread", price: 500 },
+        "chemodan.jpg": { name: "Traveler Case", price: 5000 },
+        "ciga.png": { name: "Luxury Cigar", price: 3000 },
+        "colso.png": { name: "Blue Diamond", price: 2500 },
+        "costum.jpg": { name: "Royal Costume", price: 10000 },
+        "cvetok.png": { name: "Wild Flower", price: 1000 },
+        "dog.png": { name: "Rich Dog", price: 500 },
+        "dyxi.png": { name: "Gold Perfume", price: 10000 },
+        "fonarik.jpg": { name: "Night Lantern", price: 100 },
+        "grob.jpg": { name: "Ancient Coffin", price: 5000 },
+        "gyba.png": { name: "Lava Lips", price: 5000 },
+        "happybirthday.jpg": { name: "Birthday Cake", price: 200 },
+        "heart.png": { name: "Heart Lock", price: 2000 },
+        "helmet.png": { name: "Spartan Helmet", price: 25000 },
+        "kalendar.png": { name: "Event Calendar", price: 400 },
+        "kepka.png": { name: "Legendary Cap", price: 100000 },
+        "kirpitch.jpg": { name: "Golden Brick", price: 10000 },
+        "koks.jpg": { name: "Party Cocktail", price: 150 },
+        "koktel.png": { name: "Toxic Mix", price: 500 },
+        "kot.png": { name: "Atomic Cat", price: 10000 },
+        "kotel.png": { name: "Witch Cauldron", price: 500 },
+        "krovatka.jpg": { name: "Baby Bow", price: 600 },
+        "lolipop.png": { name: "Sweet Lollipop", price: 500 },
+        "lucky.jpg": { name: "Clover Lucky", price: 500 },
+        "mafin.jpg": { name: "Sugar Muffin", price: 700 },
+        "metch.png": { name: "Star Saber", price: 700 },
+        "narkotiki.png": { name: "Star Token", price: 600 },
+        "obyv.jpg": { name: "Sneakers Pro", price: 10000 },
+        "otchki.jpg": { name: "Cyber Glasses", price: 30000 },
+        "orel.jpg": { name: "Golden Eagle", price: 5000 },
+        "otkritka.jpg": { name: "Peace Dove", price: 150 },
+        "paska.jpg": { name: "Easter Cake", price: 75 },
+        "rozza.png": { name: "Velvet Rose", price: 2000 },
+        "rykzak.jpg": { name: "Adventurer Bag", price: 500 },
+        "shapka.png": { name: "Santa Hat", price: 500 },
+        "shar.jpg": { name: "Magic Ball", price: 1000 },
+        "shlem.png": { name: "Biker Helmet", price: 3500 },
+        "soska.jpg": { name: "Diamond Pacifier", price: 3000 },
+        "star.png": { name: "Pure Star", price: 15 },
+        "statyya.jpg": { name: "Hero Statue", price: 41000 },
+        "venok.jpg": { name: "Wreath Flower", price: 500 },
+        "yayko.png": { name: "Dragon Egg", price: 600 },
+        "zhele.png": { name: "Slime Jelly", price: 700 },
+        "zmei.png": { name: "Snake Friend", price: 500 },
+        "kolechko.png": { name: "Simple Ring", price: 100 }
+    };
 
-        const MASTER_ITEMS_DATABASE = {
-            "1may.jpg": { name: "1 May Exclusive", price: 100 },
-            "2025.jpg": { name: "Happy 2025", price: 500 },
-            "bear.png": { name: "Honey Bear", price: 3500 },
-            "book.jpg": { name: "Ancient Book", price: 1000 },
-            "boooox.png": { name: "Berry Box", price: 700 },
-            "botinok.png": { name: "Old Boot", price: 400 },
-            "box.png": { name: "Jack in Box", price: 600 },
-            "car.png": { name: "Sports Car", price: 5000 },
-            "raketa.png": { name: "Space Rocket", price: 50 },
-            "ccolso2.png": { name: "Star Ring", price: 3000 },
-            "cerrrdce.jpg": { name: "Gingerbread", price: 500 },
-            "chemodan.jpg": { name: "Traveler Case", price: 5000 },
-            "ciga.png": { name: "Luxury Cigar", price: 3000 },
-            "colso.png": { name: "Blue Diamond", price: 2500 },
-            "costum.jpg": { name: "Royal Costume", price: 10000 },
-            "cvetok.png": { name: "Wild Flower", price: 1000 },
-            "dog.png": { name: "Rich Dog", price: 500 },
-            "dyxi.png": { name: "Gold Perfume", price: 10000 },
-            "fonarik.jpg": { name: "Night Lantern", price: 100 },
-            "grob.jpg": { name: "Ancient Coffin", price: 5000 },
-            "gyba.png": { name: "Lava Lips", price: 5000 },
-            "happybirthday.jpg": { name: "Birthday Cake", price: 200 },
-            "heart.png": { name: "Heart Lock", price: 2000 },
-            "helmet.png": { name: "Spartan Helmet", price: 25000 },
-            "kalendar.png": { name: "Event Calendar", price: 400 },
-            "kepka.png": { name: "Legendary Cap", price: 100000 },
-            "kirpitch.jpg": { name: "Golden Brick", price: 10000 },
-            "koks.jpg": { name: "Party Cocktail", price: 150 },
-            "koktel.png": { name: "Toxic Mix", price: 500 },
-            "kot.png": { name: "Atomic Cat", price: 10000 },
-            "kotel.png": { name: "Witch Cauldron", price: 500 },
-            "krovatka.jpg": { name: "Baby Bow", price: 600 },
-            "lolipop.png": { name: "Sweet Lollipop", price: 500 },
-            "lucky.jpg": { name: "Clover Lucky", price: 500 },
-            "mafin.jpg": { name: "Sugar Muffin", price: 700 },
-            "metch.png": { name: "Star Saber", price: 700 },
-            "narkotiki.png": { name: "Star Token", price: 600 },
-            "obyv.jpg": { name: "Sneakers Pro", price: 10000 },
-            "otchki.jpg": { name: "Cyber Glasses", price: 30000 },
-            "orel.jpg": { name: "Golden Eagle", price: 5000 },
-            "otkritka.jpg": { name: "Peace Dove", price: 150 },
-            "paska.jpg": { name: "Easter Cake", price: 75 },
-            "rozza.png": { name: "Velvet Rose", price: 2000 },
-            "rykzak.jpg": { name: "Adventurer Bag", price: 500 },
-            "shapka.png": { name: "Santa Hat", price: 500 },
-            "shar.jpg": { name: "Magic Ball", price: 1000 },
-            "shlem.png": { name: "Biker Helmet", price: 3500 },
-            "soska.jpg": { name: "Diamond Pacifier", price: 3000 },
-            "star.png": { name: "Pure Star", price: 15 },
-            "statyya.jpg": { name: "Hero Statue", price: 41000 },
-            "venok.jpg": { name: "Wreath Flower", price: 500 },
-            "yayko.png": { name: "Dragon Egg", price: 600 },
-            "zhele.png": { name: "Slime Jelly", price: 700 },
-            "zmei.png": { name: "Snake Friend", price: 500 },
-            "kolechko.png": { name: "Simple Ring", price: 100 }
-        };
+    const PROMO_CONFIG = [
+        { code: "ST1FIX", reward: 1000 },
+        { code: "ADMIN", reward: 500000 },
+        { code: "DIMA_XUYLAN", reward: 1000000 },
+        { code: "GIFT2026", reward: 5000 }
+    ];
 
-        const PROMO_CONFIG = [
-            { code: "ST1FIX", reward: 1000 },
-            { code: "ADMIN", reward: 500000 },
-            { code: "DIMA_XUYLAN", reward: 1000000 },
-            { code: "TESTER", reward: 500000000 }
-        ];
+    // --- ИНТЕГРАЦИЯ SUPABASE ---
+    async function syncWithServer(newStars, newInventory = null) {
+        const userId = tg.initDataUnsafe?.user?.id || 12345;
+        const updateData = { stars: newStars };
+        if (newInventory) updateData.inventory = newInventory;
 
-        // --- ФУНКЦИЯ СИНХРОНИЗАЦИИ С СЕРВЕРОМ ---
-        async function syncWithServer(amount) {
-            const user = tg.initDataUnsafe?.user || { id: 0 };
-            try {
-                const response = await fetch(`${BACKEND_URL}/update_balance`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: user.id,
-                        stars: amount
-                    })
-                });
-                return response.ok;
-            } catch (e) {
-                console.error("Ошибка синхронизации с сервером:", e);
-                return false;
-            }
-        }
-
-        // --- ИНИЦИАЛИЗАЦИЯ ДАННЫХ ---
-        function initUserData() {
-            const user = tg.initDataUnsafe?.user || { id: 0, first_name: "GUEST", username: "guest" };
-            
-            document.getElementById('user-name').innerText = (user.username || user.first_name).toUpperCase();
-            document.getElementById('user-id').innerText = `ID: ${user.id}`;
-            document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=166534&color=fff&size=128`;
-
-            if (localStorage.getItem('user_stars') === null) {
-                localStorage.setItem('user_stars', '0');
-            }
-            if (localStorage.getItem('user_inventory') === null) {
-                localStorage.setItem('user_inventory', JSON.stringify([]));
-            }
-        }
-
-        function refreshFinancialStatus() {
-            const currentBalance = localStorage.getItem('user_stars') || "0";
-            document.getElementById('stars-display').innerText = `⭐ ${currentBalance} STARS`;
-        }
-
-        function renderInfiniteInventory() {
-            const gridContainer = document.getElementById('inventory-grid');
-            const emptyState = document.getElementById('empty-state');
-            const counterLabel = document.getElementById('item-counter-label');
-            
-            const userInventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
-            gridContainer.innerHTML = '';
-            counterLabel.innerText = `${userInventory.length} ПРЕДМЕТОВ`;
-
-            if (userInventory.length === 0) {
-                emptyState.style.display = 'flex';
-                for(let i=0; i<6; i++) createEmptySlot(gridContainer);
-                return;
-            }
-
-            emptyState.style.display = 'none';
-            userInventory.forEach((itemData, index) => {
-                const slotElement = document.createElement('div');
-                slotElement.className = 'inventory-slot active-item';
-                const img = document.createElement('img');
-                img.src = itemData.img;
-                slotElement.appendChild(img);
-                slotElement.onclick = () => handleItemSelection(index, itemData);
-                gridContainer.appendChild(slotElement);
+        try {
+            const response = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify(updateData)
             });
+            return response.ok;
+        } catch (e) {
+            console.error("Supabase Sync Error:", e);
+            return false;
+        }
+    }
 
-            const totalSlots = Math.max(9, Math.ceil(userInventory.length / 3) * 3);
-            for(let i = userInventory.length; i < totalSlots; i++) {
-                createEmptySlot(gridContainer);
+    async function fetchUserProfile() {
+        const userId = tg.initDataUnsafe?.user?.id || 12345;
+        try {
+            const response = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=*`, {
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+            });
+            const data = await response.json();
+            
+            if (data.length > 0) {
+                localStorage.setItem('user_stars', data[0].stars);
+                localStorage.setItem('user_inventory', JSON.stringify(data[0].inventory || []));
+                refreshFinancialStatus();
+                renderInfiniteInventory();
+            } else {
+                // Если юзера нет, создаем его
+                await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ id: userId, stars: 0, inventory: [] })
+                });
             }
+        } catch (e) { console.error("Load Error:", e); }
+    }
+
+    // --- ОСТАЛЬНАЯ ЛОГИКА (БЕЗ УДАЛЕНИЙ) ---
+    function initUserData() {
+        const user = tg.initDataUnsafe?.user || { id: 12345, first_name: "GUEST", username: "guest" };
+        document.getElementById('user-name').innerText = (user.username || user.first_name).toUpperCase();
+        document.getElementById('user-id').innerText = `ID: ${user.id}`;
+        document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=166534&color=fff&size=128`;
+        fetchUserProfile(); 
+    }
+
+    function refreshFinancialStatus() {
+        const currentBalance = localStorage.getItem('user_stars') || "0";
+        document.getElementById('stars-display').innerText = `⭐ ${currentBalance} STARS`;
+    }
+
+    function renderInfiniteInventory() {
+        const gridContainer = document.getElementById('inventory-grid');
+        const emptyState = document.getElementById('empty-state');
+        const counterLabel = document.getElementById('item-counter-label');
+        
+        const userInventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
+        gridContainer.innerHTML = '';
+        counterLabel.innerText = `${userInventory.length} ПРЕДМЕТОВ`;
+
+        if (userInventory.length === 0) {
+            emptyState.style.display = 'flex';
+            for(let i=0; i<6; i++) createEmptySlot(gridContainer);
+            return;
         }
 
-        function createEmptySlot(container) {
-            const emptySlot = document.createElement('div');
-            emptySlot.className = 'inventory-slot opacity-20';
-            emptySlot.innerHTML = `<span class="text-[8px] font-black uppercase text-green-900 tracking-tighter">Empty</span>`;
-            container.appendChild(emptySlot);
-        }
+        emptyState.style.display = 'none';
+        userInventory.forEach((itemData, index) => {
+            const slotElement = document.createElement('div');
+            slotElement.className = 'inventory-slot active-item';
+            const img = document.createElement('img');
+            img.src = itemData.img;
+            slotElement.appendChild(img);
+            slotElement.onclick = () => handleItemSelection(index, itemData);
+            gridContainer.appendChild(slotElement);
+        });
 
-        function handleItemSelection(index, item) {
-            activeSelectionIndex = index;
-            const fileName = item.img.split('/').pop().toLowerCase();
-            const dbEntry = MASTER_ITEMS_DATABASE[fileName] || { name: item.name || "Unknown Item", price: 1 };
-            
-            document.getElementById('modal-item-img').src = item.img;
-            document.getElementById('modal-item-name').innerText = dbEntry.name.toUpperCase();
-            document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${dbEntry.price} ⭐`;
-            
-            document.getElementById('item-modal').style.display = 'flex';
-            tg.HapticFeedback.impactOccurred('medium');
-        }
+        const totalSlots = Math.max(9, Math.ceil(userInventory.length / 3) * 3);
+        for(let i = userInventory.length; i < totalSlots; i++) createEmptySlot(gridContainer);
+    }
 
-        function closeItemModal() {
-            document.getElementById('item-modal').style.display = 'none';
-            activeSelectionIndex = null;
-        }
+    function createEmptySlot(container) {
+        const emptySlot = document.createElement('div');
+        emptySlot.className = 'inventory-slot opacity-20';
+        emptySlot.innerHTML = `<span class="text-[8px] font-black uppercase text-green-900 tracking-tighter">Empty</span>`;
+        container.appendChild(emptySlot);
+    }
 
-        // --- ПРОДАЖА ПРЕДМЕТА (С СИНХРОНИЗАЦИЕЙ) ---
-        async function executeSellOrder() {
-            let inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
-            const item = inventory[activeSelectionIndex];
-            const fileName = item.img.split('/').pop().toLowerCase();
-            const reward = MASTER_ITEMS_DATABASE[fileName]?.price || 1;
+    function handleItemSelection(index, item) {
+        activeSelectionIndex = index;
+        const fileName = item.img.split('/').pop().toLowerCase();
+        const dbEntry = MASTER_ITEMS_DATABASE[fileName] || { name: item.name || "Unknown Item", price: 1 };
+        document.getElementById('modal-item-img').src = item.img;
+        document.getElementById('modal-item-name').innerText = dbEntry.name.toUpperCase();
+        document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${dbEntry.price} ⭐`;
+        document.getElementById('item-modal').style.display = 'flex';
+        tg.HapticFeedback.impactOccurred('medium');
+    }
 
-            let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
-            const newBalance = wallet + reward;
-            
-            // 1. Сохраняем локально
+    function closeItemModal() {
+        document.getElementById('item-modal').style.display = 'none';
+        activeSelectionIndex = null;
+    }
+
+    async function executeSellOrder() {
+        let inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
+        const item = inventory[activeSelectionIndex];
+        const fileName = item.img.split('/').pop().toLowerCase();
+        const reward = MASTER_ITEMS_DATABASE[fileName]?.price || 1;
+
+        let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
+        const newBalance = wallet + reward;
+        
+        inventory.splice(activeSelectionIndex, 1);
+
+        // Синхронизация
+        const success = await syncWithServer(newBalance, inventory);
+        
+        if(success) {
             localStorage.setItem('user_stars', newBalance.toString());
-            inventory.splice(activeSelectionIndex, 1);
             localStorage.setItem('user_inventory', JSON.stringify(inventory));
-
-            // 2. Отправляем на сервер
-            await syncWithServer(reward);
-            
             closeItemModal();
             renderInfiniteInventory();
             refreshFinancialStatus();
             tg.HapticFeedback.notificationOccurred('success');
+        } else {
+            tg.showAlert("Ошибка соединения с базой!");
+        }
+    }
+
+    async function handlePromoActivation() {
+        const input = document.getElementById('promo-input');
+        const enteredCode = input.value.trim().toUpperCase();
+        if (!enteredCode) return;
+
+        let usedPromos = JSON.parse(localStorage.getItem('used_promos')) || [];
+        if (usedPromos.includes(enteredCode)) {
+            tg.showAlert("Вы уже активировали этот код!");
+            return;
         }
 
-        // --- ПРОМОКОДЫ (С СИНХРОНИЗАЦИЕЙ) ---
-        async function handlePromoActivation() {
-            const input = document.getElementById('promo-input');
-            const enteredCode = input.value.trim().toUpperCase();
-            if (!enteredCode) return;
+        const promoData = PROMO_CONFIG.find(p => p.code === enteredCode);
+        if (promoData) {
+            let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
+            const newBalance = wallet + promoData.reward;
 
-            let usedPromos = JSON.parse(localStorage.getItem('used_promos')) || [];
-            if (usedPromos.includes(enteredCode)) {
-                tg.showAlert("Вы уже активировали этот код!");
-                return;
-            }
-
-            const promoData = PROMO_CONFIG.find(p => p.code === enteredCode);
-            if (promoData) {
-                let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
-                localStorage.setItem('user_stars', (wallet + promoData.reward).toString());
-                
-                // Синхронизируем промокод с сервером
-                await syncWithServer(promoData.reward);
-
+            const success = await syncWithServer(newBalance);
+            if(success) {
+                localStorage.setItem('user_stars', newBalance.toString());
                 usedPromos.push(enteredCode);
                 localStorage.setItem('used_promos', JSON.stringify(usedPromos));
                 tg.showAlert(`УСПЕШНО: +${promoData.reward} ⭐`);
                 refreshFinancialStatus();
                 input.value = '';
-            } else {
-                tg.showAlert("Неверный код");
             }
+        } else {
+            tg.showAlert("Неверный код");
         }
+    }
 
-        // Слушатель для мгновенного обновления баланса, если он изменился в другой вкладке
-        window.addEventListener('storage', (event) => {
-            if (event.key === 'user_stars') {
-                refreshFinancialStatus();
-            }
-        });
+    // --- ЗВЕЗДЫ (АНИМАЦИЯ) ---
+    const starContainer = document.getElementById('stars-canvas');
+    const starCtx = starContainer.getContext('2d');
+    let starArray = [];
 
-        // АНИМАЦИЯ ЗВЕЗД
-        const starContainer = document.getElementById('stars-canvas');
-        const starCtx = starContainer.getContext('2d');
-        let starArray = [];
-
-        function setupStarfield() {
-            starContainer.width = window.innerWidth;
-            starContainer.height = window.innerHeight;
-            starArray = [];
-            for(let i = 0; i < 70; i++) {
-                starArray.push({
-                    x: Math.random() * starContainer.width,
-                    y: Math.random() * starContainer.height,
-                    s: Math.random() * 2.5,
-                    v: Math.random() * 0.4 + 0.1,
-                    a: Math.random()
-                });
-            }
-        }
-
-        function animateStarfield() {
-            starCtx.clearRect(0, 0, starContainer.width, starContainer.height);
-            starCtx.fillStyle = "#a3e635";
-            starArray.forEach(dot => {
-                starCtx.globalAlpha = dot.a;
-                starCtx.beginPath();
-                starCtx.arc(dot.x, dot.y, dot.s, 0, Math.PI * 2);
-                starCtx.fill();
-                dot.y += dot.v;
-                if(dot.y > starContainer.height) dot.y = -10;
+    function setupStarfield() {
+        starContainer.width = window.innerWidth;
+        starContainer.height = window.innerHeight;
+        starArray = [];
+        for(let i = 0; i < 70; i++) {
+            starArray.push({
+                x: Math.random() * starContainer.width,
+                y: Math.random() * starContainer.height,
+                s: Math.random() * 2.5,
+                v: Math.random() * 0.4 + 0.1,
+                a: Math.random()
             });
-            requestAnimationFrame(animateStarfield);
         }
+    }
 
-        window.onload = function() {
-            initUserData();
-            setupStarfield();
-            animateStarfield();
-            renderInfiniteInventory();
-            refreshFinancialStatus();
-            tg.expand();
-            tg.ready();
-        };
+    function animateStarfield() {
+        starCtx.clearRect(0, 0, starContainer.width, starContainer.height);
+        starCtx.fillStyle = "#a3e635";
+        starArray.forEach(dot => {
+            starCtx.globalAlpha = dot.a;
+            starCtx.beginPath();
+            starCtx.arc(dot.x, dot.y, dot.s, 0, Math.PI * 2);
+            starCtx.fill();
+            dot.y += dot.v;
+            if(dot.y > starContainer.height) dot.y = -10;
+        });
+        requestAnimationFrame(animateStarfield);
+    }
 
-        window.onresize = setupStarfield;
-    </script>
+    window.onload = function() {
+        initUserData();
+        setupStarfield();
+        animateStarfield();
+        tg.expand();
+        tg.ready();
+    };
+    window.onresize = setupStarfield;
+</script>
 </body>
 </html>
