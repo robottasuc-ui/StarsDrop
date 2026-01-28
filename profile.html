@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>StarsDrop - Google Sheets Edition</title>
+    <title>StarsDrop - Profile</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -190,9 +190,10 @@
             
             <h2 id="user-name" class="text-4xl font-black uppercase italic mt-6 tracking-tighter text-white">ЗАГРУЗКА...</h2>
             
-            <div class="flex gap-3 mt-4">
+            <div class="flex flex-wrap justify-center gap-3 mt-4">
                 <div id="user-id" class="bg-white/5 border border-white/10 px-4 py-1.5 rounded-full text-[10px] font-bold text-green-400">ID: 00000000</div>
                 <div id="stars-display" class="bg-yellow-400/10 border border-yellow-400/20 px-4 py-1.5 rounded-full text-[10px] font-black text-yellow-400">⭐ 0 STARS</div>
+                <div id="ton-display" class="bg-blue-400/10 border border-blue-400/20 px-4 py-1.5 rounded-full text-[10px] font-black text-blue-400">💎 0.00 TON</div>
             </div>
         </header>
 
@@ -271,7 +272,7 @@
     const tg = window.Telegram.WebApp;
     let activeSelectionIndex = null;
     
-    // --- SHEETBEST CONFIGURATION ---
+    // --- CONFIG ---
     const SHEET_API_URL = 'https://api.sheetbest.com/sheets/85c1006a-f951-4055-896d-5daed83821ef';
     
     const MASTER_ITEMS_DATABASE = {
@@ -338,32 +339,34 @@
         { code: "GIFT2026", reward: 500000000 }
     ];
 
-    // --- ФУНКЦИИ РАБОТЫ С ГУГЛ ТАБЛИЦЕЙ ---
+    // --- SHEETS LOGIC (ИСПРАВЛЕНО) ---
 
     async function fetchUserProfile() {
         const userId = tg.initDataUnsafe?.user?.id || 12345;
         try {
-            // Ищем юзера по ID в таблице
             const response = await fetch(`${SHEET_API_URL}/id/${userId}`);
             const data = await response.json();
             
             if (data && data.length > 0) {
                 const user = data[0];
-                // Распаковываем данные (в таблице они хранятся как строки)
+                
+                // Сохраняем всё, включая TON
+                localStorage.setItem('user_stars', user.stars || '0');
+                localStorage.setItem('user_ton', user.ton || '0.00');
+                
                 const inventory = typeof user.inventory === 'string' ? JSON.parse(user.inventory) : (user.inventory || []);
                 const promos = typeof user.used_promos === 'string' ? JSON.parse(user.used_promos) : (user.used_promos || []);
                 
-                saveToLocal({
-                    stars: user.stars,
-                    inventory: inventory,
-                    used_promos: promos
-                });
+                localStorage.setItem('user_inventory', JSON.stringify(inventory));
+                localStorage.setItem('used_promos', JSON.stringify(promos));
+                
                 updateUI();
             } else {
-                // Если юзера нет - создаем нового
+                // Новый пользователь
                 const newUser = { 
-                    id: userId, 
+                    id: String(userId), 
                     stars: 0, 
+                    ton: 0.00,
                     inventory: JSON.stringify([]), 
                     used_promos: JSON.stringify([]),
                     username: tg.initDataUnsafe?.user?.username || "GUEST"
@@ -375,7 +378,10 @@
                     body: JSON.stringify(newUser)
                 });
 
-                saveToLocal({ stars: 0, inventory: [], used_promos: [] });
+                localStorage.setItem('user_stars', '0');
+                localStorage.setItem('user_ton', '0.00');
+                localStorage.setItem('user_inventory', '[]');
+                localStorage.setItem('used_promos', '[]');
                 updateUI();
             }
         } catch (e) {
@@ -385,12 +391,14 @@
 
     async function syncUserData(stars, inventory, promos) {
         const userId = tg.initDataUnsafe?.user?.id || 12345;
+        const currentTon = localStorage.getItem('user_ton') || '0.00';
         try {
             await fetch(`${SHEET_API_URL}/id/${userId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     stars: stars,
+                    ton: currentTon, // Отправляем TON обратно, чтобы не обнулить
                     inventory: JSON.stringify(inventory),
                     used_promos: JSON.stringify(promos)
                 })
@@ -400,29 +408,26 @@
         }
     }
 
-    function saveToLocal(data) {
-        localStorage.setItem('user_stars', data.stars);
-        localStorage.setItem('user_inventory', JSON.stringify(data.inventory));
-        localStorage.setItem('used_promos', JSON.stringify(data.used_promos));
-    }
-
     function updateUI() {
         refreshFinancialStatus();
         renderInfiniteInventory();
     }
 
-    // --- ЛОГИКА ПРОФИЛЯ ---
+    function refreshFinancialStatus() {
+        const stars = localStorage.getItem('user_stars') || "0";
+        const ton = localStorage.getItem('user_ton') || "0.00";
+        document.getElementById('stars-display').innerText = `⭐ ${stars} STARS`;
+        document.getElementById('ton-display').innerText = `💎 ${ton} TON`;
+    }
+
+    // --- PROFILE LOGIC ---
+
     function initUserData() {
         const user = tg.initDataUnsafe?.user || { id: 12345, first_name: "GUEST", username: "guest" };
         document.getElementById('user-name').innerText = (user.username || user.first_name).toUpperCase();
         document.getElementById('user-id').innerText = `ID: ${user.id}`;
         document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=166534&color=fff&size=128`;
         fetchUserProfile(); 
-    }
-
-    function refreshFinancialStatus() {
-        const currentBalance = localStorage.getItem('user_stars') || "0";
-        document.getElementById('stars-display').innerText = `⭐ ${currentBalance} STARS`;
     }
 
     function renderInfiniteInventory() {
@@ -489,11 +494,9 @@
         const newBalance = wallet + reward;
         inventory.splice(activeSelectionIndex, 1);
 
-        // Обновляем локально
         localStorage.setItem('user_stars', newBalance);
         localStorage.setItem('user_inventory', JSON.stringify(inventory));
         
-        // Синхрон с таблицей
         await syncUserData(newBalance, inventory, usedPromos);
 
         closeItemModal();
@@ -532,7 +535,7 @@
         }
     }
 
-    // --- ВИЗУАЛ (ЗВЕЗДЫ) ---
+    // --- VISUALS ---
     const starContainer = document.getElementById('stars-canvas');
     const starCtx = starContainer.getContext('2d');
     let starArray = [];
