@@ -524,31 +524,37 @@ window.onload = () => {
     initLive(); 
 };
 
-    // --- КРОСС-СТРАНИЧНАЯ СИНХРОНИЗАЦИЯ ---
+// --- ТВОЯ ЦЕПОЧКА СИНХРОНИЗАЦИИ (3 СЕКУНДЫ) ---
 window.addEventListener('storage', (event) => {
-    // Если на другой странице изменили звезды или тон
+    // 1. Стандартная синхронизация (если просто изменили баланс)
     if (event.key === 'user_stars' || event.key === 'user_ton') {
-        balance.stars = parseInt(localStorage.getItem('user_stars')) || 0;
-        balance.ton = parseFloat(localStorage.getItem('user_ton')) || 0;
-        
-        // Вызываем функцию обновления UI, которая уже есть в твоих файлах
-        if (typeof updateUI === 'function') updateUI();
-        console.log("Система: Баланс синхронизирован с другой страницы");
+        // Мы НЕ обновляем мгновенно, если ждем цепочку промокода
+        if (!localStorage.getItem('promo_pending')) {
+            balance.stars = parseInt(localStorage.getItem('user_stars')) || 0;
+            balance.ton = parseFloat(localStorage.getItem('user_ton')) || 0;
+            if (typeof updateUI === 'function') updateUI();
+        }
     }
-    
-    // Если изменился инвентарь
-    if (event.key === 'user_inventory') {
-        console.log("Система: Инвентарь обновлен на другой странице");
-        // Если на странице есть рендер инвентаря, можно вызвать его тут
+
+    // 2. Сигнал активации промокода
+    if (event.key === 'activate_promo') {
+        console.log("Кейсы: Получен сигнал промокода. Ожидание 3 секунды...");
+        
+        // Ставим флаг ожидания, чтобы обычная синхронизация не сработала раньше времени
+        localStorage.setItem('promo_pending', 'true');
+
+        setTimeout(() => {
+            // Спустя 3 секунды забираем данные
+            balance.stars = parseInt(localStorage.getItem('user_stars')) || 0;
+            balance.ton = parseFloat(localStorage.getItem('user_ton')) || 0;
+            
+            if (typeof updateUI === 'function') updateUI();
+            
+            localStorage.removeItem('promo_pending');
+            console.log("Кейсы: Баланс обновлен по цепочке (через 3с)");
+        }, 3000);
     }
 });
-
-// Функция для принудительного уведомления других страниц об изменениях
-function broadcastData() {
-    localStorage.setItem('user_stars', balance.stars);
-    localStorage.setItem('user_ton', balance.ton);
-    // Это событие 'storage' сработает во всех других вкладках
-}
     </script>
 </body>
 </html>
