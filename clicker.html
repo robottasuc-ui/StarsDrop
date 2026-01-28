@@ -222,10 +222,10 @@
 
 <div class="app-shell">
     <div class="top-nav">
-        <a href="index.html" class="btn-back">
+        <div onclick="safeGoBack()" class="btn-back">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             НАЗАД
-        </a>
+        </div>
         <button class="btn-info-star" onclick="openPanel('info-panel', this)">
             КАК ПОЛУЧИТЬ STAR?
         </button>
@@ -328,7 +328,7 @@
     ];
 
     let state = {
-        points: 0, // Используем points согласно структуре базы
+        points: 0,
         energy: 1000,
         maxEnergy: 1000,
         ownedHeroes: [0],
@@ -338,7 +338,6 @@
         lastUnix: Date.now()
     };
 
-    // Загрузка из базы
     async function loadFromDB() {
         const userId = tg.initDataUnsafe?.user?.id;
         if (!userId) return;
@@ -355,7 +354,6 @@
         } catch (e) { console.error("Sync Error"); }
     }
 
-    // Сохранение в базу
     async function saveToDB() {
         const userId = tg.initDataUnsafe?.user?.id;
         if (!userId) return;
@@ -373,12 +371,12 @@
         } catch (e) { console.error("Save Error"); }
     }
 
-    // Получение ТОП-100 игроков
     async function fetchLeaderboard() {
         const list = document.getElementById('leaderboard-list');
         list.innerHTML = '<div style="text-align:center; padding:30px; opacity:0.5;">Ищем легенд...</div>';
         try {
-            const res = await fetch(`${BACKEND_URL}/get_leaderboard`);
+            // Исправлен путь к лидерборду
+            const res = await fetch(`${BACKEND_URL}/get_leaders`);
             const topUsers = await res.json();
             list.innerHTML = '';
             topUsers.forEach((user, index) => {
@@ -397,7 +395,8 @@
     async function init() {
         const saved = localStorage.getItem('nova_engine_save');
         if (saved) {
-            state = { ...state, ...JSON.parse(saved) };
+            const parsed = JSON.parse(saved);
+            state = { ...state, ...parsed };
             const elapsed = Math.floor((Date.now() - state.lastUnix) / 1000);
             state.energy = Math.min(state.maxEnergy, state.energy + elapsed);
         }
@@ -413,7 +412,8 @@
                 updateUI();
             }
         }, 1000);
-        setInterval(save, 10000); // Синхронизация каждые 10 сек
+        // ПРИНУДИТЕЛЬНОЕ сохранение в базу каждые 15 сек
+        setInterval(save, 15000); 
     }
 
     const tapZone = document.getElementById('tap-zone');
@@ -435,6 +435,9 @@
         
         showPop(x, y, profit);
         updateUI();
+        
+        // Маленький шанс на моментальное сохранение при клике
+        if(state.points % 100 === 0) save();
     }
 
     tapZone.addEventListener('touchstart', (e) => {
@@ -460,7 +463,7 @@
             const lvl = state.marketLevels[item.id] || 0;
             const price = Math.floor(item.basePrice * Math.pow(1.6, lvl));
             const bonus = item.baseAdd * (lvl + 1);
-            const isMax = lvl >= 15; // ЛИМИТ 15 УРОВЕНЬ
+            const isMax = lvl >= 15;
             
             container.innerHTML += `
                 <div class="card-item">
@@ -559,7 +562,13 @@
     function save() {
         state.lastUnix = Date.now();
         localStorage.setItem('nova_engine_save', JSON.stringify(state));
-        saveToDB();
+        saveToDB(); // ОБЯЗАТЕЛЬНО вызываем функцию отправки в базу
+    }
+
+    async function safeGoBack() {
+        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+        await saveToDB(); // Ждем завершения записи
+        window.location.href = 'index.html';
     }
 
     window.onload = init;
