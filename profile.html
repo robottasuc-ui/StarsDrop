@@ -191,7 +191,7 @@
             <h2 id="user-name" class="text-4xl font-black uppercase italic mt-6 tracking-tighter text-white">ЗАГРУЗКА...</h2>
             
             <div class="flex flex-wrap justify-center gap-3 mt-4">
-                <div id="user-id" class="bg-white/5 border border-white/10 px-4 py-1.5 rounded-full text-[10px] font-bold text-green-400">ID: 00000000</div>
+                <div id="user-id-label" class="bg-white/5 border border-white/10 px-4 py-1.5 rounded-full text-[10px] font-bold text-green-400">ID: 00000000</div>
                 <div id="stars-display" class="bg-yellow-400/10 border border-yellow-400/20 px-4 py-1.5 rounded-full text-[10px] font-black text-yellow-400">⭐ 0 STARS</div>
                 <div id="ton-display" class="bg-blue-400/10 border border-blue-400/20 px-4 py-1.5 rounded-full text-[10px] font-black text-blue-400">💎 0.00 TON</div>
             </div>
@@ -284,7 +284,6 @@
         'Prefer': 'return=representation'
     };
 
-    // --- ТВОЯ БАЗА ПРЕДМЕТОВ ---
     const MASTER_ITEMS_DATABASE = {
         "1may.jpg": { name: "1 May Exclusive", price: 100 },
         "2025.jpg": { name: "Happy 2025", price: 500 },
@@ -349,8 +348,6 @@
         { code: "GIFT2026", reward: 500000000 }
     ];
 
-    // --- DB LOGIC ---
-
     async function fetchUserProfile() {
         const userId = tg.initDataUnsafe?.user?.id || 12345;
         try {
@@ -365,22 +362,21 @@
                 localStorage.setItem('user_stars', user.stars || 0);
                 localStorage.setItem('user_ton', user.balance || "0.00");
                 
-                // Обработка JSON колонок
-                const inv = user.inventory ? (typeof user.inventory === 'string' ? JSON.parse(user.inventory) : user.inventory) : [];
-                const promos = user.used_promos ? (typeof user.used_promos === 'string' ? JSON.parse(user.used_promos) : user.used_promos) : [];
+                let inv = user.inventory;
+                if (typeof inv === 'string') inv = JSON.parse(inv);
+                localStorage.setItem('user_inventory', JSON.stringify(inv || []));
+
+                let promos = user.used_promos;
+                if (typeof promos === 'string') promos = JSON.parse(promos);
+                localStorage.setItem('used_promos', JSON.stringify(promos || []));
                 
-                localStorage.setItem('user_inventory', JSON.stringify(inv));
-                localStorage.setItem('used_promos', JSON.stringify(promos));
                 updateUI();
             } else {
-                // Создаем нового юзера
                 const newUser = { 
-                    user_id: userId, 
+                    user_id: userId.toString(), 
                     username: tg.initDataUnsafe?.user?.username || "GUEST",
                     stars: 0,
                     balance: 0,
-                    points: 0,
-                    energy: 1000,
                     inventory: [],
                     used_promos: []
                 };
@@ -427,7 +423,7 @@
     function initUserData() {
         const user = tg.initDataUnsafe?.user || { id: 12345, first_name: "GUEST" };
         document.getElementById('user-name').innerText = (user.username || user.first_name).toUpperCase();
-        document.getElementById('user-id').innerText = `ID: ${user.id}`;
+        document.getElementById('user-id-label').innerText = `ID: ${user.id}`;
         document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=166534&color=fff&size=128`;
         fetchUserProfile(); 
     }
@@ -451,12 +447,15 @@
         inventory.forEach((item, index) => {
             const slot = document.createElement('div');
             slot.className = 'inventory-slot active-item';
-            slot.innerHTML = `<img src="${item.img}">`;
+            // Проверяем, есть ли полный путь или только имя файла
+            const imgSrc = item.img.includes('http') ? item.img : `img/${item.img}`;
+            slot.innerHTML = `<img src="${imgSrc}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1828/1828884.png'">`;
+            
             slot.onclick = () => {
                 activeSelectionIndex = index;
                 const fileName = item.img.split('/').pop().toLowerCase();
-                const dbInfo = MASTER_ITEMS_DATABASE[fileName] || { name: "Item", price: 1 };
-                document.getElementById('modal-item-img').src = item.img;
+                const dbInfo = MASTER_ITEMS_DATABASE[fileName] || { name: item.name || "Item", price: 1 };
+                document.getElementById('modal-item-img').src = imgSrc;
                 document.getElementById('modal-item-name').innerText = dbInfo.name.toUpperCase();
                 document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${dbInfo.price} ⭐`;
                 document.getElementById('item-modal').style.display = 'flex';
@@ -497,9 +496,14 @@
     async function handlePromoActivation() {
         const input = document.getElementById('promo-input');
         const code = input.value.trim().toUpperCase();
+        if (!code) return;
+
         let used = JSON.parse(localStorage.getItem('used_promos')) || [];
 
-        if (used.includes(code)) return tg.showAlert("Уже использован!");
+        if (used.includes(code)) {
+            tg.showAlert("Вы уже использовали этот код!");
+            return;
+        }
         
         const promo = PROMO_CONFIG.find(p => p.code === code);
         if (promo) {
@@ -510,10 +514,10 @@
             
             updateUI();
             await syncToDB();
-            tg.showAlert(`Бонус +${promo.reward} ⭐!`);
+            tg.showAlert(`Успешно! +${promo.reward} ⭐`);
             input.value = '';
         } else {
-            tg.showAlert("Код не найден");
+            tg.showAlert("Неверный промокод");
         }
     }
 
