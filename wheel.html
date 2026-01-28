@@ -133,7 +133,6 @@
             box-shadow: none; 
             opacity: 0.6;
         }
-        .star-icon { width: 18px; height: 18px; display: inline-block; vertical-align: middle; }
 
         #win-modal { 
             display: none; 
@@ -195,7 +194,7 @@
             <button id="spin-btn" class="w-full btn-main py-6 rounded-3xl text-lg uppercase tracking-widest active:scale-95 disabled:opacity-50 transition-all">
                 ЗАГРУЗКА...
             </button>
-            <div id="timer-display" class="status-text">СИНХРОНИЗАЦИЯ...</div>
+            <div id="timer-display" class="status-text">СИНХРОНИЗАЦИЯ С ТАБЛИЦЕЙ...</div>
         </div>
     </div>
 
@@ -222,8 +221,11 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        const BACKEND_URL = 'https://stars-drop.vercel.app/api';
-        const user = tg.initDataUnsafe?.user;
+        // ТВОЙ URL ИЗ SHEETBEST
+        const API_URL = 'https://api.sheetbest.com/sheets/85c1006a-f951-4055-896d-5daed83821ef';
+        
+        // Получаем реальный ID пользователя или тестовый
+        const user = tg.initDataUnsafe?.user || { id: "12345", first_name: "Player" };
         tg.expand();
 
         const wheel = document.getElementById('wheel');
@@ -232,6 +234,7 @@
         const winModal = document.getElementById('win-modal');
         const SPIN_COST = 100;
 
+        // База предметов
         const ITEMS_DB = {
             1: { name: "1 May", img: "1may.jpg", price: 100 },
             2: { name: "2025", img: "2025.jpg", price: 500 },
@@ -248,149 +251,149 @@
         const itemIds = Object.keys(ITEMS_DB);
         let winningItem = null;
         let isSpinning = false;
+        let userRowData = null;
 
         function goToMain() { window.location.href = 'index.html'; }
 
-        // ИНТЕГРАЦИЯ: Получаем баланс и время последнего спина из БД
-        async function updateStatus() {
-            if (!user) return;
+        // 1. Получение данных пользователя из таблицы
+        async function loadUserData() {
             try {
-                const res = await fetch(`${BACKEND_URL}/get_user_state/${user.id}`);
+                // Ищем строку, где в колонке username записан ID юзера
+                const res = await fetch(`${API_URL}/username/${user.id}`);
                 const data = await res.json();
                 
-                // Сохраняем в локал для мгновенного доступа
-                localStorage.setItem('user_stars', data.stars);
-                
-                const now = Date.now();
-                const lastSpin = data.last_free_spin || 0; 
-                const cooldown = 86400000;
-
-                if ((now - lastSpin) >= cooldown) {
-                    spinBtn.innerHTML = "КРУТИТЬ БЕСПЛАТНО";
-                    spinBtn.disabled = false;
-                    timerDisplay.innerText = "ЕЖЕДНЕВНЫЙ БОНУС ДОСТУПЕН!";
-                    return "free";
+                if (data.length === 0) {
+                    // Если пользователя нет — создаем новую строку
+                    const newUser = {
+                        ton: 500, // Стартовый баланс
+                        inventory: "",
+                        used_promos: "",
+                        username: user.id.toString()
+                    };
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(newUser)
+                    });
+                    userRowData = newUser;
                 } else {
-                    spinBtn.innerHTML = `КРУТИТЬ ЗА 100 <img src="img/star.png" class="star-icon">`;
-                    if (data.stars < SPIN_COST) {
-                        spinBtn.disabled = true;
-                        timerDisplay.innerText = `НУЖНО ${SPIN_COST} ⭐ (У ВАС ${data.stars})`;
-                    } else {
-                        spinBtn.disabled = false;
-                        timerDisplay.innerText = `ПЛАТНЫЙ ПРОКРУТ (БАЛАНС: ${data.stars} ⭐)`;
-                    }
-                    return "paid";
+                    userRowData = data[0];
                 }
+
+                updateUI();
             } catch (e) {
-                console.error("Ошибка синхронизации:", e);
-                timerDisplay.innerText = "ОШИБКА ПОДКЛЮЧЕНИЯ";
+                timerDisplay.innerText = "ОШИБКА СИНХРОНИЗАЦИИ";
+                console.error(e);
             }
         }
 
-        function initWheel() {
-            const isCheap = Math.random() > 0.2;
-            const winId = isCheap ? "65" : itemIds[Math.floor(Math.random() * itemIds.length)];
+        function updateUI() {
+            const balance = parseInt(userRowData.ton) || 0;
+            timerDisplay.innerText = `ВАШ БАЛАНС: ${balance} ⭐`;
+            
+            if (balance < SPIN_COST) {
+                spinBtn.disabled = true;
+                spinBtn.innerHTML = `НУЖНО ${SPIN_COST} ⭐`;
+            } else {
+                spinBtn.disabled = false;
+                spinBtn.innerHTML = `КРУТИТЬ ЗА ${SPIN_COST} ⭐`;
+            }
+        }
+
+        // 2. Логика вращения
+        spinBtn.onclick = async () => {
+            if (isSpinning) return;
+            
+            const currentBalance = parseInt(userRowData.ton);
+            if (currentBalance < SPIN_COST) return;
+
+            isSpinning = true;
+            spinBtn.disabled = true;
+
+            // Списываем баланс в таблице
+            const newBalance = currentBalance - SPIN_COST;
+            try {
+                await fetch(`${API_URL}/username/${user.id}`, {
+                    method: 'PATCH',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ ton: newBalance })
+                });
+                userRowData.ton = newBalance;
+                updateUI();
+            } catch (e) {
+                alert("Ошибка связи с сервером");
+                isSpinning = false;
+                return;
+            }
+
+            // Рандом: 10% шанс на дорогой предмет, иначе дешевка (Golden Star - 65)
+            const winId = Math.random() > 0.9 ? itemIds[Math.floor(Math.random() * itemIds.length)] : "65";
             winningItem = { id: winId, ...ITEMS_DB[winId] };
             
+            startAnimation(winId);
+        };
+
+        function startAnimation(winId) {
             wheel.innerHTML = '';
             wheel.style.transition = 'none';
             wheel.style.transform = 'translateX(0)';
             
-            for (let i = 0; i < 95; i++) {
-                const id = (i === 80) ? winningItem.id : itemIds[Math.floor(Math.random() * itemIds.length)];
+            const totalItems = 80; // Сколько предметов в ленте
+            for (let i = 0; i < totalItems + 10; i++) {
+                const id = (i === totalItems) ? winId : itemIds[Math.floor(Math.random() * itemIds.length)];
                 const div = document.createElement('div');
                 div.className = 'item';
-                div.innerHTML = `<img src="img/${ITEMS_DB[id].img}" onerror="this.src='img/star.png'">`;
+                // Заглушка, если картинки нет
+                div.innerHTML = `<img src="img/${ITEMS_DB[id].img}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1828/1828884.png'">`;
                 wheel.appendChild(div);
             }
-        }
 
-        spinBtn.addEventListener('click', async () => {
-            if (isSpinning) return;
-            const mode = await updateStatus();
-            
-            // ИНТЕГРАЦИЯ: Запрос на сервер для начала прокрута (списание валюты в БД)
-            try {
-                const res = await fetch(`${BACKEND_URL}/start_spin`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: user?.id, mode: mode })
-                });
-                const result = await res.json();
-                
-                if (!result.success) {
-                    tg.showAlert(result.error || "Ошибка старта");
-                    return;
-                }
-            } catch (e) {
-                tg.showAlert("Сервер недоступен");
-                return;
-            }
+            setTimeout(() => {
+                const itemWidth = 136; // 120px + margin 8px * 2
+                const shift = (totalItems * itemWidth) - (window.innerWidth / 2) + (itemWidth / 2);
+                wheel.style.transition = 'transform 8s cubic-bezier(0.1, 0, 0.05, 1)';
+                wheel.style.transform = `translateX(-${shift}px)`;
+                tg.HapticFeedback.impactOccurred('heavy');
+            }, 50);
 
-            isSpinning = true;
-            spinBtn.disabled = true;
-            initWheel();
-            
-            const itemWidth = 136; 
-            const finalPosition = (80 * itemWidth) - (window.innerWidth / 2) + (itemWidth / 2);
-            
-            wheel.style.transition = 'transform 8s cubic-bezier(0.1, 0, 0.05, 1)';
-            wheel.style.transform = `translateX(-${finalPosition}px)`;
-
-            tg.HapticFeedback.impactOccurred('medium');
-
-            setTimeout(() => { 
+            setTimeout(() => {
                 document.getElementById('won-item-img').src = `img/${winningItem.img}`;
                 document.getElementById('won-item-name').innerText = winningItem.name;
                 document.getElementById('sell-btn').innerText = `ПРОДАТЬ ЗА ${winningItem.price} ⭐`;
-                winModal.style.display = 'flex'; 
+                winModal.style.display = 'flex';
                 tg.HapticFeedback.notificationOccurred('success');
                 isSpinning = false;
-            }, 8200);
-        });
+            }, 8500);
+        }
 
-        // ИНТЕГРАЦИЯ: Продажа предмета через БД
+        // 3. Обработка кнопок модалки
         document.getElementById('sell-btn').onclick = async () => {
             document.getElementById('sell-btn').disabled = true;
-            try {
-                await fetch(`${BACKEND_URL}/sell_item`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        user_id: user?.id, 
-                        price: winningItem.price,
-                        item_id: winningItem.id 
-                    })
-                });
-                goToMain();
-            } catch (e) {
-                tg.showAlert("Ошибка при продаже");
-            }
+            const finalBalance = parseInt(userRowData.ton) + winningItem.price;
+            
+            await fetch(`${API_URL}/username/${user.id}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ ton: finalBalance })
+            });
+            location.reload();
         };
 
-        // ИНТЕГРАЦИЯ: Добавление в инвентарь в БД
         document.getElementById('keep-btn').onclick = async () => {
             document.getElementById('keep-btn').disabled = true;
-            try {
-                await fetch(`${BACKEND_URL}/add_inventory`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        user_id: user?.id, 
-                        item_id: winningItem.id,
-                        item_name: winningItem.name,
-                        item_img: winningItem.img
-                    })
-                });
-                goToMain();
-            } catch (e) {
-                tg.showAlert("Ошибка сохранения");
-            }
+            const currentInv = userRowData.inventory || "";
+            const newInv = currentInv ? `${currentInv}, ${winningItem.name}` : winningItem.name;
+            
+            await fetch(`${API_URL}/username/${user.id}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ inventory: newInv })
+            });
+            location.reload();
         };
 
-        // Запуск при загрузке
-        initWheel();
-        updateStatus();
+        // Стартовая загрузка
+        loadUserData();
     </script>
 </body>
 </html>
