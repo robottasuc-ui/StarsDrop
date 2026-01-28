@@ -16,7 +16,6 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 CRYPTO_PAY_TOKEN = '519389:AAnFdMg1D8ywsfVEd0aA02B8872Zzz61ATO'
 BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'
 
-# --- ПОЛУЧЕНИЕ/СОЗДАНИЕ ЮЗЕРА ---
 def get_or_create_user(user_id):
     res = supabase.table('users').select("*").eq('user_id', user_id).execute()
     if res.data:
@@ -25,14 +24,12 @@ def get_or_create_user(user_id):
     supabase.table('users').insert(new_user).execute()
     return new_user
 
-# --- СОЗДАНИЕ ОПЛАТЫ TON ---
 @app.route('/api/create_pay', methods=['POST'])
 def create_pay():
     try:
         data = request.json
         uid = str(data.get('user_id'))
         amount = data.get('amount')
-        
         url = "https://pay.crypt.bot/api/createInvoice"
         payload = {
             "asset": "TON",
@@ -41,33 +38,28 @@ def create_pay():
             "description": "Пополнение баланса TON"
         }
         headers = {"Crypto-Pay-API-Token": CRYPTO_PAY_TOKEN}
-        
         r = requests.post(url, json=payload, headers=headers).json()
         if r.get('ok'):
-            # Возвращаем ссылку так, как её ждет твой фронтенд
             return jsonify({"pay_url": r['result']['bot_invoice_url']}), 200
         return jsonify({"error": "crypto_bot_err", "details": r}), 400
     except Exception as e:
-        return jsonify({"error": str(e)} Prime), 500
+        return jsonify({"error": str(e)}), 500
 
-# --- СОЗДАНИЕ ОПЛАТЫ ЗВЁЗДАМИ ---
 @app.route('/api/create_stars_pay', methods=['POST'])
 def create_stars_pay():
     try:
         data = request.json
         uid = str(data.get('user_id'))
         amount = int(data.get('amount'))
-        
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/createInvoiceLink"
         payload = {
             "title": "Пополнение звёзд",
-            "description": f"Зачисление {amount} XTR на баланс",
+            "description": f"Зачисление {amount} XTR",
             "payload": uid,
-            "provider_token": "", # ОБЯЗАТЕЛЬНО для звезд
+            "provider_token": "",
             "currency": "XTR",
             "prices": [{"label": "Stars", "amount": amount}]
         }
-        
         r = requests.post(url, json=payload).json()
         if r.get('ok'):
             return jsonify({"pay_url": r['result']}), 200
@@ -75,7 +67,6 @@ def create_stars_pay():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# --- ВЕБХУКИ ОСТАЮТСЯ ТАКИМИ ЖЕ ---
 @app.route('/api/crypto-webhook', methods=['POST'])
 def crypto_webhook():
     update = request.json
@@ -105,6 +96,3 @@ def telegram_webhook():
 def get_balance(user_id):
     user = get_or_create_user(user_id)
     return jsonify(user), 200
-
-if __name__ == '__main__':
-    app.run(port=5000)
