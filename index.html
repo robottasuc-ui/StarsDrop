@@ -65,7 +65,7 @@
     <div id="global-loader"><div class="loader-ring"></div><div class="mt-4 text-green-500 font-black italic tracking-widest animate-pulse">STARS DROP</div></div>
     <canvas id="stars-canvas"></canvas>
     
-    <div class="main-wrapper">
+<div class="main-wrapper">
         <div class="p-6 pb-32">
             <div class="flex justify-between items-start">
                 <div class="flex items-center gap-4">
@@ -90,22 +90,21 @@
     </div>
 </div>
 
-<div class="flex flex-col items-center mt-12 mb-10">
-    <div class="hero-zone"> 
-        <div class="hero-glow"></div>
-        <div class="tap-label" style="top:-10%; left:-20%; --r:-15deg; animation-delay:0s"></div>
-        <div class="tap-label" style="top:20%; right:-25%; --r:15deg; animation-delay:0.4s"></div>
-        <div class="tap-label" style="bottom:10%; left:-15%; --r:-5deg; animation-delay:0.8s"></div>
-        <img src="hero.png" alt="HERO" class="w-56 h-56 object-contain">
-    </div>
-    <h1 class="text-5xl font-black italic mt-6 uppercase tracking-tighter text-white">Stars<span class="text-green-500">Drop</span></h1>
-    <div class="h-1.5 w-16 bg-green-500 rounded-full mt-3 shadow-lg shadow-green-500/50"></div>
+<div class="hero-zone" onclick="openVault('ton')"> <div class="hero-glow"></div>
+    <div class="tap-label" style="top:-10%; left:-20%; --r:-15deg; animation-delay:0s"></div>
+    <div class="tap-label" style="top:20%; right:-25%; --r:15deg; animation-delay:0.4s"></div>
+    <div class="tap-label" style="bottom:10%; left:-15%; --r:-5deg; animation-delay:0.8s"></div>
+    <img src="hero.png" alt="HERO" class="w-56 h-56 object-contain">
 </div>
+                <h1 class="text-5xl font-black italic mt-6 uppercase tracking-tighter text-white">Stars<span class="text-green-500">Drop</span></h1>
+                <div class="h-1.5 w-16 bg-green-500 rounded-full mt-3 shadow-lg shadow-green-500/50"></div>
+            </div>
+
             <div class="flex flex-col gap-4">
-                <div onclick="navigateTo('case.html')" class="btn-base btn-cases shadow-xl"><img src="img/case.png" class="w-8 h-8"><div class="flex flex-col"><span class="font-black uppercase tracking-widest text-sm text-white">Кейсы</span><span class="text-[10px] text-green-400 font-bold italic uppercase">Открывай и побеждай</span></div><div class="ml-auto"><svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg></div></div>
-                <div onclick="navigateTo('wheel.html')" class="btn-base btn-wheel shadow-xl"><img src="img/spin.png" class="w-8 h-8"><div class="flex flex-col"><span class="font-black uppercase tracking-widest text-sm text-black">Колесо удачи</span><span class="text-[10px] text-black/50 font-bold uppercase">Ежедневный бонус</span></div><div class="ml-auto"><div class="w-3 h-3 bg-green-600 rounded-full animate-ping"></div></div></div>
-                <div onclick="navigateTo('update.html')" class="btn-base btn-upgrade shadow-xl"><img src="img/helmet.png" class="w-8 h-8"><div class="flex flex-col"><span class="font-black uppercase tracking-widest text-sm text-white">Апгрейд</span><span class="text-[10px] text-orange-400 font-bold italic uppercase">Улучши свои шансы</span></div><div class="ml-auto"><svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg></div></div>
-                <div onclick="navigateTo('games.html')" class="btn-base btn-games shadow-xl"><img src="img/mini.png" class="w-8 h-8"><div class="flex flex-col"><span class="font-black uppercase tracking-widest text-sm text-white">Мини игры</span><span class="text-[10px] text-green-400 font-bold italic uppercase">Играть и копить</span></div><div class="ml-auto"><svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg></div></div>
+                <div onclick="navigateTo('case.html')" class="btn-base btn-cases shadow-xl"><img src="case.png" class="w-8 h-8"><div class="flex flex-col"><span class="font-black uppercase tracking-widest text-sm text-white">Кейсы</span><span class="text-[10px] text-green-400 font-bold italic uppercase">Открывай и побеждай</span></div><div class="ml-auto"><svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg></div></div>
+                <div onclick="navigateTo('wheel.html')" class="btn-base btn-wheel shadow-xl"><img src="spin.png" class="w-8 h-8"><div class="flex flex-col"><span class="font-black uppercase tracking-widest text-sm text-black">Колесо удачи</span><span class="text-[10px] text-black/50 font-bold uppercase">Ежедневный бонус</span></div><div class="ml-auto"><div class="w-3 h-3 bg-green-600 rounded-full animate-ping"></div></div></div>
+                <div onclick="navigateTo('update.html')" class="btn-base btn-upgrade shadow-xl"><img src="helmet.png" class="w-8 h-8"><div class="flex flex-col"><span class="font-black uppercase tracking-widest text-sm text-white">Апгрейд</span><span class="text-[10px] text-orange-400 font-bold italic uppercase">Улучши свои шансы</span></div><div class="ml-auto"><svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg></div></div>
+                <div onclick="navigateTo('games.html')" class="btn-base btn-games shadow-xl"><img src="mini.png" class="w-8 h-8"><div class="flex flex-col"><span class="font-black uppercase tracking-widest text-sm text-white">Мини игры</span><span class="text-[10px] text-green-400 font-bold italic uppercase">Играть и копить</span></div><div class="ml-auto"><svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg></div></div>
             </div>
         </div>
 
@@ -145,19 +144,26 @@
         const user = tg.initDataUnsafe?.user;
         let isProcessing = false;
 
-        function checkPlatform() {
-            const platform = tg.platform;
-            const isPC = ['desktop', 'tdesktop', 'macos', 'web'].includes(platform);
-            const isWideScreen = window.innerWidth > 1024;
-            if (isPC || isWideScreen) {
-                document.getElementById('pc-only-blocker').style.display = 'flex';
-                const main = document.querySelector('.main-wrapper');
-                if (main) main.remove();
-                const loader = document.getElementById('global-loader');
-                if (loader) loader.remove();
-            }
-        }
-        checkPlatform();
+function checkPlatform() {
+    const platform = tg.platform;
+    const isPC = ['desktop', 'tdesktop', 'macos', 'web'].includes(platform);
+    const isWideScreen = window.innerWidth > 1024;
+
+    if (isPC || isWideScreen) {
+        // 1. Показываем блокировщик
+        document.getElementById('pc-only-blocker').style.display = 'flex';
+        
+        // 2. Полностью удаляем игровой интерфейс, чтобы его нельзя было "откопать"
+        const main = document.querySelector('.main-wrapper');
+        if (main) main.remove();
+        
+        // 3. Убираем лоадер, чтобы он не крутился поверх баннера
+        const loader = document.getElementById('global-loader');
+        if (loader) loader.remove();
+    }
+}
+// Запускаем немедленно
+checkPlatform();
         tg.expand();
 
         if (user) {
@@ -171,43 +177,49 @@
             window.location.href = url; 
         }
 
-        // --- УЛУЧШЕННОЕ ОБНОВЛЕНИЕ БАЛАНСА ---
-        function updateBalanceUI() {
-            const stars = localStorage.getItem('user_stars') || '0';
-            const ton = localStorage.getItem('user_ton') || '0.00';
-            
-            const tonElement = document.getElementById('header-ton');
-            const starsElement = document.getElementById('header-stars');
-            
-            if (tonElement) tonElement.innerText = parseFloat(ton).toFixed(2);
-            if (starsElement) {
-                starsElement.innerText = parseInt(stars).toLocaleString('ru-RU').replace(/\s/g, '.');
-            }
-        }
+function updateBalanceUI() {
+    // Берем данные из памяти
+    const stars = parseInt(localStorage.getItem('user_stars') || '0');
+    const ton = parseFloat(localStorage.getItem('user_ton') || '0.00');
+    
+    // Ищем элементы по ПРАВИЛЬНЫМ ID (те, что вверху в HTML)
+    const tonElement = document.getElementById('header-ton');
+    const starsElement = document.getElementById('header-stars');
+    
+    // Если они есть на странице — обновляем
+    if (tonElement) tonElement.innerText = ton.toFixed(2);
+    if (starsElement) starsElement.innerText = stars.toLocaleString('ru-RU').replace(/\s/g, '.');
+}
+
+// Перед тем как лезть на сервер, проверяем, нет ли уже чего-то в памяти
+if (localStorage.getItem('user_ton')) {
+    updateBalanceUI(); 
+}
 
         async function syncData() {
-            // 1. Сначала подтягиваем то, что записали кейсы
+            // 1. Сначала берем то, что в памяти (чтобы списание в колесе отобразилось сразу)
             updateBalanceUI();
 
-            // 2. Сверяемся с сервером
+            // 2. Потом пытаемся обновиться с бэкенда
             if (user) {
                 try {
                     const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}?t=${Date.now()}`);
                     const data = await res.json();
                     
+                    // Сохраняем свежие данные с сервера
                     localStorage.setItem('user_stars', data.stars);
                     localStorage.setItem('user_ton', data.balance);
                     
                     updateBalanceUI();
-                } catch (e) { console.error("Sync error"); }
+                } catch (e) { console.error("Sync error, using local only"); }
             }
         }
 
-        // Следим за изменениями в реальном времени
-        window.addEventListener('storage', () => updateBalanceUI());
-
-        // Обновляем при возврате на страницу
-        window.addEventListener('pageshow', () => syncData());
+        // --- СЛУШАТЕЛЬ ДЛЯ СИНХРОНИЗАЦИИ ---
+        // Когда пользователь возвращается на эту страницу - обновляем баланс
+        window.onfocus = () => {
+            updateBalanceUI();
+        };
 
         const PACKS = [1, 3, 5, 10, 20, 50, 100, 250];
         const tonBox = document.getElementById('pane-ton');
@@ -259,6 +271,7 @@
             document.getElementById('pane-stars').classList.toggle('hidden', isTon);
         }
 
+        // Анимация звезд
         const canvas = document.getElementById('stars-canvas');
         if (canvas) {
             const ctx = canvas.getContext('2d');
@@ -280,12 +293,16 @@
         }
 
         window.onload = () => {
-            syncData();
+            syncData(); // Запуск синхронизации при входе
             setTimeout(() => {
                 const loader = document.getElementById('global-loader');
                 if(loader) { loader.style.opacity = '0'; setTimeout(() => { loader.style.display = 'none'; }, 500); }
             }, 800);
         };
+
+window.addEventListener('pageshow', () => {
+    syncData(); // Обновит и из памяти, и с сервера при каждом показе страницы
+}); 
     </script>
 </body>
 </html>
