@@ -185,35 +185,37 @@ let currentWinners = [];
 let mul = 1;
 let activeCase = null;
 
-// 1. Единая логика баланса
+// Единый объект баланса
 let balance = {
     stars: parseInt(localStorage.getItem('user_stars')) || 0,
     ton: parseFloat(localStorage.getItem('user_ton')) || 0
 };
 
-// Функция для сохранения и обновления UI на всех страницах
+// Функция для сохранения и обновления UI
 function saveAndRefresh() {
     localStorage.setItem('user_stars', balance.stars);
     localStorage.setItem('user_ton', balance.ton.toFixed(2));
     updateUI();
-
 }
 
+// Функция синхронизации с сервером (твоя проблема решена здесь)
 async function syncData() {
     if (tg.initDataUnsafe?.user) {
         try {
             const res = await fetch(`${BACKEND_URL}/get_balance/${tg.initDataUnsafe.user.id}?t=${Date.now()}`);
             const data = await res.json();
-            balance.stars = data.stars;
-            balance.ton = data.balance;
-            saveAndRefresh(); // Обновит и экран, и память
-        } catch (e) { console.error("Sync error"); }
+            balance.stars = parseInt(data.stars);
+            balance.ton = parseFloat(data.balance);
+            saveAndRefresh();
+            console.log("Balance updated from server");
+        } catch (e) { 
+            console.error("Sync error"); 
+            updateUI();
+        }
     }
 }
 
-
 function updateUI() {
-    // Формат 1.000 вместо 1000
     const formattedStars = Math.floor(balance.stars).toLocaleString('ru-RU').replace(/\s/g, '.');
     const headerStars = document.getElementById('header-stars');
     const headerTon = document.getElementById('header-ton');
@@ -222,21 +224,16 @@ function updateUI() {
     if (headerTon) headerTon.innerText = balance.ton.toFixed(2);
 }
 
-window.onload = () => {
-    syncData(); // Добавь эту строку первой
-    updateUI(); 
-    render(); 
-    initLive(); 
-};
-
-// Слушатель изменений из других вкладок (чтобы баланс был везде одинаковый)
+// Обновление, если изменилось в другой вкладке
 window.addEventListener('storage', () => {
     balance.stars = parseInt(localStorage.getItem('user_stars')) || 0;
     balance.ton = parseFloat(localStorage.getItem('user_ton')) || 0;
     updateUI();
 });
 
-// ТВОИ ПРЕДМЕТЫ (БЕЗ ИЗМЕНЕНИЙ)
+// Синхронизация при возврате на страницу
+window.addEventListener('pageshow', syncData);
+
 const ITEMS = {
     1: { name: "1 May", img: "1may.jpg", price: 100 },
     2: { name: "2025", img: "2025.jpg", price: 500 },
@@ -358,9 +355,8 @@ function startRoll(type) {
     const cost = type === 'stars' ? activeCase.stars * mul : activeCase.ton * mul;
     if (balance[type] < cost) return alert("Недостаточно средств");
     
-    // Списание баланса
     balance[type] -= cost;
-    saveAndRefresh(); // Сохраняем изменение
+    saveAndRefresh();
 
     document.getElementById('view-preview').style.display = 'none';
     document.getElementById('view-roulette').style.display = 'flex';
@@ -432,7 +428,7 @@ function showWin(winners) {
     
     document.getElementById('sell-btn').onclick = () => {
         balance.stars += totalSellPrice;
-        saveAndRefresh(); // Сохраняем зачисление после продажи
+        saveAndRefresh();
         closeModal();
     };
 }
@@ -479,6 +475,12 @@ function closeModal() {
     document.getElementById('case-modal').style.display = 'none';
     currentWinners = [];
 }
+
+window.onload = () => {
+    syncData(); // Важно: синхронизируем сразу при входе
+    render(); 
+    initLive(); 
+};
     </script>
 </body>
 </html>
