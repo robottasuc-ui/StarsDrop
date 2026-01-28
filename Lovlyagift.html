@@ -151,16 +151,31 @@
     let spawnRate = 800;
     let bombChance = 0.12;
 
-    const ASSETS = [
-        '1may.jpg', '2025.jpg', 'bear.png', 'book.jpg', 'boooox.png', 'botinok.png', 'box.png', 'car.png',
-        'ccolso2.png', 'cerrrdce.jpg', 'chassiki.png', 'chemodan.jpg', 'ciga.png', 'colso.png', 'costum.jpg',
-        'cvetok.png', 'dog.png', 'dyxi.png', 'fonarik.jpg', 'grob.jpg', 'gyba.png', 'happybirthday.jpg',
-        'heart.png', 'helmet.png', 'kalendar.png', 'kepka.png', 'kirpitch.jpg', 'koks.jpg', 'koktel.png',
-        'kolechko.png', 'kot.png', 'kotel.png', 'krovatka.jpg', 'lolipop.png', 'lucky.jpg', 'mafin.jpg',
-        'metch.png', 'narkotiki.png', 'obyv.jpg', 'otchki.jpg', 'orel.jpg', 'otkritka.jpg', 'paska.jpg',
-        'pepe.png', 'raketa.png', 'rozza.png', 'rykazak.jpg', 'shapka.png', 'shar.jpg', 'shlem.png',
-        'sliva.png', 'soska.jpg', 'statyya.jpg', 'statyyetka.png', 'venok.jpg', 'yayko.png', 'zhele.png', 'zmei.png'
-    ];
+// Полный список твоих ассетов
+const ASSETS = [
+    '1may.jpg', '2025.jpg', 'bear.png', 'book.jpg', 'boooox.png', 'botinok.png', 'box.png', 'car.png',
+    'ccolso2.png', 'cerrrdce.jpg', 'chassiki.png', 'chemodan.jpg', 'ciga.png', 'colso.png', 'costum.jpg',
+    'cvetok.png', 'dog.png', 'dyxi.png', 'fonarik.jpg', 'grob.jpg', 'gyba.png', 'happybirthday.jpg',
+    'heart.png', 'helmet.png', 'kalendar.png', 'kepka.png', 'kirpitch.jpg', 'koks.jpg', 'koktel.png',
+    'kolechko.png', 'kot.png', 'kotel.png', 'krovatka.jpg', 'lolipop.png', 'lucky.jpg', 'mafin.jpg',
+    'metch.png', 'narkotiki.png', 'obyv.jpg', 'otchki.jpg', 'orel.jpg', 'otkritka.jpg', 'paska.jpg',
+    'pepe.png', 'raketa.png', 'rozza.png', 'rykazak.jpg', 'shapka.png', 'shar.jpg', 'shlem.png',
+    'sliva.png', 'soska.jpg', 'statyya.jpg', 'statyyetka.png', 'venok.jpg', 'yayko.png', 'zhele.png', 'zmei.png',
+    'star.png', 'bomb.png', 'case.png' // Добавил те, что видел в твоем GitHub
+];
+
+// Функция для получения ПРАВИЛЬНОГО пути к картинке
+function getAssetUrl(fileName) {
+    // Получаем базовый URL (например, https://stars-drop.vercel.app/)
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/${fileName}`;
+}
+
+// Пример использования при создании подарка в игре:
+// Вместо item.src = "img/" + name;
+// Используй: 
+// const randomImg = ASSETS[Math.floor(Math.random() * ASSETS.length)];
+// giftElement.src = getAssetUrl(randomImg);
 
     function spawnItem() {
         if (!gameActive || isPaused) return;
