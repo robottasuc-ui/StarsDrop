@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <title>StarsDrop Games - In Development</title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+
+        
+
+        body { 
+
+            background-color: #0a1205; 
+
+            color: white; 
+
+            font-family: 'Inter', sans-serif; 
+
+            margin: 0; 
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-height: 100vh;
+
+            overflow: hidden;
+
+        }
+
+
+
+        .bg-glow {
+
+            position: absolute;
+
+            width: 300px; height: 300px;
+
+            background: radial-gradient(circle, rgba(163, 230, 53, 0.15) 0%, transparent 70%);
+
+            filter: blur(40px);
+
+            z-index: 0;
+
+            animation: pulse 4s infinite ease-in-out;
+
+        }
+
+
+
+        @keyframes pulse {
+
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+
+            50% { transform: scale(1.2); opacity: 1; }
+
+        }
+
+
+
+        .content {
+
+            position: relative;
+
+            z-index: 10;
+
+            text-align: center;
+
+            padding: 2rem;
+
+        }
+
+
+
+        .loader-dots {
+
+            display: inline-flex;
+
+            gap: 4px;
+
+        }
+
+
+
+        .dot {
+
+            width: 8px; height: 8px;
+
+            background: #a3e635;
+
+            border-radius: 50%;
+
+            animation: bounce 1.4s infinite ease-in-out both;
+
+        }
+
+
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+
+
+        @keyframes bounce {
+
+            0%, 80%, 100% { transform: scale(0); }
+
+            40% { transform: scale(1.0); }
+
+        }
+
+
+
+        .btn-back {
+
+            background: rgba(255, 255, 255, 0.05);
+
+            border: 1px solid rgba(255, 255, 255, 0.1);
+
+            padding: 16px 32px;
+
+            border-radius: 20px;
+
+            font-weight: 900;
+
+            text-transform: uppercase;
+
+            font-size: 12px;
+
+            letter-spacing: 1px;
+
+            margin-top: 2rem;
+
+            transition: 0.3s;
+
+        }
+
+
+
+        .btn-back:active {
+
+            transform: scale(0.95);
+
+            background: rgba(163, 230, 53, 0.1);
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <div class="bg-glow"></div>
+
+
+
+    <div class="content">
+
+        <div class="flex justify-center mb-6">
+
+            <div class="relative">
+
+                <img src="mini.png" alt="Games" class="w-24 h-24 opacity-20 grayscale">
+
+                <div class="absolute inset-0 flex items-center justify-center">
+
+                    <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+
+                    </svg>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <h1 class="text-3xl font-black uppercase italic tracking-tighter mb-2">
+
+            Игры  в  <span class="text-green-500">разработке</span>
+
+        </h1>
+
+        
+
+        <p class="text-gray-500 text-sm font-medium mb-8">
+
+            Настраиваем алгоритмы удачи
+
+            <span class="loader-dots">
+
+                <span class="dot"></span>
+
+                <span class="dot"></span>
+
+                <span class="dot"></span>
+
+            </span>
+
+        </p>
+
+
+
+        <button onclick="window.location.href='index.html'" class="btn-back">
+
+            Вернуться назад
+
+        </button>
+
+    </div>
+
+
+
+    <script>
+
+        const tg = window.Telegram.WebApp;
+
+        tg.expand();
+
+        tg.HapticFeedback.impactOccurred('medium');
+
+    </script>
+
+</body>
+
+</html>
