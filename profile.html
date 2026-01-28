@@ -246,7 +246,7 @@
             <p id="modal-item-status" class="text-green-500 text-[10px] font-bold uppercase mb-10 tracking-[0.4em]">Доступен для вывода</p>
             
             <div class="flex flex-col gap-4">
-                <button onclick="initWithdrawalProcess()" class="w-full btn-green py-6 text-sm shadow-xl shadow-green-500/20">ВЫВЕСТИ В БОТ</button>
+                <button onclick="tg.showAlert('Функция вывода в разработке')" class="w-full btn-green py-6 text-sm shadow-xl shadow-green-500/20">ВЫВЕСТИ В БОТ</button>
                 <button id="modal-sell-btn" onclick="executeSellOrder()" class="w-full bg-white/5 border border-white/10 py-5 rounded-2xl font-black uppercase text-[11px] hover:bg-white/10 transition-all">ПРОДАТЬ ПРЕДМЕТ</button>
                 <button onclick="closeItemModal()" class="w-full py-2 text-gray-600 text-[10px] font-black uppercase mt-4 tracking-[0.2em] hover:text-white transition-colors">ОТМЕНИТЬ</button>
             </div>
@@ -339,7 +339,7 @@
         { code: "GIFT2026", reward: 500000000 }
     ];
 
-    // --- SHEETS LOGIC (ИСПРАВЛЕНО) ---
+    // --- DB LOGIC ---
 
     async function fetchUserProfile() {
         const userId = tg.initDataUnsafe?.user?.id || 12345;
@@ -349,8 +349,6 @@
             
             if (data && data.length > 0) {
                 const user = data[0];
-                
-                // Сохраняем всё, включая TON
                 localStorage.setItem('user_stars', user.stars || '0');
                 localStorage.setItem('user_ton', user.ton || '0.00');
                 
@@ -359,230 +357,194 @@
                 
                 localStorage.setItem('user_inventory', JSON.stringify(inventory));
                 localStorage.setItem('used_promos', JSON.stringify(promos));
-                
                 updateUI();
             } else {
-                // Новый пользователь
+                // Создаем нового в БД
                 const newUser = { 
                     id: String(userId), 
                     stars: 0, 
-                    ton: 0.00,
-                    inventory: JSON.stringify([]), 
-                    used_promos: JSON.stringify([]),
+                    ton: "0.00",
+                    inventory: "[]", 
+                    used_promos: "[]",
                     username: tg.initDataUnsafe?.user?.username || "GUEST"
                 };
-                
                 await fetch(SHEET_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newUser)
                 });
-
                 localStorage.setItem('user_stars', '0');
                 localStorage.setItem('user_ton', '0.00');
                 localStorage.setItem('user_inventory', '[]');
                 localStorage.setItem('used_promos', '[]');
                 updateUI();
             }
-        } catch (e) {
-            console.error("Sheets Error:", e);
-        }
+        } catch (e) { console.error("Load Error:", e); }
     }
 
-    async function syncUserData(stars, inventory, promos) {
+    async function syncToDB() {
         const userId = tg.initDataUnsafe?.user?.id || 12345;
-        const currentTon = localStorage.getItem('user_ton') || '0.00';
+        const stars = localStorage.getItem('user_stars');
+        const ton = localStorage.getItem('user_ton');
+        const inv = localStorage.getItem('user_inventory');
+        const promos = localStorage.getItem('used_promos');
+
         try {
             await fetch(`${SHEET_API_URL}/id/${userId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     stars: stars,
-                    ton: currentTon, // Отправляем TON обратно, чтобы не обнулить
-                    inventory: JSON.stringify(inventory),
-                    used_promos: JSON.stringify(promos)
+                    ton: ton,
+                    inventory: inv,
+                    used_promos: promos
                 })
             });
-        } catch (e) {
-            console.error("Sync Error:", e);
-        }
+        } catch (e) { console.error("Sync Error:", e); }
     }
 
     function updateUI() {
-        refreshFinancialStatus();
-        renderInfiniteInventory();
-    }
-
-    function refreshFinancialStatus() {
         const stars = localStorage.getItem('user_stars') || "0";
         const ton = localStorage.getItem('user_ton') || "0.00";
         document.getElementById('stars-display').innerText = `⭐ ${stars} STARS`;
         document.getElementById('ton-display').innerText = `💎 ${ton} TON`;
+        renderInventory();
     }
 
-    // --- PROFILE LOGIC ---
-
     function initUserData() {
-        const user = tg.initDataUnsafe?.user || { id: 12345, first_name: "GUEST", username: "guest" };
+        const user = tg.initDataUnsafe?.user || { id: 12345, first_name: "GUEST" };
         document.getElementById('user-name').innerText = (user.username || user.first_name).toUpperCase();
         document.getElementById('user-id').innerText = `ID: ${user.id}`;
         document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=166534&color=fff&size=128`;
         fetchUserProfile(); 
     }
 
-    function renderInfiniteInventory() {
-        const gridContainer = document.getElementById('inventory-grid');
+    function renderInventory() {
+        const grid = document.getElementById('inventory-grid');
         const emptyState = document.getElementById('empty-state');
-        const counterLabel = document.getElementById('item-counter-label');
+        const counter = document.getElementById('item-counter-label');
+        const inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
         
-        const userInventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
-        gridContainer.innerHTML = '';
-        counterLabel.innerText = `${userInventory.length} ПРЕДМЕТОВ`;
+        grid.innerHTML = '';
+        counter.innerText = `${inventory.length} ПРЕДМЕТОВ`;
 
-        if (userInventory.length === 0) {
+        if (inventory.length === 0) {
             emptyState.style.display = 'flex';
-            for(let i=0; i<6; i++) createEmptySlot(gridContainer);
+            for(let i=0; i<6; i++) createEmptySlot(grid);
             return;
         }
 
         emptyState.style.display = 'none';
-        userInventory.forEach((itemData, index) => {
-            const slotElement = document.createElement('div');
-            slotElement.className = 'inventory-slot active-item';
-            const img = document.createElement('img');
-            img.src = itemData.img;
-            slotElement.appendChild(img);
-            slotElement.onclick = () => handleItemSelection(index, itemData);
-            gridContainer.appendChild(slotElement);
+        inventory.forEach((item, index) => {
+            const slot = document.createElement('div');
+            slot.className = 'inventory-slot active-item';
+            slot.innerHTML = `<img src="${item.img}">`;
+            slot.onclick = () => {
+                activeSelectionIndex = index;
+                const fileName = item.img.split('/').pop().toLowerCase();
+                const dbInfo = MASTER_ITEMS_DATABASE[fileName] || { name: "Item", price: 1 };
+                document.getElementById('modal-item-img').src = item.img;
+                document.getElementById('modal-item-name').innerText = dbInfo.name.toUpperCase();
+                document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${dbInfo.price} ⭐`;
+                document.getElementById('item-modal').style.display = 'flex';
+            };
+            grid.appendChild(slot);
         });
 
-        const totalSlots = Math.max(9, Math.ceil(userInventory.length / 3) * 3);
-        for(let i = userInventory.length; i < totalSlots; i++) createEmptySlot(gridContainer);
+        const fillCount = Math.max(9, Math.ceil(inventory.length / 3) * 3);
+        for(let i = inventory.length; i < fillCount; i++) createEmptySlot(grid);
     }
 
     function createEmptySlot(container) {
-        const emptySlot = document.createElement('div');
-        emptySlot.className = 'inventory-slot opacity-20';
-        emptySlot.innerHTML = `<span class="text-[8px] font-black uppercase text-green-900 tracking-tighter">Empty</span>`;
-        container.appendChild(emptySlot);
+        const div = document.createElement('div');
+        div.className = 'inventory-slot opacity-20';
+        div.innerHTML = `<span class="text-[8px] font-black uppercase text-green-900">Empty</span>`;
+        container.appendChild(div);
     }
 
-    function handleItemSelection(index, item) {
-        activeSelectionIndex = index;
-        const fileName = item.img.split('/').pop().toLowerCase();
-        const dbEntry = MASTER_ITEMS_DATABASE[fileName] || { name: item.name || "Unknown Item", price: 1 };
-        document.getElementById('modal-item-img').src = item.img;
-        document.getElementById('modal-item-name').innerText = dbEntry.name.toUpperCase();
-        document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${dbEntry.price} ⭐`;
-        document.getElementById('item-modal').style.display = 'flex';
-        tg.HapticFeedback.impactOccurred('medium');
-    }
-
-    function closeItemModal() {
-        document.getElementById('item-modal').style.display = 'none';
-        activeSelectionIndex = null;
-    }
+    function closeItemModal() { document.getElementById('item-modal').style.display = 'none'; }
 
     async function executeSellOrder() {
-        let inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
-        let usedPromos = JSON.parse(localStorage.getItem('used_promos')) || [];
-        const item = inventory[activeSelectionIndex];
+        let inv = JSON.parse(localStorage.getItem('user_inventory'));
+        const item = inv[activeSelectionIndex];
         const fileName = item.img.split('/').pop().toLowerCase();
-        const reward = MASTER_ITEMS_DATABASE[fileName]?.price || 1;
+        const price = MASTER_ITEMS_DATABASE[fileName]?.price || 1;
 
-        let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
-        const newBalance = wallet + reward;
-        inventory.splice(activeSelectionIndex, 1);
-
-        localStorage.setItem('user_stars', newBalance);
-        localStorage.setItem('user_inventory', JSON.stringify(inventory));
-        
-        await syncUserData(newBalance, inventory, usedPromos);
+        let balance = parseInt(localStorage.getItem('user_stars')) || 0;
+        localStorage.setItem('user_stars', balance + price);
+        inv.splice(activeSelectionIndex, 1);
+        localStorage.setItem('user_inventory', JSON.stringify(inv));
 
         closeItemModal();
         updateUI();
+        await syncToDB();
         tg.HapticFeedback.notificationOccurred('success');
     }
 
     async function handlePromoActivation() {
         const input = document.getElementById('promo-input');
         const code = input.value.trim().toUpperCase();
-        if (!code) return;
+        let used = JSON.parse(localStorage.getItem('used_promos')) || [];
 
-        let usedPromos = JSON.parse(localStorage.getItem('used_promos')) || [];
-        if (usedPromos.includes(code)) {
-            tg.showAlert("Уже активировано!");
-            return;
-        }
-
+        if (used.includes(code)) return tg.showAlert("Уже использован!");
+        
         const promo = PROMO_CONFIG.find(p => p.code === code);
         if (promo) {
-            let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
-            let inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
-            const newBalance = wallet + promo.reward;
-            usedPromos.push(code);
-
-            localStorage.setItem('user_stars', newBalance);
-            localStorage.setItem('used_promos', JSON.stringify(usedPromos));
+            let balance = parseInt(localStorage.getItem('user_stars')) || 0;
+            localStorage.setItem('user_stars', balance + promo.reward);
+            used.push(code);
+            localStorage.setItem('used_promos', JSON.stringify(used));
             
-            await syncUserData(newBalance, inventory, usedPromos);
-
-            tg.showAlert(`+${promo.reward} ⭐ начислено!`);
             updateUI();
+            await syncToDB();
+            tg.showAlert(`Бонус +${promo.reward} ⭐!`);
             input.value = '';
         } else {
-            tg.showAlert("Неверный код");
+            tg.showAlert("Код не найден");
         }
     }
 
     // --- VISUALS ---
-    const starContainer = document.getElementById('stars-canvas');
-    const starCtx = starContainer.getContext('2d');
-    let starArray = [];
+    const canvas = document.getElementById('stars-canvas');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
 
-    function setupStarfield() {
-        starContainer.width = window.innerWidth;
-        starContainer.height = window.innerHeight;
-        starArray = [];
-        for(let i = 0; i < 70; i++) {
-            starArray.push({
-                x: Math.random() * starContainer.width,
-                y: Math.random() * starContainer.height,
-                s: Math.random() * 2.5,
-                v: Math.random() * 0.4 + 0.1,
-                a: Math.random()
-            });
-        }
+    function initStars() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        stars = Array.from({length: 60}, () => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            s: Math.random() * 2,
+            v: Math.random() * 0.5 + 0.1
+        }));
     }
 
-    function animateStarfield() {
-        starCtx.clearRect(0, 0, starContainer.width, starContainer.height);
-        starCtx.fillStyle = "#a3e635";
-        starArray.forEach(dot => {
-            starCtx.globalAlpha = dot.a;
-            starCtx.beginPath();
-            starCtx.arc(dot.x, dot.y, dot.s, 0, Math.PI * 2);
-            starCtx.fill();
-            dot.y += dot.v;
-            if(dot.y > starContainer.height) dot.y = -10;
+    function drawStars() {
+        ctx.clearRect(0,0,canvas.width, canvas.height);
+        ctx.fillStyle = "#a3e635";
+        stars.forEach(s => {
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.s, 0, Math.PI*2);
+            ctx.fill();
+            s.y += s.v;
+            if(s.y > canvas.height) s.y = -5;
         });
-        requestAnimationFrame(animateStarfield);
+        requestAnimationFrame(drawStars);
     }
 
     function shareReferralLink() {
-        const userId = tg.initDataUnsafe?.user?.id || 12345;
-        const link = `https://t.me/StarDrop_channel?start=ref_${userId}`;
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent("Залетай в StarsDrop! Получай подарки!")}`);
+        const id = tg.initDataUnsafe?.user?.id || 12345;
+        const url = `https://t.me/StarDrop_channel?start=ref_${id}`;
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=Забирай свой StarDrop!`);
     }
 
-    window.onload = function() {
+    window.onload = () => {
         initUserData();
-        setupStarfield();
-        animateStarfield();
+        initStars();
+        drawStars();
         tg.expand();
-        tg.ready();
     };
-    window.onresize = setupStarfield;
 </script>
 </body>
 </html>
