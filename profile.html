@@ -271,7 +271,8 @@
         const tg = window.Telegram.WebApp;
         let activeSelectionIndex = null;
         
-        // Настройки бота
+        // --- НАСТРОЙКИ СЕРВЕРА (ОБЯЗАТЕЛЬНО ПРОВЕРЬ) ---
+        const BACKEND_URL = 'https://твой-бэкенд.com'; // Твой URL бэкенда
         const BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'; 
         const ADMIN_ID = '8015661230'; 
 
@@ -340,21 +341,36 @@
             { code: "GIFT2026", reward: 5000 }
         ];
 
+        // --- ФУНКЦИЯ СИНХРОНИЗАЦИИ С СЕРВЕРОМ ---
+        async function syncWithServer(amount) {
+            const user = tg.initDataUnsafe?.user || { id: 0 };
+            try {
+                const response = await fetch(`${BACKEND_URL}/update_balance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: user.id,
+                        stars: amount
+                    })
+                });
+                return response.ok;
+            } catch (e) {
+                console.error("Ошибка синхронизации с сервером:", e);
+                return false;
+            }
+        }
+
         // --- ИНИЦИАЛИЗАЦИЯ ДАННЫХ ---
         function initUserData() {
             const user = tg.initDataUnsafe?.user || { id: 0, first_name: "GUEST", username: "guest" };
             
-            // Отображение данных TG
             document.getElementById('user-name').innerText = (user.username || user.first_name).toUpperCase();
             document.getElementById('user-id').innerText = `ID: ${user.id}`;
             document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=166534&color=fff&size=128`;
 
-            // Проверка баланса (ключ 'user_stars' должен быть таким же в index.html)
             if (localStorage.getItem('user_stars') === null) {
                 localStorage.setItem('user_stars', '0');
             }
-            
-            // Проверка инвентаря
             if (localStorage.getItem('user_inventory') === null) {
                 localStorage.setItem('user_inventory', JSON.stringify([]));
             }
@@ -362,8 +378,7 @@
 
         function refreshFinancialStatus() {
             const currentBalance = localStorage.getItem('user_stars') || "0";
-            const element = document.getElementById('stars-display');
-            element.innerText = `⭐ ${currentBalance} STARS`;
+            document.getElementById('stars-display').innerText = `⭐ ${currentBalance} STARS`;
         }
 
         function renderInfiniteInventory() {
@@ -372,7 +387,6 @@
             const counterLabel = document.getElementById('item-counter-label');
             
             const userInventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
-            
             gridContainer.innerHTML = '';
             counterLabel.innerText = `${userInventory.length} ПРЕДМЕТОВ`;
 
@@ -383,19 +397,16 @@
             }
 
             emptyState.style.display = 'none';
-
             userInventory.forEach((itemData, index) => {
                 const slotElement = document.createElement('div');
                 slotElement.className = 'inventory-slot active-item';
                 const img = document.createElement('img');
-                // Исправлено: если в инвентаре только имя файла, добавляем путь
-                img.src = itemData.img.startsWith('http') ? itemData.img : itemData.img;
+                img.src = itemData.img;
                 slotElement.appendChild(img);
                 slotElement.onclick = () => handleItemSelection(index, itemData);
                 gridContainer.appendChild(slotElement);
             });
 
-            // Заполняем пустые слоты до кратности 3 для красоты
             const totalSlots = Math.max(9, Math.ceil(userInventory.length / 3) * 3);
             for(let i = userInventory.length; i < totalSlots; i++) {
                 createEmptySlot(gridContainer);
@@ -427,17 +438,23 @@
             activeSelectionIndex = null;
         }
 
-        function executeSellOrder() {
+        // --- ПРОДАЖА ПРЕДМЕТА (С СИНХРОНИЗАЦИЕЙ) ---
+        async function executeSellOrder() {
             let inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
             const item = inventory[activeSelectionIndex];
             const fileName = item.img.split('/').pop().toLowerCase();
             const reward = MASTER_ITEMS_DATABASE[fileName]?.price || 1;
 
             let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
-            localStorage.setItem('user_stars', (wallet + reward).toString());
-
+            const newBalance = wallet + reward;
+            
+            // 1. Сохраняем локально
+            localStorage.setItem('user_stars', newBalance.toString());
             inventory.splice(activeSelectionIndex, 1);
             localStorage.setItem('user_inventory', JSON.stringify(inventory));
+
+            // 2. Отправляем на сервер
+            await syncWithServer(reward);
             
             closeItemModal();
             renderInfiniteInventory();
@@ -445,10 +462,10 @@
             tg.HapticFeedback.notificationOccurred('success');
         }
 
-        function handlePromoActivation() {
+        // --- ПРОМОКОДЫ (С СИНХРОНИЗАЦИЕЙ) ---
+        async function handlePromoActivation() {
             const input = document.getElementById('promo-input');
             const enteredCode = input.value.trim().toUpperCase();
-            
             if (!enteredCode) return;
 
             let usedPromos = JSON.parse(localStorage.getItem('used_promos')) || [];
@@ -461,6 +478,10 @@
             if (promoData) {
                 let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
                 localStorage.setItem('user_stars', (wallet + promoData.reward).toString());
+                
+                // Синхронизируем промокод с сервером
+                await syncWithServer(promoData.reward);
+
                 usedPromos.push(enteredCode);
                 localStorage.setItem('used_promos', JSON.stringify(usedPromos));
                 tg.showAlert(`УСПЕШНО: +${promoData.reward} ⭐`);
@@ -470,6 +491,13 @@
                 tg.showAlert("Неверный код");
             }
         }
+
+        // Слушатель для мгновенного обновления баланса, если он изменился в другой вкладке
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'user_stars') {
+                refreshFinancialStatus();
+            }
+        });
 
         // АНИМАЦИЯ ЗВЕЗД
         const starContainer = document.getElementById('stars-canvas');
