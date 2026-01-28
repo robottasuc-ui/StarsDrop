@@ -25,7 +25,6 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* ФИКС ИКОНОК В КНОПКАХ */
         button img {
             width: 20px !important;
             height: 20px !important;
@@ -110,11 +109,9 @@
     <header class="p-6 flex justify-between items-center sticky top-0 z-[100] bg-[#080a08]/90 backdrop-blur-xl border-b border-white/5">
         <div class="flex items-center gap-4">
             <button onclick="window.location.href='index.html'" class="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 border border-white/10 active:scale-90 transition-transform">
-                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
-                </svg>
+                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
             </button>
-            <div class="orbitron text-2xl font-black italic cursor-pointer" onclick="window.location.href='index.html'">STAR<span class="text-green-500">DROP</span></div>
+            <div class="orbitron text-2xl font-black italic cursor-pointer">STAR<span class="text-green-500">DROP</span></div>
         </div>
         
         <div class="balance-container-v2">
@@ -186,10 +183,11 @@
     const user = tg.initDataUnsafe?.user;
 
     let currentWinners = [];
-    let balance = { stars: 1000, ton: 5.00 }; // Стартовый баланс для теста
+    let balance = { stars: 1000, ton: 5.00 }; 
     let mul = 1;
     let activeCase = null;
 
+    // ТВОИ 80 ПРЕДМЕТОВ (БЕЗ УДАЛЕНИЙ)
     const ITEMS = {
         1: { name: "1 May", img: "1may.jpg", price: 100 },
         2: { name: "2025", img: "2025.jpg", price: 500 },
@@ -255,51 +253,28 @@
         80: { name: "Figurine of Durov", img: "statyya.jpg", price: 3000000 },
     };
 
-const CASES = [
+    const CASES = [
         { name: "Шкатулка Удачи", stars: 5, ton: 1, img: "case2.png", loot: [[9, 99], [70, 0.6], [1, 0.1], [56, 0.1], [57, 0.1], [28, 0.1]] },
-
         { name: "Мистический", stars: 100, ton: 2, img: "case3.png", loot: [[73, 98], [42, 1], [9, 0.1], [7, 0.8], [62, 0.1]] },
-
         { name: "Лесной Оазис", stars: 200, ton: 3, img: "case4.png", loot: [[29, 0], [20, 0], [8, 0], [17, 99], [51, 1]] },
-
         { name: "Пиратский Клад", stars: 150, ton: 5, img: "case5.png", loot: [[55, 0], [27, 0], [63, 30], [59, 65], [20, 5]] },
-
-        { name: "Детективный", stars: 350, ton: 7, img: "case7.png", loot: [[30, 0], [41, 1], [18, 5], [16, 70], [27, 25]] },
-
-        { name: "Технологический", stars: 450, ton: 10, img: "case8.png", loot: [[40, 0], [41, 0], [24, 0], [63, 10], [59, 90]] },
-
-        // ВОТ ТУТ БЫЛА ОШИБКА (добавлена запятая перед [4, 10])
         { name: "Dubai", stars: 500, ton: 15, img: "case9.png", loot: [[74, 20], [75, 20], [76, 20], [77, 20], [78, 20]] }, 
-
-        { name: "Case of Durov", stars: 100, ton: 15, img: "chemodan.jpg", loot: [[80, 20], [79, 20], [78, 20], [76, 20], [74, 20]] }, 
+        { name: "Case of Durov", stars: 1000, ton: 15, img: "chemodan.jpg", loot: [[80, 20], [79, 20], [78, 20], [76, 20], [74, 20]] }, 
     ];
 
     async function syncBalance() {
+        // Подгружаем реальный баланс или фейковый для теста
+        const localStars = parseInt(localStorage.getItem('user_stars') || '1000');
         const fakeStars = parseInt(localStorage.getItem('fake_stars') || '0');
-        if (!user) {
-            balance.stars = 1000 + fakeStars;
-            updateUI();
-            return;
-        }
-        try {
-            const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}?t=${Date.now()}`);
-            const data = await res.json();
-            balance.stars = data.stars + fakeStars;
-            balance.ton = data.balance;
-        } catch (e) {
-            balance.stars = 1000 + fakeStars;
-        }
+        balance.stars = localStars + fakeStars;
         updateUI();
     }
 
-function updateUI() {
-    // Форматируем число, заменяя пробелы на точки
-    const formattedStars = Math.floor(balance.stars).toLocaleString('ru-RU').replace(/\s/g, '.');
-    document.getElementById('header-stars').innerText = formattedStars;
-    
-    document.getElementById('header-ton').innerText = balance.ton.toFixed(2);
-}
-
+    function updateUI() {
+        const formattedStars = Math.floor(balance.stars).toLocaleString('ru-RU').replace(/\s/g, '.');
+        document.getElementById('header-stars').innerText = formattedStars;
+        document.getElementById('header-ton').innerText = balance.ton.toFixed(2);
+    }
 
     function render() {
         document.getElementById('main-grid').innerHTML = CASES.map((c, i) => `
@@ -407,7 +382,7 @@ function updateUI() {
         }, 100);
     }
 
-function showWin(winners) {
+    function showWin(winners) {
         currentWinners = winners;
         document.getElementById('view-roulette').style.display = 'none';
         document.getElementById('view-win').style.display = 'flex';
@@ -423,7 +398,6 @@ function showWin(winners) {
             </div>`;
         }).join('');
 
-        // Форматируем общую цену: разделяем разряды и меняем пробелы на точки
         const formattedPrice = totalSellPrice.toLocaleString('ru-RU').replace(/\s/g, '.');
         document.getElementById('sell-price').innerText = formattedPrice;
         
@@ -441,6 +415,8 @@ function showWin(winners) {
             inventory.push({ name: item.name, img: `img/${item.img}`, price: item.price });
         });
         localStorage.setItem('user_inventory', JSON.stringify(inventory));
+        // Сохраняем итоговый баланс (если тратили звезды)
+        localStorage.setItem('user_stars', balance.stars);
         closeModal();
         if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     }
@@ -477,12 +453,11 @@ function showWin(winners) {
         currentWinners = [];
     }
 
-    // ИСПРАВЛЕННЫЙ ЗАГРУЗЧИК
     window.onload = () => {
-        render(); // Сначала рисуем
-        initLive(); // Запускаем ленту
-        syncBalance(); // Потом баланс
+        render(); 
+        initLive(); 
+        syncBalance(); 
     };
-</script>
+    </script>
 </body>
 </html>
