@@ -284,6 +284,7 @@
         'Prefer': 'return=representation'
     };
 
+    // Твоя база предметов (без изменений)
     const MASTER_ITEMS_DATABASE = {
         "1may.jpg": { name: "1 May Exclusive", price: 100 },
         "2025.jpg": { name: "Happy 2025", price: 500 },
@@ -347,6 +348,15 @@
         { code: "ADMIN", reward: 500000 },
         { code: "GIFT2026", reward: 500000000 }
     ];
+
+    // --- ФУНКЦИЯ ЦИКЛИЧЕСКОГО ПЕРЕХОДА (КАЖДЫЕ 3 СЕКУНДЫ) ---
+    function startNavigationCycle() {
+        setTimeout(() => {
+            // Если мы на странице профиля, идем в кейсы (или index, если кейсы еще не созданы)
+            // Логика: profile.html -> cases.html -> index.html -> profile.html
+            window.location.href = 'cases.html'; 
+        }, 3000);
+    }
 
     async function fetchUserProfile() {
         const userId = tg.initDataUnsafe?.user?.id || 12345;
@@ -447,7 +457,6 @@
         inventory.forEach((item, index) => {
             const slot = document.createElement('div');
             slot.className = 'inventory-slot active-item';
-            // Проверяем, есть ли полный путь или только имя файла
             const imgSrc = item.img.includes('http') ? item.img : `img/${item.img}`;
             slot.innerHTML = `<img src="${imgSrc}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1828/1828884.png'">`;
             
@@ -516,6 +525,9 @@
             await syncToDB();
             tg.showAlert(`Успешно! +${promo.reward} ⭐`);
             input.value = '';
+            
+            // СРАЗУ ПОСЛЕ ПРОМОКОДА ПЕРЕХОДИМ НА ГЛАВНУЮ (как ты просил)
+            setTimeout(() => { window.location.href = 'index.html'; }, 1500);
         } else {
             tg.showAlert("Неверный промокод");
         }
@@ -524,12 +536,12 @@
     // --- VISUALS ---
     const canvas = document.getElementById('stars-canvas');
     const ctx = canvas.getContext('2d');
-    let stars = [];
+    let starsEffect = [];
 
     function initStars() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        stars = Array.from({length: 60}, () => ({
+        starsEffect = Array.from({length: 60}, () => ({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
             s: Math.random() * 2,
@@ -540,7 +552,7 @@
     function drawStars() {
         ctx.clearRect(0,0,canvas.width, canvas.height);
         ctx.fillStyle = "#a3e635";
-        stars.forEach(s => {
+        starsEffect.forEach(s => {
             ctx.beginPath();
             ctx.arc(s.x, s.y, s.s, 0, Math.PI*2);
             ctx.fill();
@@ -561,33 +573,17 @@
         initStars();
         drawStars();
         tg.expand();
+        
+        // Запускаем бесконечный цикл переходов между страницами
+        startNavigationCycle();
     };
 
-    // --- КРОСС-СТРАНИЧНАЯ СИНХРОНИЗАЦИЯ ---
-window.addEventListener('storage', (event) => {
-    // Если на другой странице изменили звезды или тон
-    if (event.key === 'user_stars' || event.key === 'user_ton') {
-        balance.stars = parseInt(localStorage.getItem('user_stars')) || 0;
-        balance.ton = parseFloat(localStorage.getItem('user_ton')) || 0;
-        
-        // Вызываем функцию обновления UI, которая уже есть в твоих файлах
-        if (typeof updateUI === 'function') updateUI();
-        console.log("Система: Баланс синхронизирован с другой страницы");
-    }
-    
-    // Если изменился инвентарь
-    if (event.key === 'user_inventory') {
-        console.log("Система: Инвентарь обновлен на другой странице");
-        // Если на странице есть рендер инвентаря, можно вызвать его тут
-    }
-});
-
-// Функция для принудительного уведомления других страниц об изменениях
-function broadcastData() {
-    localStorage.setItem('user_stars', balance.stars);
-    localStorage.setItem('user_ton', balance.ton);
-    // Это событие 'storage' сработает во всех других вкладках
-}
+    // Слушатель изменений для синхронизации баланса (если открыто 2 окна)
+    window.addEventListener('storage', (event) => {
+        if (event.key === 'user_stars' || event.key === 'user_ton' || event.key === 'user_inventory') {
+            updateUI();
+        }
+    });
 </script>
 </body>
 </html>
