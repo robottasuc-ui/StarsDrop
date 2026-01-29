@@ -162,7 +162,7 @@
             </div>
 
             <div class="w-full space-y-3 pt-2">
-                <button onclick="saveToInventoryAndClose()" class="w-full bg-white text-black py-5 rounded-3xl font-black uppercase active:scale-95 transition-transform">Забрать в инвентарь</button>
+                <button id="claim-btn" onclick="saveToInventoryAndClose()" class="w-full bg-white text-black py-5 rounded-3xl font-black uppercase active:scale-95 transition-all">Забрать в инвентарь</button>
             </div>
         </div>
     </div>
@@ -181,13 +181,13 @@ let currentWinners = [];
 let mul = 1;
 let activeCase = null;
 let isUpdating = false;
+let isSaving = false; 
 
 let balance = {
     stars: parseInt(localStorage.getItem('user_stars')) || 0,
     ton: parseFloat(localStorage.getItem('user_ton')) || 0
 };
 
-// ... (Весь твой массив ITEMS остается без изменений)
 const ITEMS = {
     1: { name: "1 May", img: "1may.jpg", price: 100 },
     2: { name: "2025", img: "2025.jpg", price: 500 },
@@ -256,8 +256,6 @@ const CASES = [
     { name: "Лимонный", stars: 0, ton: 150, img: "case9.png", loot: [[40, 0], [66, 0], [55, 0], [21, 50], [18, 40], [4, 10]] }
 ];
 
-// ... (Остальные функции до showWin)
-
 async function syncData() {
     if (isUpdating || !tg.initDataUnsafe?.user) return;
     try {
@@ -322,8 +320,6 @@ function render() {
         </div>
     `).join('');
 }
-
-let isSaving = false; // Флаг для защиты от мульти-кликов
 
 function openCase(i) {
     activeCase = CASES[i];
@@ -419,12 +415,10 @@ function createRow(idx, win) {
     }, 100);
 }
 
-// ИСПРАВЛЕННЫЙ ВЫВОД ЦЕНЫ
 function showWin(winners) {
     currentWinners = winners;
     document.getElementById('view-roulette').style.display = 'none';
-    const winView = document.getElementById('view-win');
-    winView.style.display = 'flex';
+    document.getElementById('view-win').style.display = 'flex';
     
     let totalPrice = 0;
     let gridHtml = '';
@@ -439,27 +433,39 @@ function showWin(winners) {
     });
 
     document.getElementById('win-grid').innerHTML = gridHtml;
-
-    // Принудительное обновление DOM для цены
-    const priceElement = document.getElementById('win-total-price');
-    priceElement.innerText = totalPrice.toLocaleString('ru-RU').replace(/\s/g, '.');
-    
+    document.getElementById('win-total-price').innerText = totalPrice.toLocaleString('ru-RU').replace(/\s/g, '.');
     document.getElementById('back-btn').style.display = 'block';
+
+    // Сброс кнопки при показе нового выигрыша
+    const btn = document.getElementById('claim-btn');
+    btn.disabled = false;
+    btn.style.opacity = "1";
+    btn.style.pointerEvents = "auto";
+    btn.innerText = "Забрать в инвентарь";
+    isSaving = false;
 }
 
 async function saveToInventoryAndClose() {
-    if (isSaving) return; // Если уже сохраняем, выходим
+    // 1. ПРОВЕРКА: Если уже сохраняем ИЛИ призов нет (уже забрали), блокируем выполнение
+    if (isSaving || currentWinners.length === 0) return;
     
     isSaving = true;
-    const saveBtn = document.querySelector('#view-win button');
-    if (saveBtn) {
-        saveBtn.innerText = "Сохранение...";
-        saveBtn.style.opacity = "0.5";
-    }
+    const btn = document.getElementById('claim-btn');
+    
+    // 2. БЛОКИРОВКА КНОПКИ (DOM + CSS)
+    btn.disabled = true;
+    btn.style.pointerEvents = "none"; 
+    btn.style.opacity = "0.5";
+    btn.innerText = "СОХРАНЕНИЕ...";
 
     try {
+        // 3. МГНОВЕННОЕ КОПИРОВАНИЕ И ОБНУЛЕНИЕ
+        const winnersToSave = [...currentWinners];
+        currentWinners = []; 
+
         let inventory = JSON.parse(localStorage.getItem('user_inventory') || '[]');
-        currentWinners.forEach(item => {
+        
+        winnersToSave.forEach(item => {
             inventory.push({ 
                 name: item.name, 
                 img: item.img, 
@@ -468,29 +474,35 @@ async function saveToInventoryAndClose() {
             });
         });
         
+        // 4. ЛОКАЛЬНОЕ СОХРАНЕНИЕ
         localStorage.setItem('user_inventory', JSON.stringify(inventory));
+        
+        // 5. СИНХРОНИЗАЦИЯ С БД
         await saveInventoryToDB(inventory);
         
-        // Очищаем и закрываем только после успешного сохранения
+        // 6. ЗАКРЫТИЕ
         closeModal();
     } catch (e) {
         console.error("Save error:", e);
         alert("Ошибка при сохранении!");
-    } finally {
+        // В случае ошибки возвращаем кнопку в строй
         isSaving = false;
-        if (saveBtn) {
-            saveBtn.innerText = "Забрать в инвентарь";
-            saveBtn.style.opacity = "1";
-        }
+        btn.disabled = false;
+        btn.style.pointerEvents = "auto";
+        btn.style.opacity = "1";
+        btn.innerText = "Забрать в инвентарь";
     }
 }
 
-// В функции closeModal обнули флаг на всякий случай
 function closeModal() {
     document.getElementById('case-modal').style.display = 'none';
     currentWinners = [];
-    isSaving = false; 
+    isSaving = false;
 }
+
+// Запуск начального рендера
+render();
+syncData();
 </script>
 </body>
 </html>
