@@ -54,11 +54,6 @@
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.02), transparent);
         }
         .live-rail { display: flex; position: absolute; left: 0; top: 0; height: 100%; gap: 12px; padding: 10px; }
-        .drop-item {
-            min-width: 80px; height: 80px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .drop-item img { width: 35px; height: 35px; object-fit: contain; }
 
         .roulette-container {
             position: relative; width: 100%; height: 160px; 
@@ -86,13 +81,6 @@
 
         .scan-text { animation: blink 1.5s infinite; color: var(--neon-green); font-size: 10px; letter-spacing: 2px; }
         @keyframes blink { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-
-        .possible-loot-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-            padding: 15px; background: rgba(255, 255, 255, 0.02); border-radius: 24px;
-        }
-        .loot-preview-card { aspect-ratio: 1; background: rgba(0, 0, 0, 0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.05); }
-        .loot-preview-card img { width: 65%; opacity: 0.5; }
 
         .case-card {
             background: linear-gradient(145deg, #121612, #0a0c0a);
@@ -160,10 +148,6 @@
                 <div class="scan-text orbitron uppercase mt-1">● СКАНИРОВАНИЕ СИСТЕМЫ...</div>
             </div>
             <div id="roulette-rows" class="w-full"></div>
-            <div class="w-full mt-8">
-                <div class="orbitron text-[10px] text-gray-500 mb-3 text-center uppercase">Возможные призы:</div>
-                <div id="possible-loot" class="possible-loot-grid"></div>
-            </div>
         </div>
 
         <div id="view-win" class="hidden flex-col items-center gap-6 mt-10">
@@ -194,7 +178,6 @@ let balance = {
     ton: parseFloat(localStorage.getItem('user_ton')) || 0
 };
 
-// --- ТВОИ ПРЕДМЕТЫ ---
 const ITEMS = {
     1: { name: "1 May", img: "1may.jpg", price: 100 },
     2: { name: "2025", img: "2025.jpg", price: 500 },
@@ -263,49 +246,30 @@ const CASES = [
     { name: "Лимонный", stars: 0, ton: 150, img: "case9.png", loot: [[40, 0], [66, 0], [55, 0], [21, 50], [18, 40], [4, 10]] }
 ];
 
-// --- ФИКС СИНХРОНИЗАЦИИ ---
-
 async function syncData() {
-    // Если мы сейчас что-то покупаем/продаем (isUpdating), не даем функции затереть баланс
     if (isUpdating || !tg.initDataUnsafe?.user) return;
-    
     try {
         const res = await fetch(`${BACKEND_URL}/get_balance/${tg.initDataUnsafe.user.id}?t=${Date.now()}`);
         const data = await res.json();
-        
-        // Обновляем только если данные реально пришли
         if (data.stars !== undefined) {
             balance.stars = parseInt(data.stars);
             balance.ton = parseFloat(data.balance);
             saveAndRefresh();
         }
-
-        // Получаем инвентарь из Supabase
-        const invRes = await fetch(`${DB_CONFIG.url}/rest/v1/users?user_id=eq.${tg.initDataUnsafe.user.id}&select=inventory`, {
-            headers: { 'apikey': DB_CONFIG.key, 'Authorization': `Bearer ${DB_CONFIG.key}` }
-        });
-        const invData = await invRes.json();
-        if (invData && invData[0]?.inventory) {
-            localStorage.setItem('user_inventory', JSON.stringify(invData[0].inventory));
-        }
-    } catch (e) { console.error("Sync error:", e); }
+    } catch (e) { console.error("Sync error"); }
 }
 
 async function updateStarsOnServer(amount) {
     if (!tg.initDataUnsafe?.user) return;
-    isUpdating = true; // Блокируем syncData
+    isUpdating = true;
     try {
         await fetch(`${BACKEND_URL}/update_balance`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ user_id: tg.initDataUnsafe.user.id, stars: amount })
         });
-        // Даем серверу 1 секунду "додумать", прежде чем разрешать синхронизацию
         setTimeout(() => { isUpdating = false; }, 1000);
-    } catch (e) { 
-        console.error("Update DB error"); 
-        isUpdating = false;
-    }
+    } catch (e) { isUpdating = false; }
 }
 
 async function saveInventoryToDB(items) {
@@ -322,13 +286,8 @@ async function saveInventoryToDB(items) {
             body: JSON.stringify({ inventory: items })
         });
         setTimeout(() => { isUpdating = false; }, 1000);
-    } catch (e) { 
-        console.error("Inventory DB error"); 
-        isUpdating = false;
-    }
+    } catch (e) { isUpdating = false; }
 }
-
-// --- ЛОГИКА UI ---
 
 function saveAndRefresh() {
     localStorage.setItem('user_stars', balance.stars);
@@ -338,10 +297,8 @@ function saveAndRefresh() {
 
 function updateUI() {
     const formattedStars = Math.floor(balance.stars).toLocaleString('ru-RU').replace(/\s/g, '.');
-    const hStars = document.getElementById('header-stars');
-    const hTon = document.getElementById('header-ton');
-    if (hStars) hStars.innerText = formattedStars;
-    if (hTon) hTon.innerText = balance.ton.toFixed(2);
+    document.getElementById('header-stars').innerText = formattedStars;
+    document.getElementById('header-ton').innerText = balance.ton.toFixed(2);
 }
 
 function render() {
@@ -451,17 +408,12 @@ function showWin(winners) {
     document.getElementById('view-roulette').style.display = 'none';
     document.getElementById('view-win').style.display = 'flex';
     
-    let totalSellPrice = 0;
-    document.getElementById('win-grid').innerHTML = winners.map(w => {
-        totalSellPrice += w.price;
-        return `
+    document.getElementById('win-grid').innerHTML = winners.map(w => `
         <div class="bg-white/5 p-4 rounded-[30px] border border-white/10 flex flex-col items-center min-w-[100px]">
             <img src="img/${w.img}" class="w-16 h-16 object-contain">
             <div class="orbitron text-[8px] text-green-500 mt-2 uppercase">${w.name}</div>
-        </div>`;
-    }).join('');
-
-    document.getElementById('sell-price').innerText = totalSellPrice.toLocaleString('ru-RU').replace(/\s/g, '.');
+        </div>`).join('');
+}
 
 async function saveToInventoryAndClose() {
     let inventory = JSON.parse(localStorage.getItem('user_inventory') || '[]');
@@ -486,8 +438,6 @@ function closeModal() {
 window.onload = () => {
     syncData(); 
     render(); 
-    // Убрали setInterval(syncData, 2000), чтобы он не сбивал баланс.
-    // Если нужно обновление, лучше запускать его только при открытии приложения.
 };
 </script>
 </body>
