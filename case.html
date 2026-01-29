@@ -170,9 +170,6 @@
             <div id="win-grid" class="flex flex-wrap justify-center gap-4"></div>
             <div class="w-full space-y-3 pt-6">
                 <button onclick="saveToInventoryAndClose()" class="w-full bg-white text-black py-5 rounded-3xl font-black uppercase">Забрать</button>
-                <button id="sell-btn" class="w-full bg-white/5 border border-white/10 text-green-500 py-5 rounded-3xl font-black uppercase flex justify-center items-center gap-2">
-                    Продать за <img src="img/star.png"> <span id="sell-price">0</span>
-                </button>
             </div>
         </div>
     </div>
@@ -465,14 +462,6 @@ function showWin(winners) {
     }).join('');
 
     document.getElementById('sell-price').innerText = totalSellPrice.toLocaleString('ru-RU').replace(/\s/g, '.');
-    
-    document.getElementById('sell-btn').onclick = async () => {
-        balance.stars += totalSellPrice;
-        saveAndRefresh();
-        await updateStarsOnServer(balance.stars);
-        closeModal();
-    };
-}
 
 async function saveToInventoryAndClose() {
     let inventory = JSON.parse(localStorage.getItem('user_inventory') || '[]');
