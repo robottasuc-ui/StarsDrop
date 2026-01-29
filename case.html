@@ -115,7 +115,7 @@
 
     <div id="case-modal" class="fixed inset-0 z-[200] hidden flex-col p-6 bg-[#080a08]/98 backdrop-blur-2xl overflow-y-auto">
         <div class="flex justify-between items-center mb-8">
-            <button onclick="closeModal()" class="text-gray-500 font-bold text-xs uppercase tracking-widest">← Назад</button>
+            <button id="back-btn" onclick="closeModal()" class="text-gray-500 font-bold text-xs uppercase tracking-widest">← Назад</button>
             <div class="orbitron text-[10px] text-green-500 uppercase">System Ready</div>
         </div>
 
@@ -150,21 +150,22 @@
             <div id="roulette-rows" class="w-full"></div>
         </div>
 
-<div id="view-win" class="hidden flex-col items-center gap-6 mt-10">
-    <div id="win-grid" class="flex flex-wrap justify-center gap-4"></div>
-    
-    <div class="flex items-center gap-2 bg-white/5 px-6 py-3 rounded-2xl border border-white/5">
-        <span class="text-gray-400 text-xs uppercase font-bold tracking-widest">Общая ценность:</span>
-        <div class="flex items-center gap-1">
-            <img src="img/star.png" class="w-4 h-4">
-            <span id="win-total-price" class="orbitron text-green-500 font-black text-lg">0</span>
+        <div id="view-win" class="hidden flex-col items-center gap-6 mt-10">
+            <div id="win-grid" class="flex flex-wrap justify-center gap-4"></div>
+            
+            <div class="flex items-center gap-2 bg-white/5 px-6 py-3 rounded-2xl border border-white/5">
+                <span class="text-gray-400 text-xs uppercase font-bold tracking-widest">Общая ценность:</span>
+                <div class="flex items-center gap-1">
+                    <img src="img/star.png" class="w-4 h-4">
+                    <span id="win-total-price" class="orbitron text-green-500 font-black text-lg">0</span>
+                </div>
+            </div>
+
+            <div class="w-full space-y-3 pt-2">
+                <button onclick="saveToInventoryAndClose()" class="w-full bg-white text-black py-5 rounded-3xl font-black uppercase active:scale-95 transition-transform">Забрать в инвентарь</button>
+            </div>
         </div>
     </div>
-
-    <div class="w-full space-y-3 pt-2">
-        <button onclick="saveToInventoryAndClose()" class="w-full bg-white text-black py-5 rounded-3xl font-black uppercase active:scale-95 transition-transform">Забрать в инвентарь</button>
-    </div>
-</div>
 
 <script>
 const tg = window.Telegram.WebApp;
@@ -326,6 +327,7 @@ function openCase(i) {
     document.getElementById('view-preview').style.display = 'block';
     document.getElementById('view-roulette').style.display = 'none';
     document.getElementById('view-win').style.display = 'none';
+    document.getElementById('back-btn').style.display = 'block'; // Показываем кнопку назад
     document.getElementById('m-img').src = `img/${activeCase.img}`;
     document.getElementById('m-title').innerText = activeCase.name;
 
@@ -365,6 +367,7 @@ function startRoll(type) {
     saveAndRefresh();
     if (type === 'stars') updateStarsOnServer(balance.stars);
 
+    document.getElementById('back-btn').style.display = 'none'; // Скрываем кнопку во время крутки
     document.getElementById('view-preview').style.display = 'none';
     document.getElementById('view-roulette').style.display = 'flex';
     document.getElementById('roul-title').innerText = activeCase.name;
@@ -416,11 +419,10 @@ function showWin(winners) {
     document.getElementById('view-roulette').style.display = 'none';
     document.getElementById('view-win').style.display = 'flex';
     
-    // Считаем общую стоимость всех выпавших предметов
     let totalPrice = 0;
     
     document.getElementById('win-grid').innerHTML = winners.map(w => {
-        totalPrice += w.price; // Плюсуем цену каждого предмета
+        totalPrice += w.price;
         return `
         <div class="bg-white/5 p-4 rounded-[30px] border border-white/10 flex flex-col items-center min-w-[100px]">
             <img src="img/${w.img}" class="w-16 h-16 object-contain">
@@ -428,7 +430,7 @@ function showWin(winners) {
         </div>`;
     }).join('');
 
-    // Выводим итоговую сумму (с красивыми точками в числах)
+    // ОБНОВЛЕНИЕ ЦЕНЫ
     document.getElementById('win-total-price').innerText = totalPrice.toLocaleString('ru-RU').replace(/\s/g, '.');
 }
 
@@ -437,7 +439,7 @@ async function saveToInventoryAndClose() {
     currentWinners.forEach(item => {
         inventory.push({ 
             name: item.name, 
-            img: `img/${item.img}`, 
+            img: item.img, 
             price: item.price,
             id: Date.now() + Math.random()
         });
