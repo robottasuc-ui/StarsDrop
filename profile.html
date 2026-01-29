@@ -15,16 +15,19 @@
         .main-wrapper { position: relative; z-index: 1; min-height: 100vh; padding: 24px 20px 160px; background: radial-gradient(circle at 50% 30%, #5d9e1c 0%, #0a1205 80%); }
         .glass-card { background: var(--panel-bg); border: 1px solid rgba(163, 230, 53, 0.2); backdrop-filter: blur(25px); border-radius: 32px; }
         .inventory-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        .inventory-slot { aspect-ratio: 1/1; background: rgba(163, 230, 53, 0.03); border: 1px dashed rgba(163, 230, 53, 0.15); border-radius: 24px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .inventory-slot { aspect-ratio: 1/1; background: rgba(163, 230, 53, 0.03); border: 1px dashed rgba(163, 230, 53, 0.15); border-radius: 24px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
         .active-item { background: rgba(163, 230, 53, 0.08); border: 1.5px solid var(--accent-green); cursor: pointer; transition: 0.2s; }
         .active-item:active { transform: scale(0.9); }
         .active-item img { width: 70%; height: 70%; object-fit: contain; }
         .btn-green { background: var(--accent-green); color: #000; font-weight: 900; text-transform: uppercase; border-radius: 22px; box-shadow: 0 8px 0 #65a30d; }
         .btn-green:active { transform: translateY(4px); box-shadow: 0 4px 0 #65a30d; }
         .dock-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10, 18, 5, 0.95); backdrop-filter: blur(20px); border-top: 1px solid rgba(163, 230, 53, 0.2); display: flex; justify-content: space-around; padding: 20px 10px 45px; z-index: 9999; }
-        .dock-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #4b5563; text-decoration: none; }
+        .dock-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #4b5563; text-decoration: none; font-size: 12px; font-weight: 700; }
         .dock-btn.active { color: var(--accent-green); }
         #item-modal { position: fixed; inset: 0; z-index: 10000; display: none; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(15px); }
+        
+        /* Promo Styles */
+        .promo-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(163, 230, 53, 0.3); border-radius: 15px; padding: 12px; width: 100%; color: white; outline: none; text-align: center; font-weight: 700; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -38,6 +41,15 @@
                 <div id="ton-display" class="bg-blue-400/10 border border-blue-400/20 px-4 py-1.5 rounded-full text-[10px] font-black text-blue-400">💎 0.00 TON</div>
             </div>
         </header>
+
+        <section class="glass-card p-6 mb-6">
+            <h3 class="text-[10px] font-black uppercase mb-3 text-green-400/60">Активация промокода</h3>
+            <div class="flex gap-2">
+                <input type="text" id="promo-field" class="promo-input text-sm" placeholder="Введите код...">
+                <button onclick="activatePromo()" class="bg-white text-black px-4 rounded-xl font-black text-[10px] uppercase active:scale-90 transition-transform">ОК</button>
+            </div>
+            <div id="promo-status" class="text-[9px] mt-2 font-bold uppercase hidden text-center"></div>
+        </section>
 
         <section class="glass-card p-7 mb-8">
             <button onclick="shareReferralLink()" class="w-full btn-green py-5 text-sm">Пригласить друга (+5 ⭐)</button>
@@ -69,11 +81,19 @@
 <script>
     const tg = window.Telegram.WebApp;
     let activeSelectionIndex = null;
+    let currentUserData = null;
+
     const SB_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
     const SB_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
     const TABLE = 'users';
 
-    // ВЕРНУЛ ВСЕ ЦЕНЫ И НАЗВАНИЯ
+    // Список промокодов (можно добавить новые здесь)
+    const PROMO_LIST = {
+        "START": { reward: 100, type: "stars" },
+        "TONFREE": { reward: 0.5, type: "balance" },
+        "GEMINI": { reward: 500, type: "stars" }
+    };
+
     const MASTER_ITEMS_DATABASE = {
         "1may.jpg": { name: "1 May Exclusive", price: 100 },
         "2025.jpg": { name: "Happy 2025", price: 500 },
@@ -140,62 +160,42 @@
             });
             const data = await res.json();
             if (data && data.length > 0) {
-                const user = data[0];
-                
-                // Используем твои колонки: stars, balance, inventory
-                localStorage.setItem('user_stars', user.stars || 0);
-                localStorage.setItem('user_ton', user.balance || 0);
-                
-                let cloudInv = user.inventory || [];
-                localStorage.setItem('user_inventory', JSON.stringify(cloudInv));
-                
+                currentUserData = data[0];
                 updateUI();
             }
-        } catch (e) { console.error(e); }
-    }
-
-    async function syncToDB() {
-        const userId = (tg.initDataUnsafe?.user?.id || 12345).toString();
-        const body = {
-            stars: parseInt(localStorage.getItem('user_stars')) || 0,
-            balance: parseFloat(localStorage.getItem('user_ton')) || 0,
-            inventory: JSON.parse(localStorage.getItem('user_inventory')) || []
-        };
-        await fetch(`${SB_URL}/rest/v1/${TABLE}?user_id=eq.${userId}`, {
-            method: 'PATCH',
-            headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
+        } catch (e) { console.error("DB Error:", e); }
     }
 
     function updateUI() {
-        document.getElementById('stars-display').innerText = `⭐ ${localStorage.getItem('user_stars') || 0} STARS`;
-        document.getElementById('ton-display').innerText = `💎 ${localStorage.getItem('user_ton') || 0} TON`;
+        if(!currentUserData) return;
+        
+        document.getElementById('stars-display').innerText = `⭐ ${currentUserData.stars || 0} STARS`;
+        document.getElementById('ton-display').innerText = `💎 ${(currentUserData.balance || 0).toFixed(2)} TON`;
+        
         renderInventory();
     }
 
     function renderInventory() {
         const grid = document.getElementById('inventory-grid');
-        const inv = JSON.parse(localStorage.getItem('user_inventory')) || [];
+        // Берем инвентарь СТРОГО из данных базы
+        const inv = currentUserData.inventory || [];
         grid.innerHTML = '';
+        
         document.getElementById('item-counter-label').innerText = `${inv.length} ПРЕДМЕТОВ`;
         
         inv.forEach((item, index) => {
             const slot = document.createElement('div');
             slot.className = 'inventory-slot active-item';
-            const fileName = item.img.split('/').pop();
+            
+            // Получаем чистое имя файла из пути
+            const fileName = item.img ? item.img.split('/').pop() : "star.png";
+            
             slot.innerHTML = `<img src="img/${fileName}" onerror="this.src='img/star.png'">`;
-            slot.onclick = () => {
-                activeSelectionIndex = index;
-                const info = MASTER_ITEMS_DATABASE[fileName] || { name: "Unknown Item", price: 0 };
-                document.getElementById('modal-item-img').src = `img/${fileName}`;
-                document.getElementById('modal-item-name').innerText = info.name;
-                document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${info.price} ⭐`;
-                document.getElementById('item-modal').style.display = 'flex';
-            };
+            slot.onclick = () => openItemModal(index, fileName);
             grid.appendChild(slot);
         });
         
+        // Добиваем пустые ячейки до 9
         for(let i=inv.length; i<9; i++) {
             const empty = document.createElement('div');
             empty.className = 'inventory-slot opacity-20';
@@ -203,23 +203,115 @@
         }
     }
 
+    function openItemModal(index, fileName) {
+        activeSelectionIndex = index;
+        const info = MASTER_ITEMS_DATABASE[fileName] || { name: "Unknown Item", price: 0 };
+        document.getElementById('modal-item-img').src = `img/${fileName}`;
+        document.getElementById('modal-item-name').innerText = info.name;
+        document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${info.price} ⭐`;
+        document.getElementById('item-modal').style.display = 'flex';
+    }
+
     async function executeSellOrder() {
-        let inv = JSON.parse(localStorage.getItem('user_inventory'));
-        const fileName = inv[activeSelectionIndex].img.split('/').pop();
+        if (activeSelectionIndex === null) return;
+        
+        let inv = [...currentUserData.inventory];
+        const itemToDelete = inv[activeSelectionIndex];
+        const fileName = itemToDelete.img.split('/').pop();
         const price = MASTER_ITEMS_DATABASE[fileName]?.price || 0;
         
-        let stars = parseInt(localStorage.getItem('user_stars')) || 0;
-        localStorage.setItem('user_stars', stars + price);
+        // Обновляем локальный объект
+        const newStars = (currentUserData.stars || 0) + price;
         inv.splice(activeSelectionIndex, 1);
-        localStorage.setItem('user_inventory', JSON.stringify(inv));
         
-        document.getElementById('item-modal').style.display = 'none';
+        currentUserData.stars = newStars;
+        currentUserData.inventory = inv;
+
+        // Синхроним с БД
+        await syncData({ stars: newStars, inventory: inv });
+        
+        closeItemModal();
         updateUI();
-        await syncToDB();
         tg.HapticFeedback.notificationOccurred('success');
     }
 
-    function closeItemModal() { document.getElementById('item-modal').style.display = 'none'; }
+    async function activatePromo() {
+        const code = document.getElementById('promo-field').value.trim().toUpperCase();
+        const statusEl = document.getElementById('promo-status');
+        
+        if (!code) return;
+        
+        statusEl.classList.remove('hidden', 'text-green-400', 'text-red-400');
+        statusEl.innerText = "ПРОВЕРКА...";
+        statusEl.classList.add('block');
+
+        // 1. Проверяем, существует ли такой код
+        const promoInfo = PROMO_LIST[code];
+        if (!promoInfo) {
+            statusEl.innerText = "КОД НЕ СУЩЕСТВУЕТ";
+            statusEl.classList.add('text-red-400');
+            return;
+        }
+
+        // 2. Проверяем, юзал ли его юзер
+        const usedPromos = currentUserData.used_promos ? currentUserData.used_promos.split(',') : [];
+        if (usedPromos.includes(code)) {
+            statusEl.innerText = "УЖЕ ИСПОЛЬЗОВАНО";
+            statusEl.classList.add('text-red-400');
+            return;
+        }
+
+        // 3. Начисляем награду
+        const updateObj = {};
+        if (promoInfo.type === 'stars') {
+            currentUserData.stars = (currentUserData.stars || 0) + promoInfo.reward;
+            updateObj.stars = currentUserData.stars;
+        } else {
+            currentUserData.balance = (currentUserData.balance || 0) + promoInfo.reward;
+            updateObj.balance = currentUserData.balance;
+        }
+
+        // Записываем код в список использованных
+        usedPromos.push(code);
+        currentUserData.used_promos = usedPromos.join(',');
+        updateObj.used_promos = currentUserData.used_promos;
+
+        // 4. Сохраняем в БД
+        await syncData(updateObj);
+        
+        statusEl.innerText = `УСПЕХ! +${promoInfo.reward} ${promoInfo.type.toUpperCase()}`;
+        statusEl.classList.add('text-green-400');
+        document.getElementById('promo-field').value = "";
+        updateUI();
+        tg.HapticFeedback.notificationOccurred('success');
+    }
+
+    async function syncData(payload) {
+        const userId = tg.initDataUnsafe?.user?.id || 12345;
+        try {
+            await fetch(`${SB_URL}/rest/v1/${TABLE}?user_id=eq.${userId}`, {
+                method: 'PATCH',
+                headers: { 
+                    'apikey': SB_KEY, 
+                    'Authorization': `Bearer ${SB_KEY}`, 
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify(payload)
+            });
+        } catch (e) { console.error("Sync Error:", e); }
+    }
+
+    function closeItemModal() { 
+        document.getElementById('item-modal').style.display = 'none'; 
+        activeSelectionIndex = null;
+    }
+
+    function shareReferralLink() {
+        const userId = tg.initDataUnsafe?.user?.id || 12345;
+        const link = `https://t.me/StarDropBot?start=${userId}`;
+        const text = `🚀 Забирай бесплатные кейсы со звездами в StarDrop!`;
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
+    }
 
     window.onload = () => {
         const user = tg.initDataUnsafe?.user || { id: 12345, first_name: "GUEST" };
