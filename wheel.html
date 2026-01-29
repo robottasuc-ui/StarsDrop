@@ -260,28 +260,42 @@
         btn.innerText = balance < SPIN_COST ? `НУЖНО ${SPIN_COST} ⭐` : `КРУТИТЬ ЗА ${SPIN_COST} ⭐`;
     }
 
-    document.getElementById('spin-btn').onclick = async () => {
-        if (isSpinning) return;
-        
-        const currentBalance = parseInt(userRowData.stars) || 0;
-        if (currentBalance < SPIN_COST) return;
+// 1. ШАНСЫ 99% НА ЗВЕЗДУ (ID: 65)
+const randomNum = Math.random() * 100;
+let winId;
 
-        isSpinning = true;
-        const newBalance = currentBalance - SPIN_COST;
-        
-        try {
-            await supabaseCall(`${TABLE_NAME}?user_id=eq.${user.id}`, 'PATCH', { stars: newBalance });
-            userRowData.stars = newBalance;
-            updateUI();
-        } catch (e) {
-            isSpinning = false;
-            return;
-        }
+if (randomNum <= 99) {
+    winId = "65"; // Звезда (99% шанс)
+} else {
+    // Остальной 1% распределяем между остальными предметами
+    const premiumItems = itemIds.filter(id => id !== "65");
+    winId = premiumItems[Math.floor(Math.random() * premiumItems.length)];
+}
 
-        const winId = Math.random() > 0.8 ? itemIds[Math.floor(Math.random() * itemIds.length)] : "65";
-        winningItem = { id: winId, ...ITEMS_DB[winId] };
-        startAnimation(winId);
-    };
+winningItem = { id: winId, ...ITEMS_DB[winId] };
+
+// 2. ФИКС КНОПКИ "В ИНВЕНТАРЬ" (Чтобы точно попадало в профиль)
+document.getElementById('keep-btn').onclick = async () => {
+    // Сначала берем свежайшие данные из базы, чтобы не затереть старое
+    const { data: latestUser } = await supabaseCall(`${TABLE_NAME}?user_id=eq.${user.id}`);
+    
+    let currentInv = [];
+    if (latestUser && latestUser[0] && latestUser[0].inventory) {
+        // Проверяем, массив это или строка, и приводим к массиву
+        currentInv = Array.isArray(latestUser[0].inventory) ? latestUser[0].inventory : [];
+    }
+
+    // Добавляем новый предмет в массив
+    const updatedInv = [...currentInv, { name: winningItem.name, img: winningItem.img }];
+
+    // Отправляем в базу и ЖДЕМ (await)
+    await supabaseCall(`${TABLE_NAME}?user_id=eq.${user.id}`, 'PATCH', { 
+        inventory: updatedInv 
+    });
+
+    // Только после этого уходим в профиль
+    window.location.href = 'profile.html';
+};
 
     function startAnimation(winId) {
         const wheel = document.getElementById('wheel');
