@@ -197,7 +197,7 @@ let balance = {
     ton: parseFloat(localStorage.getItem('user_ton')) || 0
 };
 
-// --- ТВОИ ПРЕДМЕТЫ (ВЕРНУЛ ВСЕ) ---
+// --- ТВОИ ПРЕДМЕТЫ ---
 const ITEMS = {
     1: { name: "1 May", img: "1may.jpg", price: 100 },
     2: { name: "2025", img: "2025.jpg", price: 500 },
@@ -256,7 +256,6 @@ const ITEMS = {
     73: { name: "Ring", img: "kolechko.png", price: 100 }
 };
 
-// --- ТВОИ КЕЙСЫ (ВЕРНУЛ ВСЕ) ---
 const CASES = [
     { name: "Шкатулка Удачи", stars: 0, ton: 1, img: "case2.png", loot: [[9, 99], [70, 0.6], [1, 0.1], [56, 0.1], [57, 0.1], [28, 0.1]] },
     { name: "Мистический", stars: 300, ton: 3, img: "case3.png", loot: [[73, 98], [42, 1], [9, 0.1], [7, 0.8], [62, 0.1]] },
@@ -270,14 +269,20 @@ const CASES = [
 // --- ФИКС СИНХРОНИЗАЦИИ ---
 
 async function syncData() {
+    // Если мы сейчас что-то покупаем/продаем (isUpdating), не даем функции затереть баланс
     if (isUpdating || !tg.initDataUnsafe?.user) return;
-    isUpdating = true;
+    
     try {
         const res = await fetch(`${BACKEND_URL}/get_balance/${tg.initDataUnsafe.user.id}?t=${Date.now()}`);
         const data = await res.json();
-        balance.stars = parseInt(data.stars);
-        balance.ton = parseFloat(data.balance);
         
+        // Обновляем только если данные реально пришли
+        if (data.stars !== undefined) {
+            balance.stars = parseInt(data.stars);
+            balance.ton = parseFloat(data.balance);
+            saveAndRefresh();
+        }
+
         // Получаем инвентарь из Supabase
         const invRes = await fetch(`${DB_CONFIG.url}/rest/v1/users?user_id=eq.${tg.initDataUnsafe.user.id}&select=inventory`, {
             headers: { 'apikey': DB_CONFIG.key, 'Authorization': `Bearer ${DB_CONFIG.key}` }
@@ -286,24 +291,29 @@ async function syncData() {
         if (invData && invData[0]?.inventory) {
             localStorage.setItem('user_inventory', JSON.stringify(invData[0].inventory));
         }
-        saveAndRefresh();
-    } catch (e) { console.error("Sync error"); }
-    finally { isUpdating = false; }
+    } catch (e) { console.error("Sync error:", e); }
 }
 
 async function updateStarsOnServer(amount) {
     if (!tg.initDataUnsafe?.user) return;
+    isUpdating = true; // Блокируем syncData
     try {
         await fetch(`${BACKEND_URL}/update_balance`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ user_id: tg.initDataUnsafe.user.id, stars: amount })
         });
-    } catch (e) { console.error("Update DB error"); }
+        // Даем серверу 1 секунду "додумать", прежде чем разрешать синхронизацию
+        setTimeout(() => { isUpdating = false; }, 1000);
+    } catch (e) { 
+        console.error("Update DB error"); 
+        isUpdating = false;
+    }
 }
 
 async function saveInventoryToDB(items) {
     if (!tg.initDataUnsafe?.user) return;
+    isUpdating = true;
     try {
         await fetch(`${DB_CONFIG.url}/rest/v1/users?user_id=eq.${tg.initDataUnsafe.user.id}`, {
             method: 'PATCH',
@@ -314,7 +324,11 @@ async function saveInventoryToDB(items) {
             },
             body: JSON.stringify({ inventory: items })
         });
-    } catch (e) { console.error("Inventory DB error"); }
+        setTimeout(() => { isUpdating = false; }, 1000);
+    } catch (e) { 
+        console.error("Inventory DB error"); 
+        isUpdating = false;
+    }
 }
 
 // --- ЛОГИКА UI ---
@@ -483,7 +497,8 @@ function closeModal() {
 window.onload = () => {
     syncData(); 
     render(); 
-    setInterval(syncData, 2000); // Опрос БД каждые 2 секунды
+    // Убрали setInterval(syncData, 2000), чтобы он не сбивал баланс.
+    // Если нужно обновление, лучше запускать его только при открытии приложения.
 };
 </script>
 </body>
