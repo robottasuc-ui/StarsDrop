@@ -318,10 +318,12 @@ function render() {
         <div class="case-card p-6 flex flex-col items-center" onclick="openCase(${i})">
             <img src="img/${c.img}" class="w-24 h-24 mb-4 object-contain">
             <div class="orbitron text-[10px] text-green-500 font-black mb-1 uppercase">${c.name}</div>
-            <div class="text-[11px] font-bold opacity-40 uppercase">${c.stars === 0 ? 'TON ONLY' : '⭐ ' + c.stars}</div>
+            <div class="text-[11px] font-bold opacity-40 uppercase">${c.stars === 0 ? 'Бесплатно' : '⭐ ' + c.stars}</div>
         </div>
     `).join('');
 }
+
+let isSaving = false; // Флаг для защиты от мульти-кликов
 
 function openCase(i) {
     activeCase = CASES[i];
@@ -446,29 +448,49 @@ function showWin(winners) {
 }
 
 async function saveToInventoryAndClose() {
-    let inventory = JSON.parse(localStorage.getItem('user_inventory') || '[]');
-    currentWinners.forEach(item => {
-        inventory.push({ 
-            name: item.name, 
-            img: item.img, 
-            price: item.price,
-            id: Date.now() + Math.random()
+    if (isSaving) return; // Если уже сохраняем, выходим
+    
+    isSaving = true;
+    const saveBtn = document.querySelector('#view-win button');
+    if (saveBtn) {
+        saveBtn.innerText = "Сохранение...";
+        saveBtn.style.opacity = "0.5";
+    }
+
+    try {
+        let inventory = JSON.parse(localStorage.getItem('user_inventory') || '[]');
+        currentWinners.forEach(item => {
+            inventory.push({ 
+                name: item.name, 
+                img: item.img, 
+                price: item.price,
+                id: Date.now() + Math.random()
+            });
         });
-    });
-    localStorage.setItem('user_inventory', JSON.stringify(inventory));
-    await saveInventoryToDB(inventory);
-    closeModal();
+        
+        localStorage.setItem('user_inventory', JSON.stringify(inventory));
+        await saveInventoryToDB(inventory);
+        
+        // Очищаем и закрываем только после успешного сохранения
+        closeModal();
+    } catch (e) {
+        console.error("Save error:", e);
+        alert("Ошибка при сохранении!");
+    } finally {
+        isSaving = false;
+        if (saveBtn) {
+            saveBtn.innerText = "Забрать в инвентарь";
+            saveBtn.style.opacity = "1";
+        }
+    }
 }
 
+// В функции closeModal обнули флаг на всякий случай
 function closeModal() {
     document.getElementById('case-modal').style.display = 'none';
     currentWinners = [];
+    isSaving = false; 
 }
-
-window.onload = () => {
-    syncData(); 
-    render(); 
-};
 </script>
 </body>
 </html>
