@@ -152,8 +152,8 @@
             </div>
 
             <div class="w-full flex flex-col gap-3">
-                <button id="sell-all-btn" onclick="sellAllAndClose()" class="w-full bg-green-500 text-black py-5 rounded-3xl font-black uppercase text-sm active:scale-95 transition-all">Продать всё</button>
-                <button id="keep-all-btn" onclick="saveToInventoryAndClose()" class="w-full bg-white/5 border border-white/10 text-white py-4 rounded-3xl font-bold uppercase text-xs active:scale-95">В инвентарь</button>
+                <button id="sell-all-btn" onclick="sellAllAndClose()" class="w-full bg-green-500 text-black py-5 rounded-3xl font-black uppercase text-sm active:scale-95 transition-all">Продать</button>
+                <button id="keep-all-btn" onclick="saveToInventoryAndClose()" class="w-full bg-white/5 border border-white/10 text-white py-4 rounded-3xl font-bold uppercase text-xs active:scale-95">Забрать</button>
             </div>
         </div>
     </div>
@@ -381,7 +381,7 @@ function showWin(winners) {
 
     document.getElementById('win-grid').innerHTML = grid;
     document.getElementById('win-total-price').innerText = total;
-    document.getElementById('sell-all-btn').innerText = `Продать всё за ${total} ⭐`;
+    document.getElementById('sell-all-btn').innerText = `Продать: ${total} ⭐`;
     document.getElementById('back-btn').style.display = 'block';
     
     // Сброс состояния кнопок
@@ -418,7 +418,7 @@ async function sellAllAndClose() {
         alert("Ошибка сети!");
         isBusy = false;
         sellBtn.style.opacity = "1";
-        sellBtn.innerText = `Продать всё за ${totalGain} ⭐`;
+        sellBtn.innerText = `Продать: ${totalGain} ⭐`;
     }
 }
 
@@ -454,7 +454,7 @@ async function saveToInventoryAndClose() {
         alert("Ошибка сохранения!");
         isBusy = false;
         keepBtn.style.opacity = "1";
-        keepBtn.innerText = "В инвентарь";
+        keepBtn.innerText = "Забрать";
     }
 }
 
