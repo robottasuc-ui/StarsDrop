@@ -271,13 +271,11 @@ const CASES = [
 async function syncData() {
     if (tg.initDataUnsafe?.user) {
         try {
-            // 1. Получаем баланс
             const res = await fetch(`${BACKEND_URL}/get_balance/${tg.initDataUnsafe.user.id}?t=${Date.now()}`);
             const data = await res.json();
             balance.stars = parseInt(data.stars);
             balance.ton = parseFloat(data.balance);
             
-            // 2. Получаем актуальный инвентарь из базы (по user_id)
             const invRes = await fetch(`${DB_CONFIG.url}/rest/v1/users?user_id=eq.${tg.initDataUnsafe.user.id}&select=inventory`, {
                 headers: {
                     'apikey': DB_CONFIG.key,
@@ -469,30 +467,33 @@ function showWin(winners) {
     document.getElementById('sell-price').innerText = totalSellPrice.toLocaleString('ru-RU').replace(/\s/g, '.');
     
     document.getElementById('sell-btn').onclick = async () => {
+        // Добавляем звезды к балансу
         balance.stars += totalSellPrice;
+        
+        // 1. Сначала сохраняем баланс локально и на бэкенд
         saveAndRefresh();
         await updateStarsOnServer(balance.stars);
+        
+        // 2. СИНХРОНИЗАЦИЯ ИНВЕНТАРЯ: Продажа предмета НЕ должна его добавлять в базу. 
+        // Мы просто закрываем модалку. Баланс уже улетел в базу выше.
         closeModal();
     };
 }
 
 async function saveToInventoryAndClose() {
-    // 1. Берем текущий инвентарь из localStorage
     let inventory = JSON.parse(localStorage.getItem('user_inventory') || '[]');
     
-    // 2. Добавляем новые выигранные предметы
     currentWinners.forEach(item => {
         inventory.push({ 
             name: item.name, 
             img: `img/${item.img}`, 
             price: item.price,
-            id: Date.now() + Math.random() // уникальный ID для каждого предмета
+            id: Date.now() + Math.random()
         });
     });
     
-    // 3. Сохраняем локально и в базу по user_id
     localStorage.setItem('user_inventory', JSON.stringify(inventory));
-    await saveInventoryToDB(inventory);
+    await saveInventoryToDB(inventory); // Отправляем новый инвентарь в Supabase
     
     closeModal();
     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
@@ -537,7 +538,6 @@ window.onload = () => {
     initLive(); 
 };
 
-// --- ТВОЯ ЦЕПОЧКА СИНХРОНИЗАЦИИ ---
 window.addEventListener('storage', (event) => {
     if (event.key === 'user_stars' || event.key === 'user_ton') {
         if (!localStorage.getItem('promo_pending')) {
@@ -545,16 +545,6 @@ window.addEventListener('storage', (event) => {
             balance.ton = parseFloat(localStorage.getItem('user_ton')) || 0;
             updateUI();
         }
-    }
-
-    if (event.key === 'activate_promo') {
-        localStorage.setItem('promo_pending', 'true');
-        setTimeout(() => {
-            balance.stars = parseInt(localStorage.getItem('user_stars')) || 0;
-            balance.ton = parseFloat(localStorage.getItem('user_ton')) || 0;
-            updateUI();
-            localStorage.removeItem('promo_pending');
-        }, 3000);
     }
 });
 </script>
