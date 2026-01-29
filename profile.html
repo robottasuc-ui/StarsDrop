@@ -272,7 +272,6 @@
     const tg = window.Telegram.WebApp;
     let activeSelectionIndex = null;
     
-    // --- SUPABASE CONFIG ---
     const SB_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
     const SB_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
     const TABLE = 'users';
@@ -348,52 +347,31 @@
         { code: "GIFT2026", reward: 500000000 }
     ];
 
-    // ИСПРАВЛЕННАЯ ФУНКЦИЯ ЦИКЛА (теперь она не мешает работать)
-    function startNavigationCycle() {
-        console.log("Авто-переход отключен для стабильности профиля");
-        // Если очень нужно, можно раскомментировать ниже, но это может вызвать 404 если файла case.html нет
-        /* setTimeout(() => {
-            window.location.href = 'case.html'; 
-        }, 5000); 
-        */
-    }
-
     async function fetchUserProfile() {
         const userId = tg.initDataUnsafe?.user?.id || 12345;
         try {
             const response = await fetch(`${SB_URL}/rest/v1/${TABLE}?user_id=eq.${userId}`, {
-                method: 'GET',
-                headers: headers
+                method: 'GET', headers: headers
             });
             const data = await response.json();
-            
             if (data && data.length > 0) {
                 const user = data[0];
                 localStorage.setItem('user_stars', user.stars || 0);
                 localStorage.setItem('user_ton', user.balance || "0.00");
-                
                 let inv = user.inventory;
                 if (typeof inv === 'string') inv = JSON.parse(inv);
                 localStorage.setItem('user_inventory', JSON.stringify(inv || []));
-
                 let promos = user.used_promos;
                 if (typeof promos === 'string') promos = JSON.parse(promos);
                 localStorage.setItem('used_promos', JSON.stringify(promos || []));
-                
                 updateUI();
             } else {
                 const newUser = { 
-                    user_id: userId.toString(), 
-                    username: tg.initDataUnsafe?.user?.username || "GUEST",
-                    stars: 0,
-                    balance: 0,
-                    inventory: [],
-                    used_promos: []
+                    user_id: userId.toString(), username: tg.initDataUnsafe?.user?.username || "GUEST",
+                    stars: 0, balance: 0, inventory: [], used_promos: []
                 };
                 await fetch(`${SB_URL}/rest/v1/${TABLE}`, {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify(newUser)
+                    method: 'POST', headers: headers, body: JSON.stringify(newUser)
                 });
                 localStorage.setItem('user_stars', '0');
                 localStorage.setItem('user_ton', '0.00');
@@ -412,12 +390,9 @@
             inventory: JSON.parse(localStorage.getItem('user_inventory')),
             used_promos: JSON.parse(localStorage.getItem('used_promos'))
         };
-
         try {
             await fetch(`${SB_URL}/rest/v1/${TABLE}?user_id=eq.${userId}`, {
-                method: 'PATCH',
-                headers: headers,
-                body: JSON.stringify(updateData)
+                method: 'PATCH', headers: headers, body: JSON.stringify(updateData)
             });
         } catch (e) { console.error("Sync Error:", e); }
     }
@@ -443,23 +418,19 @@
         const emptyState = document.getElementById('empty-state');
         const counter = document.getElementById('item-counter-label');
         const inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
-        
         grid.innerHTML = '';
         counter.innerText = `${inventory.length} ПРЕДМЕТОВ`;
-
         if (inventory.length === 0) {
             emptyState.style.display = 'flex';
             for(let i=0; i<6; i++) createEmptySlot(grid);
             return;
         }
-
         emptyState.style.display = 'none';
         inventory.forEach((item, index) => {
             const slot = document.createElement('div');
             slot.className = 'inventory-slot active-item';
             const imgSrc = item.img.includes('http') ? item.img : `img/${item.img}`;
             slot.innerHTML = `<img src="${imgSrc}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1828/1828884.png'">`;
-            
             slot.onclick = () => {
                 activeSelectionIndex = index;
                 const fileName = item.img.split('/').pop().toLowerCase();
@@ -471,7 +442,6 @@
             };
             grid.appendChild(slot);
         });
-
         const fillCount = Math.max(9, Math.ceil(inventory.length / 3) * 3);
         for(let i = inventory.length; i < fillCount; i++) createEmptySlot(grid);
     }
@@ -490,12 +460,10 @@
         const item = inv[activeSelectionIndex];
         const fileName = item.img.split('/').pop().toLowerCase();
         const price = MASTER_ITEMS_DATABASE[fileName]?.price || 1;
-
         let balance = parseInt(localStorage.getItem('user_stars')) || 0;
         localStorage.setItem('user_stars', balance + price);
         inv.splice(activeSelectionIndex, 1);
         localStorage.setItem('user_inventory', JSON.stringify(inv));
-
         closeItemModal();
         updateUI();
         await syncToDB();
@@ -506,27 +474,20 @@
         const input = document.getElementById('promo-input');
         const code = input.value.trim().toUpperCase();
         if (!code) return;
-
         let used = JSON.parse(localStorage.getItem('used_promos')) || [];
-
         if (used.includes(code)) {
-            tg.showAlert("Вы уже использовали этот код!");
-            return;
+            tg.showAlert("Вы уже использовали этот код!"); return;
         }
-        
         const promo = PROMO_CONFIG.find(p => p.code === code);
         if (promo) {
             let balance = parseInt(localStorage.getItem('user_stars')) || 0;
             localStorage.setItem('user_stars', balance + promo.reward);
             used.push(code);
             localStorage.setItem('used_promos', JSON.stringify(used));
-            
             updateUI();
             await syncToDB();
             tg.showAlert(`Успешно! +${promo.reward} ⭐`);
             input.value = '';
-            
-            setTimeout(() => { window.location.href = 'index.html'; }, 1500);
         } else {
             tg.showAlert("Неверный промокод");
         }
@@ -535,27 +496,19 @@
     const canvas = document.getElementById('stars-canvas');
     const ctx = canvas.getContext('2d');
     let starsEffect = [];
-
     function initStars() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
         starsEffect = Array.from({length: 60}, () => ({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            s: Math.random() * 2,
-            v: Math.random() * 0.5 + 0.1
+            x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+            s: Math.random() * 2, v: Math.random() * 0.5 + 0.1
         }));
     }
-
     function drawStars() {
         ctx.clearRect(0,0,canvas.width, canvas.height);
         ctx.fillStyle = "#a3e635";
         starsEffect.forEach(s => {
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.s, 0, Math.PI*2);
-            ctx.fill();
-            s.y += s.v;
-            if(s.y > canvas.height) s.y = -5;
+            ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill();
+            s.y += s.v; if(s.y > canvas.height) s.y = -5;
         });
         requestAnimationFrame(drawStars);
     }
@@ -571,14 +524,7 @@
         initStars();
         drawStars();
         tg.expand();
-        startNavigationCycle();
     };
-
-    window.addEventListener('storage', (event) => {
-        if (event.key === 'user_stars' || event.key === 'user_ton' || event.key === 'user_inventory') {
-            updateUI();
-        }
-    });
 </script>
 </body>
 </html>
