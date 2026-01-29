@@ -182,7 +182,6 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 
 const BACKEND_URL = 'https://stars-drop.vercel.app/api';
-
 const DB_CONFIG = {
     url: 'https://mwsbkpfarhdankpyifbm.supabase.co',
     key: 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA'
@@ -191,13 +190,14 @@ const DB_CONFIG = {
 let currentWinners = [];
 let mul = 1;
 let activeCase = null;
+let isUpdating = false;
 
 let balance = {
     stars: parseInt(localStorage.getItem('user_stars')) || 0,
     ton: parseFloat(localStorage.getItem('user_ton')) || 0
 };
 
-// --- ДАННЫЕ (ITEMS) ---
+// --- ТВОИ ПРЕДМЕТЫ (ВЕРНУЛ ВСЕ) ---
 const ITEMS = {
     1: { name: "1 May", img: "1may.jpg", price: 100 },
     2: { name: "2025", img: "2025.jpg", price: 500 },
@@ -256,6 +256,7 @@ const ITEMS = {
     73: { name: "Ring", img: "kolechko.png", price: 100 }
 };
 
+// --- ТВОИ КЕЙСЫ (ВЕРНУЛ ВСЕ) ---
 const CASES = [
     { name: "Шкатулка Удачи", stars: 0, ton: 1, img: "case2.png", loot: [[9, 99], [70, 0.6], [1, 0.1], [56, 0.1], [57, 0.1], [28, 0.1]] },
     { name: "Мистический", stars: 300, ton: 3, img: "case3.png", loot: [[73, 98], [42, 1], [9, 0.1], [7, 0.8], [62, 0.1]] },
@@ -266,33 +267,28 @@ const CASES = [
     { name: "Лимонный", stars: 0, ton: 150, img: "case9.png", loot: [[40, 0], [66, 0], [55, 0], [21, 50], [18, 40], [4, 10]] }
 ];
 
-// --- ИНТЕГРАЦИЯ ---
+// --- ФИКС СИНХРОНИЗАЦИИ ---
 
 async function syncData() {
-    if (tg.initDataUnsafe?.user) {
-        try {
-            const res = await fetch(`${BACKEND_URL}/get_balance/${tg.initDataUnsafe.user.id}?t=${Date.now()}`);
-            const data = await res.json();
-            balance.stars = parseInt(data.stars);
-            balance.ton = parseFloat(data.balance);
-            
-            const invRes = await fetch(`${DB_CONFIG.url}/rest/v1/users?user_id=eq.${tg.initDataUnsafe.user.id}&select=inventory`, {
-                headers: {
-                    'apikey': DB_CONFIG.key,
-                    'Authorization': `Bearer ${DB_CONFIG.key}`
-                }
-            });
-            const invData = await invRes.json();
-            if (invData && invData[0] && invData[0].inventory) {
-                localStorage.setItem('user_inventory', JSON.stringify(invData[0].inventory));
-            }
-
-            saveAndRefresh();
-        } catch (e) { 
-            console.error("Database Sync: Failed", e); 
-            updateUI();
+    if (isUpdating || !tg.initDataUnsafe?.user) return;
+    isUpdating = true;
+    try {
+        const res = await fetch(`${BACKEND_URL}/get_balance/${tg.initDataUnsafe.user.id}?t=${Date.now()}`);
+        const data = await res.json();
+        balance.stars = parseInt(data.stars);
+        balance.ton = parseFloat(data.balance);
+        
+        // Получаем инвентарь из Supabase
+        const invRes = await fetch(`${DB_CONFIG.url}/rest/v1/users?user_id=eq.${tg.initDataUnsafe.user.id}&select=inventory`, {
+            headers: { 'apikey': DB_CONFIG.key, 'Authorization': `Bearer ${DB_CONFIG.key}` }
+        });
+        const invData = await invRes.json();
+        if (invData && invData[0]?.inventory) {
+            localStorage.setItem('user_inventory', JSON.stringify(invData[0].inventory));
         }
-    }
+        saveAndRefresh();
+    } catch (e) { console.error("Sync error"); }
+    finally { isUpdating = false; }
 }
 
 async function updateStarsOnServer(amount) {
@@ -301,12 +297,9 @@ async function updateStarsOnServer(amount) {
         await fetch(`${BACKEND_URL}/update_balance`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                user_id: tg.initDataUnsafe.user.id,
-                stars: amount
-            })
+            body: JSON.stringify({ user_id: tg.initDataUnsafe.user.id, stars: amount })
         });
-    } catch (e) { console.error("Update stars error"); }
+    } catch (e) { console.error("Update DB error"); }
 }
 
 async function saveInventoryToDB(items) {
@@ -317,12 +310,11 @@ async function saveInventoryToDB(items) {
             headers: {
                 'apikey': DB_CONFIG.key,
                 'Authorization': `Bearer ${DB_CONFIG.key}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=minimal'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ inventory: items })
         });
-    } catch (e) { console.error("Inventory DB error", e); }
+    } catch (e) { console.error("Inventory DB error"); }
 }
 
 // --- ЛОГИКА UI ---
@@ -358,7 +350,6 @@ function openCase(i) {
     document.getElementById('view-preview').style.display = 'block';
     document.getElementById('view-roulette').style.display = 'none';
     document.getElementById('view-win').style.display = 'none';
-    
     document.getElementById('m-img').src = `img/${activeCase.img}`;
     document.getElementById('m-title').innerText = activeCase.name;
 
@@ -402,10 +393,6 @@ function startRoll(type) {
     document.getElementById('view-roulette').style.display = 'flex';
     document.getElementById('roul-title').innerText = activeCase.name;
     document.getElementById('roulette-rows').innerHTML = '';
-
-    document.getElementById('possible-loot').innerHTML = activeCase.loot.map(attr => `
-        <div class="loot-preview-card"><img src="img/${ITEMS[attr[0]].img}"></div>
-    `).join('');
 
     const winners = [];
     for (let i = 0; i < mul; i++) {
@@ -456,7 +443,6 @@ function showWin(winners) {
     let totalSellPrice = 0;
     document.getElementById('win-grid').innerHTML = winners.map(w => {
         totalSellPrice += w.price;
-        addLiveItem(false, w);
         return `
         <div class="bg-white/5 p-4 rounded-[30px] border border-white/10 flex flex-col items-center min-w-[100px]">
             <img src="img/${w.img}" class="w-16 h-16 object-contain">
@@ -467,22 +453,15 @@ function showWin(winners) {
     document.getElementById('sell-price').innerText = totalSellPrice.toLocaleString('ru-RU').replace(/\s/g, '.');
     
     document.getElementById('sell-btn').onclick = async () => {
-        // Добавляем звезды к балансу
         balance.stars += totalSellPrice;
-        
-        // 1. Сначала сохраняем баланс локально и на бэкенд
         saveAndRefresh();
         await updateStarsOnServer(balance.stars);
-        
-        // 2. СИНХРОНИЗАЦИЯ ИНВЕНТАРЯ: Продажа предмета НЕ должна его добавлять в базу. 
-        // Мы просто закрываем модалку. Баланс уже улетел в базу выше.
         closeModal();
     };
 }
 
 async function saveToInventoryAndClose() {
     let inventory = JSON.parse(localStorage.getItem('user_inventory') || '[]');
-    
     currentWinners.forEach(item => {
         inventory.push({ 
             name: item.name, 
@@ -491,40 +470,9 @@ async function saveToInventoryAndClose() {
             id: Date.now() + Math.random()
         });
     });
-    
     localStorage.setItem('user_inventory', JSON.stringify(inventory));
-    await saveInventoryToDB(inventory); // Отправляем новый инвентарь в Supabase
-    
+    await saveInventoryToDB(inventory);
     closeModal();
-    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-}
-
-function addLiveItem(first = false, it = null) {
-    const rail = document.getElementById('live-drop-rail');
-    if (!rail) return;
-    const keys = Object.keys(ITEMS);
-    const item = it || ITEMS[keys[Math.floor(Math.random() * keys.length)]];
-    const div = document.createElement('div');
-    div.className = 'drop-item';
-    div.innerHTML = `<img src="img/${item.img}" onerror="this.src='img/star.png'"><div class="text-[7px] mt-1 font-black" style="color:${it ? '#00ff41' : '#333'}">${it ? 'YOU' : 'DROP'}</div>`;
-    first ? rail.appendChild(div) : rail.prepend(div);
-}
-
-function initLive() {
-    const rail = document.getElementById('live-drop-rail');
-    if (!rail) return;
-    for (let i = 0; i < 15; i++) addLiveItem(true);
-    let x = 0;
-    function run() {
-        x -= 0.5;
-        if (x <= -92) {
-            x = 0;
-            if (rail.firstElementChild) rail.appendChild(rail.firstElementChild);
-        }
-        rail.style.transform = `translateX(${x}px)`;
-        requestAnimationFrame(run);
-    }
-    run();
 }
 
 function closeModal() {
@@ -535,18 +483,8 @@ function closeModal() {
 window.onload = () => {
     syncData(); 
     render(); 
-    initLive(); 
+    setInterval(syncData, 2000); // Опрос БД каждые 2 секунды
 };
-
-window.addEventListener('storage', (event) => {
-    if (event.key === 'user_stars' || event.key === 'user_ton') {
-        if (!localStorage.getItem('promo_pending')) {
-            balance.stars = parseInt(localStorage.getItem('user_stars')) || 0;
-            balance.ton = parseFloat(localStorage.getItem('user_ton')) || 0;
-            updateUI();
-        }
-    }
-});
 </script>
 </body>
 </html>
