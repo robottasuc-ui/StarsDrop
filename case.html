@@ -177,7 +177,7 @@
         </div>
     </div>
 
-    <script>
+<script>
 const tg = window.Telegram.WebApp;
 tg.expand();
 
@@ -271,12 +271,14 @@ const CASES = [
 async function syncData() {
     if (tg.initDataUnsafe?.user) {
         try {
+            // 1. Получаем баланс
             const res = await fetch(`${BACKEND_URL}/get_balance/${tg.initDataUnsafe.user.id}?t=${Date.now()}`);
             const data = await res.json();
             balance.stars = parseInt(data.stars);
             balance.ton = parseFloat(data.balance);
             
-            const invRes = await fetch(`${DB_CONFIG.url}/rest/v1/users?id=eq.${tg.initDataUnsafe.user.id}&select=inventory`, {
+            // 2. Получаем актуальный инвентарь из базы (по user_id)
+            const invRes = await fetch(`${DB_CONFIG.url}/rest/v1/users?user_id=eq.${tg.initDataUnsafe.user.id}&select=inventory`, {
                 headers: {
                     'apikey': DB_CONFIG.key,
                     'Authorization': `Bearer ${DB_CONFIG.key}`
@@ -312,7 +314,7 @@ async function updateStarsOnServer(amount) {
 async function saveInventoryToDB(items) {
     if (!tg.initDataUnsafe?.user) return;
     try {
-        await fetch(`${DB_CONFIG.url}/rest/v1/users?id=eq.${tg.initDataUnsafe.user.id}`, {
+        await fetch(`${DB_CONFIG.url}/rest/v1/users?user_id=eq.${tg.initDataUnsafe.user.id}`, {
             method: 'PATCH',
             headers: {
                 'apikey': DB_CONFIG.key,
@@ -475,12 +477,23 @@ function showWin(winners) {
 }
 
 async function saveToInventoryAndClose() {
+    // 1. Берем текущий инвентарь из localStorage
     let inventory = JSON.parse(localStorage.getItem('user_inventory') || '[]');
+    
+    // 2. Добавляем новые выигранные предметы
     currentWinners.forEach(item => {
-        inventory.push({ name: item.name, img: `img/${item.img}`, price: item.price });
+        inventory.push({ 
+            name: item.name, 
+            img: `img/${item.img}`, 
+            price: item.price,
+            id: Date.now() + Math.random() // уникальный ID для каждого предмета
+        });
     });
+    
+    // 3. Сохраняем локально и в базу по user_id
     localStorage.setItem('user_inventory', JSON.stringify(inventory));
     await saveInventoryToDB(inventory);
+    
     closeModal();
     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
 }
@@ -524,37 +537,26 @@ window.onload = () => {
     initLive(); 
 };
 
-// --- ТВОЯ ЦЕПОЧКА СИНХРОНИЗАЦИИ (3 СЕКУНДЫ) ---
+// --- ТВОЯ ЦЕПОЧКА СИНХРОНИЗАЦИИ ---
 window.addEventListener('storage', (event) => {
-    // 1. Стандартная синхронизация (если просто изменили баланс)
     if (event.key === 'user_stars' || event.key === 'user_ton') {
-        // Мы НЕ обновляем мгновенно, если ждем цепочку промокода
         if (!localStorage.getItem('promo_pending')) {
             balance.stars = parseInt(localStorage.getItem('user_stars')) || 0;
             balance.ton = parseFloat(localStorage.getItem('user_ton')) || 0;
-            if (typeof updateUI === 'function') updateUI();
+            updateUI();
         }
     }
 
-    // 2. Сигнал активации промокода
     if (event.key === 'activate_promo') {
-        console.log("Кейсы: Получен сигнал промокода. Ожидание 3 секунды...");
-        
-        // Ставим флаг ожидания, чтобы обычная синхронизация не сработала раньше времени
         localStorage.setItem('promo_pending', 'true');
-
         setTimeout(() => {
-            // Спустя 3 секунды забираем данные
             balance.stars = parseInt(localStorage.getItem('user_stars')) || 0;
             balance.ton = parseFloat(localStorage.getItem('user_ton')) || 0;
-            
-            if (typeof updateUI === 'function') updateUI();
-            
+            updateUI();
             localStorage.removeItem('promo_pending');
-            console.log("Кейсы: Баланс обновлен по цепочке (через 3с)");
         }, 3000);
     }
 });
-    </script>
+</script>
 </body>
 </html>
