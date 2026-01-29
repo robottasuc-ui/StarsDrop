@@ -187,6 +187,7 @@ let balance = {
     ton: parseFloat(localStorage.getItem('user_ton')) || 0
 };
 
+// ... (Весь твой массив ITEMS остается без изменений)
 const ITEMS = {
     1: { name: "1 May", img: "1may.jpg", price: 100 },
     2: { name: "2025", img: "2025.jpg", price: 500 },
@@ -255,6 +256,8 @@ const CASES = [
     { name: "Лимонный", stars: 0, ton: 150, img: "case9.png", loot: [[40, 0], [66, 0], [55, 0], [21, 50], [18, 40], [4, 10]] }
 ];
 
+// ... (Остальные функции до showWin)
+
 async function syncData() {
     if (isUpdating || !tg.initDataUnsafe?.user) return;
     try {
@@ -315,7 +318,7 @@ function render() {
         <div class="case-card p-6 flex flex-col items-center" onclick="openCase(${i})">
             <img src="img/${c.img}" class="w-24 h-24 mb-4 object-contain">
             <div class="orbitron text-[10px] text-green-500 font-black mb-1 uppercase">${c.name}</div>
-            <div class="text-[11px] font-bold opacity-40 uppercase">${c.stars === 0 ? 'Бесплатно' : '⭐ ' + c.stars}</div>
+            <div class="text-[11px] font-bold opacity-40 uppercase">${c.stars === 0 ? 'TON ONLY' : '⭐ ' + c.stars}</div>
         </div>
     `).join('');
 }
@@ -327,7 +330,7 @@ function openCase(i) {
     document.getElementById('view-preview').style.display = 'block';
     document.getElementById('view-roulette').style.display = 'none';
     document.getElementById('view-win').style.display = 'none';
-    document.getElementById('back-btn').style.display = 'block'; // Показываем кнопку назад
+    document.getElementById('back-btn').style.display = 'block';
     document.getElementById('m-img').src = `img/${activeCase.img}`;
     document.getElementById('m-title').innerText = activeCase.name;
 
@@ -367,7 +370,7 @@ function startRoll(type) {
     saveAndRefresh();
     if (type === 'stars') updateStarsOnServer(balance.stars);
 
-    document.getElementById('back-btn').style.display = 'none'; // Скрываем кнопку во время крутки
+    document.getElementById('back-btn').style.display = 'none';
     document.getElementById('view-preview').style.display = 'none';
     document.getElementById('view-roulette').style.display = 'flex';
     document.getElementById('roul-title').innerText = activeCase.name;
@@ -414,24 +417,32 @@ function createRow(idx, win) {
     }, 100);
 }
 
+// ИСПРАВЛЕННЫЙ ВЫВОД ЦЕНЫ
 function showWin(winners) {
     currentWinners = winners;
     document.getElementById('view-roulette').style.display = 'none';
-    document.getElementById('view-win').style.display = 'flex';
+    const winView = document.getElementById('view-win');
+    winView.style.display = 'flex';
     
     let totalPrice = 0;
+    let gridHtml = '';
     
-    document.getElementById('win-grid').innerHTML = winners.map(w => {
+    winners.forEach(w => {
         totalPrice += w.price;
-        return `
+        gridHtml += `
         <div class="bg-white/5 p-4 rounded-[30px] border border-white/10 flex flex-col items-center min-w-[100px]">
             <img src="img/${w.img}" class="w-16 h-16 object-contain">
-            <div class="orbitron text-[8px] text-green-500 mt-2 uppercase">${w.name}</div>
+            <div class="orbitron text-[8px] text-green-500 mt-2 uppercase font-black">${w.name}</div>
         </div>`;
-    }).join('');
+    });
 
-    // ОБНОВЛЕНИЕ ЦЕНЫ
-    document.getElementById('win-total-price').innerText = totalPrice.toLocaleString('ru-RU').replace(/\s/g, '.');
+    document.getElementById('win-grid').innerHTML = gridHtml;
+
+    // Принудительное обновление DOM для цены
+    const priceElement = document.getElementById('win-total-price');
+    priceElement.innerText = totalPrice.toLocaleString('ru-RU').replace(/\s/g, '.');
+    
+    document.getElementById('back-btn').style.display = 'block';
 }
 
 async function saveToInventoryAndClose() {
