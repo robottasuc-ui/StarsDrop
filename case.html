@@ -25,12 +25,6 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        button img {
-            width: 20px !important;
-            height: 20px !important;
-            object-fit: contain;
-        }
-
         .orbitron { font-family: 'Orbitron', sans-serif; }
 
         .balance-container-v2 {
@@ -79,9 +73,6 @@
         .roulette-item img { width: 80px; height: 80px; object-fit: contain; }
         .win-glow { border-color: #a3e635 !important; background: rgba(163, 230, 53, 0.1) !important; box-shadow: 0 0 30px rgba(163, 230, 53, 0.2); }
 
-        .scan-text { animation: blink 1.5s infinite; color: var(--neon-green); font-size: 10px; letter-spacing: 2px; }
-        @keyframes blink { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-
         .case-card {
             background: linear-gradient(145deg, #121612, #0a0c0a);
             border-radius: 35px; border: 1px solid rgba(255,255,255,0.03);
@@ -89,19 +80,18 @@
         }
         .case-card:active { transform: scale(0.95); }
         .cnt-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: white; transition: 0.3s; }
-        .cnt-btn.active { background: var(--neon-green); color: black; font-weight: 900; box-shadow: 0 0 15px rgba(0, 255, 65, 0.3); }
+        .cnt-btn.active { background: var(--neon-green); color: black; font-weight: 900; }
     </style>
 </head>
 <body>
 
     <header class="p-6 flex justify-between items-center sticky top-0 z-[100] bg-[#080a08]/90 backdrop-blur-xl border-b border-white/5">
         <div class="flex items-center gap-4">
-            <button onclick="window.location.href='index.html'" class="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 border border-white/10 active:scale-90 transition-transform">
-                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+            <button onclick="window.location.href='index.html'" class="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 border border-white/10">
+                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </button>
-            <div class="orbitron text-2xl font-black italic cursor-pointer">STAR<span class="text-green-500">DROP</span></div>
+            <div class="orbitron text-2xl font-black italic">STAR<span class="text-green-500">DROP</span></div>
         </div>
-        
         <div class="balance-container-v2">
             <div class="balance-item-v2 text-blue-400"><span id="header-ton">0.00</span><img src="img/ton.png"></div>
             <div class="balance-item-v2 text-yellow-400"><span id="header-stars">0</span><img src="img/star.png"></div>
@@ -131,11 +121,11 @@
                     <button onclick="setMul(3)" class="cnt-btn w-12 h-12 rounded-xl font-black">3</button>
                 </div>
                 <div class="grid grid-cols-2 gap-4 w-full">
-                    <button onclick="startRoll('stars')" class="bg-green-500 text-black py-4 rounded-3xl font-black flex justify-center items-center gap-2">
-                        <img src="img/star.png"> <span id="p-stars">0</span>
+                    <button onclick="startRoll('stars')" class="bg-green-500 text-black py-4 rounded-3xl font-black flex justify-center items-center gap-2 active:scale-95 transition-transform">
+                        <img src="img/star.png" class="w-5 h-5"> <span id="p-stars">0</span>
                     </button>
-                    <button onclick="startRoll('ton')" class="bg-[#0088cc] text-white py-4 rounded-3xl font-black flex justify-center items-center gap-2">
-                        <img src="img/ton.png"> <span id="p-ton">0</span>
+                    <button onclick="startRoll('ton')" class="bg-[#0088cc] text-white py-4 rounded-3xl font-black flex justify-center items-center gap-2 active:scale-95 transition-transform">
+                        <img src="img/ton.png" class="w-5 h-5"> <span id="p-ton">0</span>
                     </button>
                 </div>
             </div>
@@ -145,7 +135,7 @@
         <div id="view-roulette" class="hidden flex-col items-center">
             <div class="text-center mb-6">
                 <h2 id="roul-title" class="orbitron text-xl font-black uppercase text-white"></h2>
-                <div class="scan-text orbitron uppercase mt-1">● СКАНИРОВАНИЕ СИСТЕМЫ...</div>
+                <div class="orbitron text-[10px] text-green-500 animate-pulse mt-1 uppercase tracking-widest">● Анализ вероятностей...</div>
             </div>
             <div id="roulette-rows" class="w-full"></div>
         </div>
@@ -154,40 +144,46 @@
             <div id="win-grid" class="flex flex-wrap justify-center gap-4"></div>
             
             <div class="flex items-center gap-2 bg-white/5 px-6 py-3 rounded-2xl border border-white/5">
-                <span class="text-gray-400 text-xs uppercase font-bold tracking-widest">Общая ценность:</span>
+                <span class="text-gray-400 text-[10px] uppercase font-bold tracking-widest">Общая ценность:</span>
                 <div class="flex items-center gap-1">
                     <img src="img/star.png" class="w-4 h-4">
                     <span id="win-total-price" class="orbitron text-green-500 font-black text-lg">0</span>
                 </div>
             </div>
 
-            <div class="w-full space-y-3 pt-2">
-                <button id="claim-btn" onclick="saveToInventoryAndClose()" class="w-full bg-white text-black py-5 rounded-3xl font-black uppercase active:scale-95 transition-all">Забрать в инвентарь</button>
+            <div class="w-full flex flex-col gap-3">
+                <button id="sell-all-btn" onclick="sellAllAndClose()" class="w-full bg-green-500 text-black py-5 rounded-3xl font-black uppercase text-sm active:scale-95 transition-all">Продать всё</button>
+                <button id="keep-all-btn" onclick="saveToInventoryAndClose()" class="w-full bg-white/5 border border-white/10 text-white py-4 rounded-3xl font-bold uppercase text-xs active:scale-95">В инвентарь</button>
             </div>
         </div>
     </div>
 
 <script>
 const tg = window.Telegram.WebApp;
-tg.expand();
+const userId = tg.initDataUnsafe?.user?.id || 12345;
 
+const SB_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
+const SB_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
 const BACKEND_URL = 'https://stars-drop.vercel.app/api';
-const DB_CONFIG = {
-    url: 'https://mwsbkpfarhdankpyifbm.supabase.co',
-    key: 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA'
+
+const headers = {
+    'apikey': SB_KEY,
+    'Authorization': `Bearer ${SB_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation'
 };
 
 let currentWinners = [];
 let mul = 1;
 let activeCase = null;
-let isUpdating = false;
-let isSaving = false; 
+let isBusy = false;
 
 let balance = {
     stars: parseInt(localStorage.getItem('user_stars')) || 0,
     ton: parseFloat(localStorage.getItem('user_ton')) || 0
 };
 
+// ... ТВОИ ITEMS (оставь как были) ...
 const ITEMS = {
     1: { name: "1 May", img: "1may.jpg", price: 100 },
     2: { name: "2025", img: "2025.jpg", price: 500 },
@@ -257,57 +253,21 @@ const CASES = [
 ];
 
 async function syncData() {
-    if (isUpdating || !tg.initDataUnsafe?.user) return;
     try {
-        const res = await fetch(`${BACKEND_URL}/get_balance/${tg.initDataUnsafe.user.id}?t=${Date.now()}`);
+        const res = await fetch(`${BACKEND_URL}/get_balance/${userId}?t=${Date.now()}`);
         const data = await res.json();
         if (data.stars !== undefined) {
             balance.stars = parseInt(data.stars);
             balance.ton = parseFloat(data.balance);
             saveAndRefresh();
         }
-    } catch (e) { console.error("Sync error"); }
-}
-
-async function updateStarsOnServer(amount) {
-    if (!tg.initDataUnsafe?.user) return;
-    isUpdating = true;
-    try {
-        await fetch(`${BACKEND_URL}/update_balance`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ user_id: tg.initDataUnsafe.user.id, stars: amount })
-        });
-        setTimeout(() => { isUpdating = false; }, 1000);
-    } catch (e) { isUpdating = false; }
-}
-
-async function saveInventoryToDB(items) {
-    if (!tg.initDataUnsafe?.user) return;
-    isUpdating = true;
-    try {
-        await fetch(`${DB_CONFIG.url}/rest/v1/users?user_id=eq.${tg.initDataUnsafe.user.id}`, {
-            method: 'PATCH',
-            headers: {
-                'apikey': DB_CONFIG.key,
-                'Authorization': `Bearer ${DB_CONFIG.key}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ inventory: items })
-        });
-        setTimeout(() => { isUpdating = false; }, 1000);
-    } catch (e) { isUpdating = false; }
+    } catch (e) {}
 }
 
 function saveAndRefresh() {
     localStorage.setItem('user_stars', balance.stars);
     localStorage.setItem('user_ton', balance.ton.toFixed(2));
-    updateUI();
-}
-
-function updateUI() {
-    const formattedStars = Math.floor(balance.stars).toLocaleString('ru-RU').replace(/\s/g, '.');
-    document.getElementById('header-stars').innerText = formattedStars;
+    document.getElementById('header-stars').innerText = balance.stars.toLocaleString('ru-RU').replace(/\s/g, '.');
     document.getElementById('header-ton').innerText = balance.ton.toFixed(2);
 }
 
@@ -316,7 +276,7 @@ function render() {
         <div class="case-card p-6 flex flex-col items-center" onclick="openCase(${i})">
             <img src="img/${c.img}" class="w-24 h-24 mb-4 object-contain">
             <div class="orbitron text-[10px] text-green-500 font-black mb-1 uppercase">${c.name}</div>
-            <div class="text-[11px] font-bold opacity-40 uppercase">${c.stars === 0 ? 'Бесплатно' : '⭐ ' + c.stars}</div>
+            <div class="text-[11px] font-bold opacity-40 uppercase">${c.stars === 0 ? 'TON ' + c.ton : '⭐ ' + c.stars}</div>
         </div>
     `).join('');
 }
@@ -328,16 +288,14 @@ function openCase(i) {
     document.getElementById('view-preview').style.display = 'block';
     document.getElementById('view-roulette').style.display = 'none';
     document.getElementById('view-win').style.display = 'none';
-    document.getElementById('back-btn').style.display = 'block';
     document.getElementById('m-img').src = `img/${activeCase.img}`;
     document.getElementById('m-title').innerText = activeCase.name;
 
-    document.getElementById('loot-display').innerHTML = activeCase.loot.map(itemArr => {
-        const item = ITEMS[itemArr[0]];
-        return `
-        <div class="bg-white/5 border border-white/5 rounded-2xl p-2 flex flex-col items-center">
-            <img src="img/${item.img}" class="w-10 h-10 mb-1">
-            <div class="text-[8px] text-green-500">⭐ ${item.price}</div>
+    document.getElementById('loot-display').innerHTML = activeCase.loot.map(attr => {
+        const itm = ITEMS[attr[0]];
+        return `<div class="bg-white/5 rounded-2xl p-2 flex flex-col items-center border border-white/5">
+            <img src="img/${itm.img}" class="w-10 h-10 mb-1">
+            <div class="text-[8px] text-green-500">⭐${itm.price}</div>
         </div>`;
     }).join('');
 }
@@ -349,24 +307,12 @@ function setMul(n) {
     document.getElementById('p-ton').innerText = (activeCase.ton * n).toFixed(2);
 }
 
-function getWin() {
-    const pool = activeCase.loot.map(attr => ({ id: attr[0], weight: attr[1], ...ITEMS[attr[0]] }));
-    const totalWeight = pool.reduce((sum, item) => sum + item.weight, 0);
-    let rnd = Math.random() * totalWeight;
-    for (let item of pool) {
-        if (rnd < item.weight) return item;
-        rnd -= item.weight;
-    }
-    return pool[0];
-}
-
 function startRoll(type) {
     const cost = type === 'stars' ? activeCase.stars * mul : activeCase.ton * mul;
     if (balance[type] < cost) return alert("Недостаточно средств");
     
     balance[type] -= cost;
     saveAndRefresh();
-    if (type === 'stars') updateStarsOnServer(balance.stars);
 
     document.getElementById('back-btn').style.display = 'none';
     document.getElementById('view-preview').style.display = 'none';
@@ -383,6 +329,14 @@ function startRoll(type) {
     setTimeout(() => showWin(winners), 7200);
 }
 
+function getWin() {
+    const pool = activeCase.loot.map(attr => ({ id: attr[0], weight: attr[1], ...ITEMS[attr[0]] }));
+    const total = pool.reduce((s, i) => s + i.weight, 0);
+    let rnd = Math.random() * total;
+    for (let i of pool) { if (rnd < i.weight) return i; rnd -= i.weight; }
+    return pool[0];
+}
+
 function createRow(idx, win) {
     const row = document.createElement('div');
     row.className = 'roulette-container mb-4';
@@ -391,25 +345,20 @@ function createRow(idx, win) {
 
     const rail = document.getElementById(`rail-${idx}`);
     const winIndex = 35;
-    const itemWidth = 140;
-    
     let html = '';
     for (let i = 0; i < 45; i++) {
-        const randomItem = activeCase.loot[Math.floor(Math.random() * activeCase.loot.length)];
-        const id = (i === winIndex) ? win.id : randomItem[0];
-        html += `<div class="roulette-item" id="item-${idx}-${i}"><img src="img/${ITEMS[id].img}"></div>`;
+        const rId = activeCase.loot[Math.floor(Math.random() * activeCase.loot.length)][0];
+        const finalId = (i === winIndex) ? win.id : rId;
+        html += `<div class="roulette-item" id="item-${idx}-${i}"><img src="img/${ITEMS[finalId].img}"></div>`;
     }
     rail.innerHTML = html;
 
     setTimeout(() => {
-        const center = window.innerWidth / 2;
-        const targetPos = (winIndex * itemWidth) + (itemWidth / 2) - center;
-        rail.style.transition = 'transform 6.5s cubic-bezier(0.15, 0, 0.05, 1)';
-        rail.style.transform = `translateX(-${targetPos}px)`;
-        
+        const shift = (winIndex * 140) - (window.innerWidth / 2) + 70;
+        rail.style.transition = 'transform 6.5s cubic-bezier(0.1, 0, 0.05, 1)';
+        rail.style.transform = `translateX(-${shift}px)`;
         setTimeout(() => {
-            const el = document.getElementById(`item-${idx}-${winIndex}`);
-            if (el) el.classList.add('win-glow');
+            document.getElementById(`item-${idx}-${winIndex}`).classList.add('win-glow');
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
         }, 6500);
     }, 100);
@@ -420,87 +369,101 @@ function showWin(winners) {
     document.getElementById('view-roulette').style.display = 'none';
     document.getElementById('view-win').style.display = 'flex';
     
-    let totalPrice = 0;
-    let gridHtml = '';
-    
+    let total = 0;
+    let grid = '';
     winners.forEach(w => {
-        totalPrice += w.price;
-        gridHtml += `
-        <div class="bg-white/5 p-4 rounded-[30px] border border-white/10 flex flex-col items-center min-w-[100px]">
-            <img src="img/${w.img}" class="w-16 h-16 object-contain">
+        total += w.price;
+        grid += `<div class="bg-white/5 p-4 rounded-[30px] border border-white/10 flex flex-col items-center min-w-[100px]">
+            <img src="img/${w.img}" class="w-14 h-14 object-contain">
             <div class="orbitron text-[8px] text-green-500 mt-2 uppercase font-black">${w.name}</div>
         </div>`;
     });
 
-    document.getElementById('win-grid').innerHTML = gridHtml;
-    document.getElementById('win-total-price').innerText = totalPrice.toLocaleString('ru-RU').replace(/\s/g, '.');
+    document.getElementById('win-grid').innerHTML = grid;
+    document.getElementById('win-total-price').innerText = total;
+    document.getElementById('sell-all-btn').innerText = `Продать всё за ${total} ⭐`;
     document.getElementById('back-btn').style.display = 'block';
-
-    // Сброс кнопки при показе нового выигрыша
-    const btn = document.getElementById('claim-btn');
-    btn.disabled = false;
-    btn.style.opacity = "1";
-    btn.style.pointerEvents = "auto";
-    btn.innerText = "Забрать в инвентарь";
-    isSaving = false;
+    
+    // Сброс состояния кнопок
+    isBusy = false;
+    document.getElementById('sell-all-btn').disabled = false;
+    document.getElementById('keep-all-btn').disabled = false;
+    document.getElementById('sell-all-btn').style.opacity = "1";
+    document.getElementById('keep-all-btn').style.opacity = "1";
 }
 
-async function saveToInventoryAndClose() {
-    // 1. ПРОВЕРКА: Если уже сохраняем ИЛИ призов нет (уже забрали), блокируем выполнение
-    if (isSaving || currentWinners.length === 0) return;
+// КНОПКА ПРОДАТЬ (как в рулетке)
+async function sellAllAndClose() {
+    if (isBusy || currentWinners.length === 0) return;
+    isBusy = true;
     
-    isSaving = true;
-    const btn = document.getElementById('claim-btn');
-    
-    // 2. БЛОКИРОВКА КНОПКИ (DOM + CSS)
-    btn.disabled = true;
-    btn.style.pointerEvents = "none"; 
-    btn.style.opacity = "0.5";
-    btn.innerText = "СОХРАНЕНИЕ...";
+    const sellBtn = document.getElementById('sell-all-btn');
+    sellBtn.innerText = "ПРОДАЖА...";
+    sellBtn.style.opacity = "0.5";
+
+    let totalGain = currentWinners.reduce((sum, item) => sum + item.price, 0);
+    const newStarsBalance = balance.stars + totalGain;
 
     try {
-        // 3. МГНОВЕННОЕ КОПИРОВАНИЕ И ОБНУЛЕНИЕ
-        const winnersToSave = [...currentWinners];
-        currentWinners = []; 
-
-        let inventory = JSON.parse(localStorage.getItem('user_inventory') || '[]');
-        
-        winnersToSave.forEach(item => {
-            inventory.push({ 
-                name: item.name, 
-                img: item.img, 
-                price: item.price,
-                id: Date.now() + Math.random()
-            });
+        await fetch(`${SB_URL}/rest/v1/users?user_id=eq.${userId}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify({ stars: newStarsBalance })
         });
         
-        // 4. ЛОКАЛЬНОЕ СОХРАНЕНИЕ
-        localStorage.setItem('user_inventory', JSON.stringify(inventory));
-        
-        // 5. СИНХРОНИЗАЦИЯ С БД
-        await saveInventoryToDB(inventory);
-        
-        // 6. ЗАКРЫТИЕ
+        balance.stars = newStarsBalance;
+        saveAndRefresh();
         closeModal();
     } catch (e) {
-        console.error("Save error:", e);
-        alert("Ошибка при сохранении!");
-        // В случае ошибки возвращаем кнопку в строй
-        isSaving = false;
-        btn.disabled = false;
-        btn.style.pointerEvents = "auto";
-        btn.style.opacity = "1";
-        btn.innerText = "Забрать в инвентарь";
+        alert("Ошибка сети!");
+        isBusy = false;
+        sellBtn.style.opacity = "1";
+        sellBtn.innerText = `Продать всё за ${totalGain} ⭐`;
+    }
+}
+
+// КНОПКА В ИНВЕНТАРЬ
+async function saveToInventoryAndClose() {
+    if (isBusy || currentWinners.length === 0) return;
+    isBusy = true;
+
+    const keepBtn = document.getElementById('keep-all-btn');
+    keepBtn.innerText = "СОХРАНЕНИЕ...";
+    keepBtn.style.opacity = "0.5";
+
+    try {
+        // Получаем текущий инвентарь из базы (синхронизация)
+        const res = await fetch(`${SB_URL}/rest/v1/users?select=inventory&user_id=eq.${userId}`, { headers });
+        const data = await res.json();
+        let dbInv = data[0]?.inventory || [];
+        
+        // Добавляем новые
+        currentWinners.forEach(w => {
+            dbInv.push({ name: w.name, img: w.img, price: w.price, id: Date.now() + Math.random() });
+        });
+
+        // Сохраняем обратно
+        await fetch(`${SB_URL}/rest/v1/users?user_id=eq.${userId}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify({ inventory: dbInv })
+        });
+
+        closeModal();
+    } catch (e) {
+        alert("Ошибка сохранения!");
+        isBusy = false;
+        keepBtn.style.opacity = "1";
+        keepBtn.innerText = "В инвентарь";
     }
 }
 
 function closeModal() {
     document.getElementById('case-modal').style.display = 'none';
     currentWinners = [];
-    isSaving = false;
+    isBusy = false;
 }
 
-// Запуск начального рендера
 render();
 syncData();
 </script>
