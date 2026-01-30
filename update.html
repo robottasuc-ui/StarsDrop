@@ -205,49 +205,47 @@
         }
     }
 
-    async function startUpgrade() {
-        const btn = document.getElementById('upg-btn');
-        const pointer = document.getElementById('pointer-wrapper');
-        const resMsg = document.getElementById('res-msg');
-        
-        btn.disabled = true;
-        const chance = Math.min((s1.price / s2.price) * 100, 80);
-        const isWin = (Math.random() * 100) <= chance;
-        
-        const winDeg = chance * 3.6; 
-        const spins = 360 * 5;
-        let finalDeg = isWin ? (spins + (Math.random() * (winDeg - 4)) + 2) : (spins + winDeg + (Math.random() * (356 - winDeg)) + 2);
+async function startUpgrade() {
+    const btn = document.getElementById('upg-btn');
+    const pointer = document.getElementById('pointer-wrapper');
+    const resMsg = document.getElementById('res-msg');
+    
+    btn.disabled = true;
 
-        pointer.style.transform = `rotate(${finalDeg}deg)`;
-        tg.HapticFeedback.impactOccurred('medium');
+    // --- РЕГУЛИРОВКА ШАНСОВ ---
+    let baseChance = (s1.price / s2.price) * 100;
+    // Умножаем на 0.7 (минус 30% от честного шанса) и ограничиваем потолок в 55%
+    const chance = Math.min(baseChance * 0.7, 55); 
+    // --------------------------
 
-        setTimeout(async () => {
-            document.getElementById('center-ui').style.opacity = "0";
-            resMsg.style.display = "block";
+    const isWin = (Math.random() * 100) <= chance;
+    
+    const winDeg = chance * 3.6; 
+    const spins = 360 * 5;
+    let finalDeg = isWin ? (spins + (Math.random() * (winDeg - 4)) + 2) : (spins + winDeg + (Math.random() * (356 - winDeg)) + 2);
 
-            let newInventory = [...userInventory];
-            if (isWin) {
-                resMsg.innerText = "УДАЧА"; resMsg.style.color = "#a3e635";
-                // Сохраняем в том же формате, что был в базе
-                newInventory[s1.idx] = { img: s2.img, name: s2.name };
-                tg.HapticFeedback.notificationOccurred('success');
-            } else {
-                resMsg.innerText = "ПРОВАЛ"; resMsg.style.color = "#ff4d4d";
-                newInventory.splice(s1.idx, 1);
-                tg.HapticFeedback.notificationOccurred('error');
-            }
+    pointer.style.transform = `rotate(${finalDeg}deg)`;
+    tg.HapticFeedback.impactOccurred('medium');
 
-            // Записываем обратно в базу
-            const { error } = await _supabase
-                .from('users')
-                .update({ inventory: newInventory })
-                .eq('user_id', userId);
+    setTimeout(async () => {
+        document.getElementById('center-ui').style.opacity = "0";
+        resMsg.style.display = "block";
 
-            if (error) console.error("Ошибка сохранения:", error);
-            
-            setTimeout(() => location.reload(), 2000);
-        }, 3600);
-    }
+        let newInventory = [...userInventory];
+        if (isWin) {
+            resMsg.innerText = "УДАЧА"; resMsg.style.color = "#a3e635";
+            newInventory[s1.idx] = { img: s2.img, name: s2.name };
+            tg.HapticFeedback.notificationOccurred('success');
+        } else {
+            resMsg.innerText = "ПРОВАЛ"; resMsg.style.color = "#ff4d4d";
+            newInventory.splice(s1.idx, 1);
+            tg.HapticFeedback.notificationOccurred('error');
+        }
+
+        await _supabase.from('users').update({ inventory: newInventory }).eq('user_id', userId);
+        setTimeout(() => location.reload(), 2000);
+    }, 3600);
+}
 
     window.onload = () => {
         tg.expand();
