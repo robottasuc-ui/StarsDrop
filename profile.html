@@ -294,7 +294,7 @@
             return;
         }
 
-        const PROMOS = { "START": 100, "ADMIN": 500000, "GIFT": 500 };
+        const PROMOS = { "START": 5, "WINTER2026": 15, "FREE": 10, "ROCKET": 50 };
         if (PROMOS[code]) {
             const newUsed = user.used_promos ? `${user.used_promos},${code}` : code;
             const { error } = await _supabase.from('users').update({ 
