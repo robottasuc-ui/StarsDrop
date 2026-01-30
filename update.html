@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>StarDrop Upgrade</title>
+    <title>StarDrop Upgrade Fix</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
@@ -42,16 +41,16 @@
         </div>
     </div>
 
-    <div id="info-chance" class="text-center text-[#a3e635] font-black text-[10px] mb-3 uppercase italic">Загрузка данных...</div>
+    <div id="info-chance" class="text-center text-[#a3e635] font-black text-[10px] mb-3 uppercase italic">Выберите предметы</div>
 
     <div class="grid grid-cols-2 gap-3 mb-4">
         <div class="slot" id="slot-1">
             <img id="img-1" src="" class="w-8 h-8 object-contain hidden">
-            <div id="slot-1-label" class="text-[7px] font-black opacity-30 mt-1 uppercase">Инвентарь</div>
+            <div class="text-[7px] font-black opacity-30 mt-1 uppercase">Инвентарь</div>
         </div>
         <div class="slot" id="slot-2">
             <img id="img-2" src="" class="w-8 h-8 object-contain hidden">
-            <div id="slot-2-label" class="text-[7px] font-black opacity-30 mt-1 uppercase">Цель</div>
+            <div class="text-[7px] font-black opacity-30 mt-1 uppercase">Цель</div>
         </div>
     </div>
 
@@ -70,122 +69,81 @@
 
 <script>
     const tg = window.Telegram.WebApp;
-    const SUPABASE_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const userId = tg.initDataUnsafe?.user?.id || 8015661230;
-
-    // Твоя база цен и имен
+    
+    // БАЗА ДАННЫХ (Пути теперь совпадают с профилем)
     const ITEMS_DATA = {
-        "1may.jpg": { name: "1 May", price: 100 },
-        "2025.jpg": { name: "2025", price: 500 },
-        "bear.png": { name: "Bear", price: 3500 },
-        "book.jpg": { name: "Book", price: 1000 },
-        "boooox.png": { name: "Berry Box", price: 700 },
-        "botinok.png": { name: "Boot", price: 400 },
-        "box.png": { name: "Jack Box", price: 600 },
-        "car.png": { name: "Car", price: 5000 },
-        "ccolso2.png": { name: "Star Ring", price: 3000 },
-        "cerrrdce.jpg": { name: "Gingerbread", price: 500 },
-        "chemodan.jpg": { name: "Suitcase", price: 5000 },
-        "ciga.png": { name: "Cigar", price: 3000 },
-        "colso.png": { name: "Blue Ring", price: 2500 },
-        "costum.jpg": { name: "Costume", price: 10000 },
-        "cvetok.png": { name: "Flower", price: 1000 },
-        "dog.png": { name: "Rich Dog", price: 500 },
-        "dyxi.png": { name: "Perfume", price: 10000 },
-        "fonarik.jpg": { name: "Lantern", price: 100 },
-        "grob.jpg": { name: "Coffin", price: 5000 },
-        "gyba.png": { name: "Lava Lips", price: 5000 },
-        "happybirthday.jpg": { name: "B-Day Cake", price: 200 },
-        "heart.png": { name: "Heart Lock", price: 2000 },
-        "helmet.png": { name: "Spartan", price: 25000 },
-        "kepka.png": { name: "Red Cap", price: 100000 },
-        "kirpitch.jpg": { name: "Brick", price: 10000 },
-        "metch.png": { name: "Lightsaber", price: 700 },
-        "obyv.jpg": { name: "Sneakers", price: 10000 },
-        "ochki.jpg": { name: "Glasses", price: 30000 },
-        "orel.jpg": { name: "Eagle", price: 5000 },
-        "rozza.png": { name: "Rose", price: 2000 },
-        "shlem.png": { name: "Helmet Biker", price: 3500 },
-        "statyya.jpg": { name: "Statue", price: 41000 },
-        "zmei.png": { name: "Snake", price: 500 }
+        1: { name: "1 May", img: "1may.jpg", price: 100 },
+        2: { name: "2025", img: "2025.jpg", price: 500 },
+        3: { name: "Bear", img: "bear.png", price: 3500 },
+        4: { name: "Book", img: "book.jpg", price: 1000 },
+        5: { name: "Berry Box", img: "boooox.png", price: 700 }, // исправлено опечатка в пути
+        6: { name: "Boot", img: "botinok.png", price: 400 },
+        7: { name: "Jack Box", img: "box.png", price: 600 },
+        8: { name: "Car", img: "car.png", price: 5000 },
+        16: { name: "Star Ring", img: "ccolso2.png", price: 3000 },
+        17: { name: "Gingerbread", img: "cerrrdce.jpg", price: 500 },
+        18: { name: "Suitcase", img: "chemodan.jpg", price: 5000 },
+        19: { name: "Cigar", img: "ciga.png", price: 3000 },
+        20: { name: "Blue Ring", img: "colso.png", price: 2500 },
+        21: { name: "Costume", img: "costum.jpg", price: 10000 },
+        22: { name: "Flower", img: "cvetok.png", price: 1000 },
+        23: { name: "Rich Dog", img: "dog.png", price: 500 },
+        24: { name: "Perfume", img: "dyxi.png", price: 10000 },
+        25: { name: "Lantern", img: "fonarik.jpg", price: 100 },
+        26: { name: "Coffin", img: "grob.jpg", price: 5000 },
+        27: { name: "Lava Lips", img: "gyba.png", price: 5000 },
+        28: { name: "B-Day Cake", img: "happybirthday.jpg", price: 200 },
+        29: { name: "Heart Lock", img: "heart.png", price: 2000 },
+        30: { name: "Spartan", img: "helmet.png", price: 25000 },
+        40: { name: "Red Cap", img: "kepka.png", price: 100000 },
+        41: { name: "Brick", img: "kirpitch.jpg", price: 10000 },
+        50: { name: "Lightsaber", img: "metch.png", price: 700 },
+        53: { name: "Sneakers", img: "obyv.jpg", price: 10000 },
+        54: { name: "Glasses", img: "ochki.jpg", price: 30000 },
+        55: { name: "Eagle", img: "orel.jpg", price: 5000 },
+        59: { name: "Rose", img: "rozza.png", price: 2000 },
+        63: { name: "Helmet Biker", img: "shlem.png", price: 3500 },
+        66: { name: "Statue", img: "statyya.jpg", price: 41000 },
+        72: { name: "Snake", img: "zmei.png", price: 500 }
     };
 
-    let userInventory = [];
     let s1 = null; let s2 = null;
 
-    async function loadFromDB() {
-        const info = document.getElementById('info-chance');
-        try {
-            console.log("Загрузка для ID:", userId);
-            const { data, error } = await _supabase
-                .from('users')
-                .select('inventory')
-                .eq('user_id', userId)
-                .single();
-
-            if (error) throw error;
-
-            console.log("Данные из базы:", data);
-
-            // Обработка данных: если NULL или не массив, ставим пустой список
-            userInventory = Array.isArray(data?.inventory) ? data.inventory : [];
-            
-            info.innerText = userInventory.length > 0 ? "Выберите предмет" : "Инвентарь пуст";
-            render();
-        } catch (e) {
-            console.error("Ошибка загрузки:", e);
-            info.innerText = "Ошибка загрузки данных";
-        }
-    }
-
     function render() {
+        // Читаем из того же ключа, что и профиль
+        const inv = JSON.parse(localStorage.getItem('user_inventory')) || [];
         const mList = document.getElementById('mine-list');
         const tList = document.getElementById('target-list');
 
-        // Рендер левой колонки (Инвентарь)
-        mList.innerHTML = userInventory.map((it, i) => {
-            // it может быть строкой или объектом {"img": "..."}
-            const rawImg = typeof it === 'string' ? it : it.img;
-            const fileName = rawImg.split('/').pop();
-            const info = ITEMS_DATA[fileName] || { name: "Неизвестно", price: 0 };
-            const fullImgPath = rawImg.startsWith('img/') ? rawImg : 'img/' + rawImg;
+        mList.innerHTML = inv.map((it, i) => `
+            <div class="item-card ${s1?.idx === i ? 'active' : ''}" onclick="sel1(${i},'${it.img}',${it.price},'${it.name}')">
+                <img src="${it.img.startsWith('img/') ? it.img : 'img/' + it.img}" class="w-8 h-8 object-contain">
+                <div class="text-[8px] font-black truncate">${it.name}</div>
+            </div>`).join('');
 
-            return `
-                <div class="item-card ${s1?.idx === i ? 'active' : ''}" onclick="sel1(${i},'${fullImgPath}',${info.price},'${info.name}')">
-                    <img src="${fullImgPath}" class="w-8 h-8 object-contain">
-                    <div class="text-[8px] font-black truncate">${info.name}</div>
-                </div>`;
-        }).join('');
-
-        // Рендер правой колонки (Цели)
-        tList.innerHTML = Object.entries(ITEMS_DATA)
-            .filter(([file, info]) => !s1 || info.price > s1.price)
-            .sort((a,b) => a[1].price - b[1].price)
-            .map(([file, info]) => {
-                const imgPath = 'img/' + file;
-                return `
-                <div class="item-card ${s2?.name === info.name ? 'active' : ''}" onclick="sel2('${imgPath}',${info.price},'${info.name}')">
-                    <img src="${imgPath}" class="w-8 h-8 object-contain">
-                    <div class="text-[8px] font-black truncate">${info.name}</div>
-                </div>`
-            }).join('');
+        tList.innerHTML = Object.values(ITEMS_DATA)
+            .filter(it => !s1 || it.price > s1.price)
+            .sort((a,b) => a.price - b.price)
+            .map(it => `
+                <div class="item-card ${s2?.name === it.name ? 'active' : ''}" onclick="sel2('img/${it.img}',${it.price},'${it.name}')">
+                    <img src="img/${it.img}" class="w-8 h-8 object-contain">
+                    <div class="text-[8px] font-black truncate">${it.name}</div>
+                </div>`).join('');
     }
 
     function sel1(idx, img, price, name) {
         s1 = {idx, img, price, name};
-        const i1 = document.getElementById('img-1');
-        i1.src = img; i1.classList.remove('hidden');
+        document.getElementById('img-1').src = img.startsWith('img/') ? img : 'img/' + img;
+        document.getElementById('img-1').classList.remove('hidden');
         s2 = null; updateUI(); render();
     }
 
     function sel2(img, price, name) {
         s2 = {img, price, name};
-        const i2 = document.getElementById('img-2');
-        i2.src = img; i2.classList.remove('hidden');
-        const vt = document.getElementById('view-target');
-        vt.src = img; vt.classList.remove('hidden');
+        document.getElementById('img-2').src = img;
+        document.getElementById('img-2').classList.remove('hidden');
+        document.getElementById('view-target').src = img;
+        document.getElementById('view-target').classList.remove('hidden');
         document.getElementById('view-empty').classList.add('hidden');
         updateUI(); render();
     }
@@ -195,7 +153,8 @@
         const info = document.getElementById('info-chance');
         const wheel = document.getElementById('wheel-progress');
         if(s1 && s2) {
-            let chance = Math.min((s1.price / s2.price) * 100, 80);
+            let chance = (s1.price / s2.price) * 100;
+            if(chance > 80) chance = 80;
             info.innerText = `ШАНС: ${chance.toFixed(2)}%`;
             wheel.style.background = `conic-gradient(#a3e635 ${chance * 3.6}deg, #000 0deg)`;
             btn.disabled = false;
@@ -205,52 +164,56 @@
         }
     }
 
-async function startUpgrade() {
-    const btn = document.getElementById('upg-btn');
-    const pointer = document.getElementById('pointer-wrapper');
-    const resMsg = document.getElementById('res-msg');
-    
-    btn.disabled = true;
+    function startUpgrade() {
+        const btn = document.getElementById('upg-btn');
+        const pointer = document.getElementById('pointer-wrapper');
+        const resMsg = document.getElementById('res-msg');
+        const center = document.getElementById('center-ui');
+        
+        btn.disabled = true;
 
-    // --- РЕГУЛИРОВКА ШАНСОВ ---
-    let baseChance = (s1.price / s2.price) * 100;
-    // Умножаем на 0.7 (минус 30% от честного шанса) и ограничиваем потолок в 55%
-    const chance = Math.min(baseChance * 0.7, 55); 
-    // --------------------------
+        const visualChance = (s1.price / s2.price) * 100;
+        const limitedVisual = Math.min(visualChance, 80); 
+        const isWin = (Math.random() * 100) <= limitedVisual; // Исправлено: теперь шанс реальный
+        
+        const winDeg = limitedVisual * 3.6; 
+        const spins = 360 * 5;
+        let finalDeg;
 
-    const isWin = (Math.random() * 100) <= chance;
-    
-    const winDeg = chance * 3.6; 
-    const spins = 360 * 5;
-    let finalDeg = isWin ? (spins + (Math.random() * (winDeg - 4)) + 2) : (spins + winDeg + (Math.random() * (356 - winDeg)) + 2);
-
-    pointer.style.transform = `rotate(${finalDeg}deg)`;
-    tg.HapticFeedback.impactOccurred('medium');
-
-    setTimeout(async () => {
-        document.getElementById('center-ui').style.opacity = "0";
-        resMsg.style.display = "block";
-
-        let newInventory = [...userInventory];
         if (isWin) {
-            resMsg.innerText = "УДАЧА"; resMsg.style.color = "#a3e635";
-            newInventory[s1.idx] = { img: s2.img, name: s2.name };
-            tg.HapticFeedback.notificationOccurred('success');
+            finalDeg = spins + (Math.random() * (winDeg - 2)) + 1;
         } else {
-            resMsg.innerText = "ПРОВАЛ"; resMsg.style.color = "#ff4d4d";
-            newInventory.splice(s1.idx, 1);
-            tg.HapticFeedback.notificationOccurred('error');
+            finalDeg = spins + winDeg + (Math.random() * (358 - winDeg)) + 2;
         }
 
-        await _supabase.from('users').update({ inventory: newInventory }).eq('user_id', userId);
-        setTimeout(() => location.reload(), 2000);
-    }, 3600);
-}
+        pointer.style.transform = `rotate(${finalDeg}deg)`;
+        tg.HapticFeedback.impactOccurred('medium');
 
-    window.onload = () => {
-        tg.expand();
-        loadFromDB();
-    };
+        setTimeout(() => {
+            center.style.opacity = "0";
+            resMsg.style.display = "block";
+            let inv = JSON.parse(localStorage.getItem('user_inventory')) || [];
+
+            if (isWin) {
+                resMsg.innerText = "УДАЧА";
+                resMsg.style.color = "#a3e635";
+                // СОХРАНЯЕМ В ПРОФИЛЬ (чистое имя картинки)
+                const cleanImg = s2.img.replace('img/', '');
+                inv[s1.idx] = { name: s2.name, img: 'img/' + cleanImg, price: s2.price };
+                tg.HapticFeedback.notificationOccurred('success');
+            } else {
+                resMsg.innerText = "ПРОВАЛ";
+                resMsg.style.color = "#ff4d4d";
+                inv.splice(s1.idx, 1);
+                tg.HapticFeedback.notificationOccurred('error');
+            }
+
+            localStorage.setItem('user_inventory', JSON.stringify(inv));
+            setTimeout(() => location.reload(), 2000);
+        }, 3600);
+    }
+
+    window.onload = render;
 </script>
 </body>
 </html>
