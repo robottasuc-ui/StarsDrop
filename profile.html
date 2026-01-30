@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>StarsDrop - Profile DB FULL</title>
+    <title>StarsDrop - Cloud Profile</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -22,7 +22,7 @@
         .btn-green { background: var(--accent-green); color: #000; font-weight: 900; text-transform: uppercase; border-radius: 22px; box-shadow: 0 8px 0 #65a30d; transition: all 0.1s ease; }
         .btn-green:active { transform: translateY(4px); box-shadow: 0 4px 0 #65a30d; }
         .dock-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10, 18, 5, 0.95); backdrop-filter: blur(20px); border-top: 1px solid rgba(163, 230, 53, 0.2); display: flex; justify-content: space-around; padding: 20px 10px 45px; z-index: 9999; }
-        .dock-btn { display: flex; flex-direction: column; align-items: center; color: #4b5563; flex: 1; transition: 0.3s; text-decoration: none; }
+        .dock-btn { display: flex; flex-direction: column; align-items: center; color: #4b5563; flex: 1; text-decoration: none; }
         .dock-btn.active { color: var(--accent-green); }
         #item-modal { position: fixed; inset: 0; z-index: 10000; display: none; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(15px); }
         input { background: rgba(255,255,255,0.05); border: 2px solid rgba(163, 230, 53, 0.1); border-radius: 20px; padding: 16px; color: white; font-weight: 600; text-align: center; outline: none; }
@@ -34,9 +34,9 @@
     <div class="main-wrapper">
         <header class="flex flex-col items-center mt-6 mb-10">
             <div class="relative group">
-                <div class="absolute -inset-1 bg-green-500 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+                <div class="absolute -inset-1 bg-green-500 rounded-full blur opacity-25"></div>
                 <img id="user-avatar" src="" class="relative w-28 h-28 rounded-full border-4 border-green-500/40 bg-gray-900 object-cover shadow-2xl">
-                <div class="absolute bottom-1 right-2 w-7 h-7 bg-green-500 border-4 border-[#0a1205] rounded-full shadow-lg"></div>
+                <div class="absolute bottom-1 right-2 w-7 h-7 bg-green-500 border-4 border-[#0a1205] rounded-full"></div>
             </div>
             
             <h2 id="user-name" class="text-4xl font-black uppercase italic mt-6 tracking-tighter text-white">ЗАГРУЗКА...</h2>
@@ -82,14 +82,14 @@
     </div>
 
     <div id="item-modal">
-        <div class="glass-card p-10 w-[90%] max-w-[360px] text-center border-green-500/50 shadow-[0_0_50px_rgba(163,230,53,0.2)]">
+        <div class="glass-card p-10 w-[90%] max-w-[360px] text-center border-green-500/50">
             <div class="relative w-32 h-32 mx-auto mb-8 bg-green-500/5 rounded-[40px] flex items-center justify-center border border-green-500/10">
                 <img id="modal-item-img" src="" class="w-20 h-20 object-contain">
             </div>
             <h2 id="modal-item-name" class="text-3xl font-black uppercase italic mb-2 tracking-tighter">НАЗВАНИЕ</h2>
             <p id="modal-item-status" class="text-green-500 text-[10px] font-bold uppercase mb-10 tracking-[0.4em]">Доступен для вывода</p>
             <div class="flex flex-col gap-4">
-                <button onclick="initWithdrawalProcess()" class="w-full btn-green py-6 text-sm shadow-xl shadow-green-500/20">ВЫВЕСТИ В БОТ</button>
+                <button onclick="initWithdrawalProcess()" class="w-full btn-green py-6 text-sm">ВЫВЕСТИ В БОТ</button>
                 <button id="modal-sell-btn" onclick="executeSellOrder()" class="w-full bg-white/5 border border-white/10 py-5 rounded-2xl font-black uppercase text-[11px]">ПРОДАТЬ ПРЕДМЕТ</button>
                 <button onclick="closeItemModal()" class="w-full py-2 text-gray-600 text-[10px] font-black uppercase mt-4">ОТМЕНИТЬ</button>
             </div>
@@ -97,237 +97,224 @@
     </div>
 
     <nav class="dock-bar">
-        <a href="#" class="dock-btn">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-            <span class="text-[10px] font-bold uppercase">Главная</span>
-        </a>
-        <div class="dock-btn active">
-            <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg>
-            <span class="text-[10px] font-bold uppercase">Профиль</span>
-        </div>
+        <a href="#" class="dock-btn"><span class="text-[10px] font-bold uppercase mt-1">Главная</span></a>
+        <div class="dock-btn active"><span class="text-[10px] font-bold uppercase mt-1">Профиль</span></div>
     </nav>
 
-<script>
-const tg = window.Telegram.WebApp;
-const SUPABASE_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    <script>
+        const tg = window.Telegram.WebApp;
+        
+        // --- ПРАВИЛЬНАЯ ИНИЦИАЛИЗАЦИЯ SUPABASE ---
+        const SUPABASE_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
+        // Используем глобальный объект supabase из CDN
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'; 
-const ADMIN_ID = '8015661230'; 
+        let currentUserData = { id: 0, stars: 0, ton: 0, inventory: [], isPaid75: false };
+        let activeSelectionIndex = null;
 
-let dbUser = null;
-let activeSelectionIndex = null;
+        const BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'; 
+        const ADMIN_ID = '8015661230'; 
 
-const MASTER_ITEMS_DATABASE = {
-    "1may.jpg": { name: "1 May Exclusive", price: 100 },
-    "2025.jpg": { name: "Happy 2025", price: 500 },
-    "bear.png": { name: "Honey Bear", price: 3500 },
-    "book.jpg": { name: "Ancient Book", price: 1000 },
-    "boooox.png": { name: "Berry Box", price: 700 },
-    "botinok.png": { name: "Old Boot", price: 400 },
-    "box.png": { name: "Jack in Box", price: 600 },
-    "car.png": { name: "Sports Car", price: 5000 },
-    "raketa.png": { name: "Space Rocket", price: 50 },
-    "ccolso2.png": { name: "Star Ring", price: 3000 },
-    "cerrrdce.jpg": { name: "Gingerbread", price: 500 },
-    "chemodan.jpg": { name: "Traveler Case", price: 5000 },
-    "ciga.png": { name: "Luxury Cigar", price: 3000 },
-    "colso.png": { name: "Blue Diamond", price: 2500 },
-    "costum.jpg": { name: "Royal Costume", price: 10000 },
-    "cvetok.png": { name: "Wild Flower", price: 1000 },
-    "dog.png": { name: "Rich Dog", price: 500 },
-    "dyxi.png": { name: "Gold Perfume", price: 10000 },
-    "fonarik.jpg": { name: "Night Lantern", price: 100 },
-    "grob.jpg": { name: "Ancient Coffin", price: 5000 },
-    "gyba.png": { name: "Lava Lips", price: 5000 },
-    "happybirthday.jpg": { name: "Birthday Cake", price: 200 },
-    "heart.png": { name: "Heart Lock", price: 2000 },
-    "helmet.png": { name: "Spartan Helmet", price: 25000 },
-    "kalendar.png": { name: "Event Calendar", price: 400 },
-    "kepka.png": { name: "Legendary Cap", price: 100000 },
-    "kirpitch.jpg": { name: "Golden Brick", price: 10000 },
-    "koks.jpg": { name: "Party Cocktail", price: 150 },
-    "koktel.png": { name: "Toxic Mix", price: 500 },
-    "kot.png": { name: "Atomic Cat", price: 10000 },
-    "kotel.png": { name: "Witch Cauldron", price: 500 },
-    "krovatka.jpg": { name: "Baby Bow", price: 600 },
-    "lolipop.png": { name: "Sweet Lollipop", price: 500 },
-    "lucky.jpg": { name: "Clover Lucky", price: 500 },
-    "mafin.jpg": { name: "Sugar Muffin", price: 700 },
-    "metch.png": { name: "Star Saber", price: 700 },
-    "narkotiki.png": { name: "Star Token", price: 600 },
-    "obyv.jpg": { name: "Sneakers Pro", price: 10000 },
-    "otchki.jpg": { name: "Cyber Glasses", price: 30000 },
-    "orel.jpg": { name: "Golden Eagle", price: 5000 },
-    "otkritka.jpg": { name: "Peace Dove", price: 150 },
-    "paska.jpg": { name: "Easter Cake", price: 75 },
-    "rozza.png": { name: "Velvet Rose", price: 2000 },
-    "rykzak.jpg": { name: "Adventurer Bag", price: 500 },
-    "shapka.png": { name: "Santa Hat", price: 500 },
-    "shar.jpg": { name: "Magic Ball", price: 1000 },
-    "shlem.png": { name: "Biker Helmet", price: 3500 },
-    "soska.jpg": { name: "Diamond Pacifier", price: 3000 },
-    "star.png": { name: "Pure Star", price: 15 },
-    "statyya.jpg": { name: "Hero Statue", price: 41000 },
-    "venok.jpg": { name: "Wreath Flower", price: 500 },
-    "yayko.png": { name: "Dragon Egg", price: 600 },
-    "zhele.png": { name: "Slime Jelly", price: 700 },
-    "zmei.png": { name: "Snake Friend", price: 500 },
-    "kolechko.png": { name: "Simple Ring", price: 100 }
-};
-
-async function syncUser() {
-    const user = tg.initDataUnsafe?.user || { id: 7140366080, first_name: "Admin" };
-    let { data, error } = await supabase.from('users').select('*').eq('user_id', user.id).single();
-
-    if (error && error.code === 'PGRST116') {
-        const { data: newUser } = await supabase.from('users').insert([{ 
-            user_id: user.id, stars: 0, balance: 0, energy: 1000, inventory: [], is_paid: false 
-        }]).select().single();
-        data = newUser;
-    }
-    dbUser = data;
-    renderAll();
-}
-
-function renderAll() {
-    const u = tg.initDataUnsafe?.user || { first_name: "Guest" };
-    document.getElementById('user-name').innerText = (u.username || u.first_name).toUpperCase();
-    document.getElementById('user-id-label').innerText = `ID: ${dbUser.user_id}`;
-    document.getElementById('stars-display').innerText = `⭐ ${dbUser.stars} STARS`;
-    document.getElementById('ton-display').innerText = `💎 ${dbUser.balance} TON`;
-    document.getElementById('user-avatar').src = u.photo_url || `https://ui-avatars.com/api/?name=${u.first_name}&background=166534&color=fff`;
-
-    const grid = document.getElementById('inventory-grid');
-    grid.innerHTML = '';
-    const items = dbUser.inventory || [];
-    document.getElementById('item-counter-label').innerText = `${items.length} ПРЕДМЕТОВ`;
-
-    items.forEach((item, index) => {
-        const slot = document.createElement('div');
-        slot.className = 'inventory-slot active-item';
-        slot.innerHTML = `<img src="${item.img || 'img/star.png'}">`;
-        slot.onclick = () => {
-            activeSelectionIndex = index;
-            const fileName = item.img.split('/').pop().toLowerCase();
-            const dbEntry = MASTER_ITEMS_DATABASE[fileName] || { name: item.name || "Item", price: 1 };
-            document.getElementById('modal-item-img').src = item.img;
-            document.getElementById('modal-item-name').innerText = dbEntry.name.toUpperCase();
-            document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${dbEntry.price} ⭐`;
-            document.getElementById('item-modal').style.display = 'flex';
+        const MASTER_ITEMS_DATABASE = {
+            "1may.jpg": { name: "1 May Exclusive", price: 100 },
+            "2025.jpg": { name: "Happy 2025", price: 500 },
+            "bear.png": { name: "Honey Bear", price: 3500 },
+            "raketa.png": { name: "Space Rocket", price: 50 },
+            "star.png": { name: "Pure Star", price: 15 },
+            "kepka.png": { name: "Legendary Cap", price: 100000 }
         };
-        grid.appendChild(slot);
-    });
 
-    for(let i=0; i < Math.max(0, 6 - items.length); i++) {
-        const empty = document.createElement('div');
-        empty.className = 'inventory-slot opacity-20';
-        empty.innerHTML = `<span class="text-[8px] font-black text-green-900">EMPTY</span>`;
-        grid.appendChild(empty);
-    }
-}
+        async function fetchCloudData() {
+            const user = tg.initDataUnsafe?.user || { id: 12345, first_name: 'LocalUser' };
+            
+            try {
+                let { data, error } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
 
-async function executeSellOrder() {
-    const item = dbUser.inventory[activeSelectionIndex];
-    const fileName = item.img.split('/').pop().toLowerCase();
-    const reward = MASTER_ITEMS_DATABASE[fileName]?.price || 1;
-
-    const newInv = [...dbUser.inventory];
-    newInv.splice(activeSelectionIndex, 1);
-
-    const { error } = await supabase.from('users').update({ 
-        stars: dbUser.stars + reward, inventory: newInv 
-    }).eq('user_id', dbUser.user_id);
-
-    if(!error) {
-        dbUser.stars += reward;
-        dbUser.inventory = newInv;
-        closeItemModal();
-        renderAll();
-        tg.HapticFeedback.notificationOccurred('success');
-    }
-}
-
-async function handlePromoActivation() {
-    const code = document.getElementById('promo-input').value.trim().toUpperCase();
-    const PROMOS = { "ADMIN": 500000, "ST1FIX": 1000 };
-
-    if (PROMOS[code]) {
-        const { error } = await supabase.from('users').update({ 
-            stars: dbUser.stars + PROMOS[code] 
-        }).eq('user_id', dbUser.user_id);
-        if(!error) {
-            dbUser.stars += PROMOS[code];
-            tg.showAlert(`УСПЕХ! +${PROMOS[code]} ⭐`);
-            renderAll();
-            document.getElementById('promo-input').value = '';
-        }
-    } else { tg.showAlert("Промокод не найден."); }
-}
-
-async function initWithdrawalProcess() {
-    if (!dbUser.is_paid) {
-        if (dbUser.stars < 75) {
-            tg.showAlert("🛑 НУЖНА ВЕРИФИКАЦИЯ (75 Stars)");
-            return;
-        } else {
-            tg.showConfirm("Списать 75 Stars для верификации?", async (confirmed) => {
-                if (confirmed) {
-                    const { error } = await supabase.from('users').update({ 
-                        stars: dbUser.stars - 75, is_paid: true 
-                    }).eq('user_id', dbUser.user_id);
-                    if(!error) {
-                        dbUser.stars -= 75; dbUser.is_paid = true;
-                        renderAll(); tg.showAlert("✅ Верификация пройдена!");
-                    }
+                if (error && error.code === 'PGRST116') { // Код ошибки "строка не найдена"
+                    const { data: newUser, error: createError } = await supabaseClient
+                        .from('users')
+                        .insert([{ 
+                            id: user.id, 
+                            username: user.username || user.first_name,
+                            stars: 0,
+                            ton: 0,
+                            inventory: [],
+                            isPaid75: false
+                        }]).select().single();
+                    data = newUser;
                 }
-            });
-            return;
+
+                if (data) {
+                    currentUserData = data;
+                    syncUI();
+                }
+            } catch (e) {
+                console.error("Ошибка Supabase:", e);
+            }
         }
-    }
 
-    const item = dbUser.inventory[activeSelectionIndex];
-    const u = tg.initDataUnsafe?.user || { id: '000', first_name: 'Unknown' };
-    const text = `🚀 ЗАЯВКА НА ВЫВОД\n👤 Юзер: ${u.first_name}\n🆔 ID: ${u.id}\n🎁 Файл: ${item.img}`;
+        function syncUI() {
+            document.getElementById('stars-display').innerText = `⭐ ${currentUserData.stars} STARS`;
+            document.getElementById('ton-display').innerText = `💎 ${(currentUserData.ton || 0).toFixed(2)} TON`;
+            renderCloudInventory();
+        }
 
-    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: ADMIN_ID, text: text })
-    });
+        async function updateCloud(updates) {
+            const { error } = await supabaseClient
+                .from('users')
+                .update(updates)
+                .eq('id', currentUserData.id);
+            
+            if (!error) {
+                currentUserData = { ...currentUserData, ...updates };
+                syncUI();
+            } else {
+                tg.showAlert("Ошибка сохранения в облако");
+            }
+        }
 
-    if (res.ok) {
-        const newInv = [...dbUser.inventory];
-        newInv.splice(activeSelectionIndex, 1);
-        await supabase.from('users').update({ inventory: newInv }).eq('user_id', dbUser.user_id);
-        dbUser.inventory = newInv;
-        tg.showAlert("✅ Заявка отправлена!");
-        closeItemModal(); renderAll();
-    }
-}
+        function renderCloudInventory() {
+            const grid = document.getElementById('inventory-grid');
+            grid.innerHTML = '';
+            const inv = currentUserData.inventory || [];
+            document.getElementById('item-counter-label').innerText = `${inv.length} ПРЕДМЕТОВ`;
 
-function shareReferralLink() {
-    const link = `https://t.me/StarsDropBot?start=${dbUser.user_id}`;
-    tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Забирай Stars!`);
-}
+            inv.forEach((item, index) => {
+                const slot = document.createElement('div');
+                slot.className = 'inventory-slot active-item';
+                slot.innerHTML = `<img src="${item.img}">`;
+                slot.onclick = () => {
+                    activeSelectionIndex = index;
+                    const fileName = item.img.split('/').pop().toLowerCase();
+                    const dbEntry = MASTER_ITEMS_DATABASE[fileName] || { name: item.name, price: 1 };
+                    document.getElementById('modal-item-img').src = item.img;
+                    document.getElementById('modal-item-name').innerText = dbEntry.name.toUpperCase();
+                    document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${dbEntry.price} ⭐`;
+                    document.getElementById('item-modal').style.display = 'flex';
+                };
+                grid.appendChild(slot);
+            });
 
-function closeItemModal() { document.getElementById('item-modal').style.display = 'none'; }
+            const remaining = Math.max(0, 9 - (inv.length));
+            for(let i=0; i < remaining; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'inventory-slot opacity-20';
+                empty.innerHTML = `<span class="text-[8px] font-black uppercase text-green-900">Empty</span>`;
+                grid.appendChild(empty);
+            }
+        }
 
-// --- BACKGROUND CANVAS ---
-const canvas = document.getElementById('stars-canvas');
-const ctx = canvas.getContext('2d');
-let stars = [];
-function initStars() {
-    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-    stars = Array(70).fill().map(() => ({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*2, v: 0.1+Math.random()*0.3 }));
-}
-function animate() {
-    ctx.clearRect(0,0,canvas.width, canvas.height); ctx.fillStyle = "#a3e635";
-    stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill(); s.y += s.v; if(s.y > canvas.height) s.y = -5; });
-    requestAnimationFrame(animate);
-}
+        async function executeSellOrder() {
+            const item = currentUserData.inventory[activeSelectionIndex];
+            const fileName = item.img.split('/').pop().toLowerCase();
+            const reward = MASTER_ITEMS_DATABASE[fileName]?.price || 1;
 
-window.onload = () => { initStars(); animate(); syncUser(); tg.expand(); tg.ready(); };
-</script>
+            const newInventory = [...currentUserData.inventory];
+            newInventory.splice(activeSelectionIndex, 1);
+
+            await updateCloud({
+                stars: (currentUserData.stars || 0) + reward,
+                inventory: newInventory
+            });
+
+            closeItemModal();
+            tg.HapticFeedback.notificationOccurred('success');
+        }
+
+        async function initWithdrawalProcess() {
+            if (!currentUserData.isPaid75) {
+                if (currentUserData.stars < 75) {
+                    tg.showAlert("Для верификации нужно 75 ⭐. У вас: " + currentUserData.stars);
+                    return;
+                }
+                tg.showConfirm("Списать 75 ⭐ за верификацию?", async (ok) => {
+                    if (ok) {
+                        await updateCloud({ 
+                            stars: currentUserData.stars - 75, 
+                            isPaid75: true 
+                        });
+                        tg.showAlert("Верификация пройдена! Теперь нажмите 'Вывести' снова.");
+                    }
+                });
+                return;
+            }
+
+            const item = currentUserData.inventory[activeSelectionIndex];
+            const text = `🚀 *ЗАЯВКА НА ВЫВОД*\n👤 Юзер: ${currentUserData.username}\n🆔 ID: ${currentUserData.id}\n🎁 Предмет: ${item.name}`;
+            
+            try {
+                const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: ADMIN_ID, text: text, parse_mode: 'Markdown' })
+                });
+
+                if (res.ok) {
+                    const newInv = [...currentUserData.inventory];
+                    newInv.splice(activeSelectionIndex, 1);
+                    await updateCloud({ inventory: newInv });
+                    tg.showAlert("✅ Заявка отправлена! Ожидайте поступления в боте.");
+                    closeItemModal();
+                }
+            } catch(e) { tg.showAlert("Ошибка связи с ботом"); }
+        }
+
+        async function handlePromoActivation() {
+            const code = document.getElementById('promo-input').value.trim().toUpperCase();
+            const PROMOS = { "ADMIN": 500000, "ST1FIX": 1000 };
+
+            if (PROMOS[code]) {
+                await updateCloud({ stars: (currentUserData.stars || 0) + PROMOS[code] });
+                tg.showAlert(`Успешно! +${PROMOS[code]} ⭐`);
+                document.getElementById('promo-input').value = '';
+            } else {
+                tg.showAlert("Неверный или использованный промокод");
+            }
+        }
+
+        function closeItemModal() { document.getElementById('item-modal').style.display = 'none'; }
+        
+        function shareReferralLink() {
+            const link = `https://t.me/StarsDropBot?start=${currentUserData.id}`;
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=Забирай звезды!`);
+        }
+
+        function initStars() {
+            const canvas = document.getElementById('stars-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            let dots = [];
+            for(let i=0; i<70; i++) dots.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, v: Math.random()*0.5+0.1, s: Math.random()*2});
+            function anim() {
+                ctx.clearRect(0,0,canvas.width, canvas.height);
+                ctx.fillStyle = "#a3e635";
+                dots.forEach(d => {
+                    ctx.beginPath(); ctx.arc(d.x, d.y, d.s, 0, 7); ctx.fill();
+                    d.y += d.v; if(d.y > canvas.height) d.y = -10;
+                });
+                requestAnimationFrame(anim);
+            }
+            anim();
+        }
+
+        window.onload = () => {
+            const u = tg.initDataUnsafe?.user;
+            if (u) {
+                document.getElementById('user-name').innerText = (u.username || u.first_name).toUpperCase();
+                document.getElementById('user-id-label').innerText = `ID: ${u.id}`;
+                document.getElementById('user-avatar').src = u.photo_url || `https://ui-avatars.com/api/?name=${u.first_name}`;
+            }
+            initStars();
+            fetchCloudData();
+            tg.expand();
+            tg.ready();
+        };
+    </script>
 </body>
 </html>
