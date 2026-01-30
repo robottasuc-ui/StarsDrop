@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>StarDrop Upgrade Final</title>
+    <title>StarDrop Smart Upgrade</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -42,7 +42,7 @@
         </div>
     </div>
 
-    <div id="info-chance" class="text-center text-[#a3e635] font-black text-[10px] mb-3 uppercase italic">Загрузка инвентаря...</div>
+    <div id="info-chance" class="text-center text-[#a3e635] font-black text-[10px] mb-3 uppercase italic">Загрузка...</div>
 
     <div class="grid grid-cols-2 gap-3 mb-4">
         <div class="slot" id="slot-1">
@@ -103,7 +103,7 @@
         if (!error && data?.inventory) {
             userInventory = Array.isArray(data.inventory) ? data.inventory : [];
         }
-        document.getElementById('info-chance').innerText = userInventory.length > 0 ? "Выберите предметы" : "У вас нет подарков";
+        document.getElementById('info-chance').innerText = userInventory.length > 0 ? "Выбери шмот для улучшения" : "Инвентарь пуст";
         render();
     }
 
@@ -111,36 +111,46 @@
         const mList = document.getElementById('mine-list');
         const tList = document.getElementById('target-list');
 
+        // Мой шмот
         mList.innerHTML = userInventory.map((it, i) => {
             const imgPath = typeof it === 'string' ? it : it.img;
             const file = imgPath.split('/').pop();
-            const name = ITEMS_DATA[file]?.name || "Подарок";
+            const info = ITEMS_DATA[file] || { name: "Подарок", price: 0 };
             const src = imgPath.startsWith('img/') ? imgPath : 'img/' + imgPath;
             return `
-                <div class="item-card ${s1?.idx === i ? 'active' : ''}" onclick="sel1(${i},'${src}','${name}')">
+                <div class="item-card ${s1?.idx === i ? 'active' : ''}" onclick="sel1(${i},'${src}','${info.name}', ${info.price})">
                     <img src="${src}" class="w-8 h-8 object-contain">
-                    <div class="text-[8px] font-black truncate">${name}</div>
+                    <div class="flex-1 overflow-hidden">
+                        <div class="text-[8px] font-black truncate">${info.name}</div>
+                        <div class="text-[6px] opacity-50">${info.price} ⭐</div>
+                    </div>
                 </div>`;
         }).join('');
 
+        // Список апгрейдов (ТОЛЬКО ДОРОЖЕ, ЧЕМ ВЫБРАННЫЙ)
         tList.innerHTML = Object.entries(ITEMS_DATA)
+            .filter(([file, info]) => !s1 || info.price > s1.price) // Фильтр: только если дороже
             .sort((a,b) => a[1].price - b[1].price)
             .map(([file, info]) => `
-                <div class="item-card ${s2?.name === info.name ? 'active' : ''}" onclick="sel2('img/${file}','${info.name}')">
+                <div class="item-card ${s2?.name === info.name ? 'active' : ''}" onclick="sel2('img/${file}','${info.name}', ${info.price})">
                     <img src="img/${file}" class="w-8 h-8 object-contain">
-                    <div class="text-[8px] font-black truncate">${info.name}</div>
+                    <div class="flex-1 overflow-hidden">
+                        <div class="text-[8px] font-black truncate">${info.name}</div>
+                        <div class="text-[6px] text-[#a3e635]">${info.price} ⭐</div>
+                    </div>
                 </div>`).join('');
     }
 
-    function sel1(idx, img, name) {
-        s1 = {idx, img, name};
+    function sel1(idx, img, name, price) {
+        s1 = {idx, img, name, price};
         document.getElementById('img-1').src = img;
         document.getElementById('img-1').classList.remove('hidden');
+        s2 = null; // Сбрасываем цель, так как список обновится
         updateUI(); render();
     }
 
-    function sel2(img, name) {
-        s2 = {img, name};
+    function sel2(img, name, price) {
+        s2 = {img, name, price};
         document.getElementById('img-2').src = img;
         document.getElementById('img-2').classList.remove('hidden');
         document.getElementById('view-target').src = img;
@@ -153,13 +163,19 @@
         const btn = document.getElementById('upg-btn');
         const info = document.getElementById('info-chance');
         const wheel = document.getElementById('wheel-progress');
+        
         if(s1 && s2) {
-            info.innerText = "Шанс: 20%"; // Визуально всегда 20%
-            wheel.style.background = `conic-gradient(#a3e635 72deg, #000 0deg)`; // 20% это 72 градуса
+            // МАТЕМАТИЧЕСКИЙ ШАНС С ПОПРАВКОЙ НА КАЗИНО (0.7)
+            let rawChance = (s1.price / s2.price) * 100;
+            let riggedChance = Math.min(rawChance * 0.7, 75); // Макс шанс 75%
+            
+            info.innerText = `Шанс успеха: ${riggedChance.toFixed(1)}%`;
+            wheel.style.background = `conic-gradient(#a3e635 ${riggedChance * 3.6}deg, #000 0deg)`;
             btn.disabled = false;
         } else {
             btn.disabled = true;
             wheel.style.background = `conic-gradient(#a3e635 0deg, #000 0deg)`;
+            info.innerText = s1 ? "Выбери цель апгрейда" : "Выбери шмот из инвентаря";
         }
     }
 
@@ -169,10 +185,12 @@
         const resMsg = document.getElementById('res-msg');
         btn.disabled = true;
 
-        // ШАНСЫ: 20% победа, 80% поражение
-        const isWin = Math.random() < 0.2; 
+        let rawChance = (s1.price / s2.price) * 100;
+        let finalChance = Math.min(rawChance * 0.7, 75);
         
-        const winDeg = 72; // Конец зеленой зоны
+        const isWin = (Math.random() * 100) < finalChance; 
+        
+        const winDeg = finalChance * 3.6;
         const spins = 360 * 5;
         let finalDeg = isWin ? (spins + Math.random() * (winDeg - 2)) : (spins + winDeg + Math.random() * (358 - winDeg));
 
@@ -185,7 +203,7 @@
 
             let newInv = [...userInventory];
             if (isWin) {
-                resMsg.innerText = "УДАЧА"; resMsg.style.color = "#a3e635";
+                resMsg.innerText = "УСПЕХ"; resMsg.style.color = "#a3e635";
                 newInv[s1.idx] = { img: s2.img, name: s2.name };
                 tg.HapticFeedback.notificationOccurred('success');
             } else {
