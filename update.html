@@ -3,222 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>StarsDrop - Profile</title>
+    <title>StarDrop Upgrade Cloud</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        :root { --bg-dark: #0a1205; --accent-green: #a3e635; --panel-bg: rgba(0, 0, 0, 0.4); --border-glow: rgba(163, 230, 53, 0.2); }
-        body { background: var(--bg-dark); color: white; font-family: 'Inter', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
-        .main-wrapper { position: relative; z-index: 1; min-height: 100vh; padding: 24px 20px 160px; background: radial-gradient(circle at 50% 30%, #5d9e1c 0%, #0a1205 80%); }
-        .glass-card { background: var(--panel-bg); border: 1px solid var(--border-glow); backdrop-filter: blur(25px); border-radius: 32px; }
-        .inventory-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        .inventory-slot { aspect-ratio: 1/1; background: rgba(163, 230, 53, 0.03); border: 1px dashed rgba(163, 230, 53, 0.15); border-radius: 24px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .active-item { background: rgba(163, 230, 53, 0.08); border: 1.5px solid var(--accent-green); cursor: pointer; }
-        .active-item img { width: 70%; height: 70%; object-fit: contain; }
-        .btn-green { background: var(--accent-green); color: #000; font-weight: 900; text-transform: uppercase; border-radius: 22px; box-shadow: 0 8px 0 #65a30d; }
-        .dock-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10, 18, 5, 0.95); backdrop-filter: blur(20px); border-top: 1px solid rgba(163, 230, 53, 0.2); display: flex; justify-content: space-around; padding: 20px 10px 45px; z-index: 9999; }
-        .dock-btn { display: flex; flex-direction: column; align-items: center; color: #4b5563; flex: 1; text-decoration: none; }
-        .dock-btn.active { color: var(--accent-green); }
-        #item-modal { position: fixed; inset: 0; z-index: 10000; display: none; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(15px); }
-        input { background: rgba(255,255,255,0.05); border: 2px solid rgba(163, 230, 53, 0.1); border-radius: 20px; padding: 16px; color: white; text-align: center; outline: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+        body { background: #050a04; color: white; font-family: 'Montserrat', sans-serif; height: 100vh; overflow: hidden; }
+        .wheel-container { width: 210px; height: 210px; border-radius: 50%; background: #000; border: 4px solid #1a2e0a; margin: 10px auto; position: relative; display: flex; align-items: center; justify-content: center; }
+        #wheel-progress { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(#a3e635 0deg, #000 0deg); opacity: 0.7; }
+        #pointer-wrapper { position: absolute; inset: -15px; z-index: 30; transition: transform 3.5s cubic-bezier(0.15, 0, 0.15, 1); }
+        #pointer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 4px; height: 35px; background: #fff; border-radius: 10px; box-shadow: 0 0 15px #fff; }
+        .scroll-area { height: 200px; overflow-y: auto; background: rgba(255,255,255,0.02); border-radius: 12px; padding: 8px; border: 1px solid rgba(163,230,53,0.1); }
+        .item-card { display: flex; align-items: center; gap: 8px; padding: 8px; margin-bottom: 6px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 2px solid transparent; cursor: pointer; transition: 0.2s; }
+        .item-card.active { border-color: #a3e635; background: rgba(163, 230, 53, 0.1); }
+        .slot { width: 100%; height: 70px; background: rgba(255,255,255,0.03); border: 1px solid rgba(163,230,53,0.2); border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .btn-main { background: #a3e635; color: #000; font-weight: 900; text-transform: uppercase; width: 100%; padding: 16px; border-radius: 20px; box-shadow: 0 0 20px rgba(163, 230, 53, 0.3); }
+        .btn-main:disabled { background: #1a2e0a; color: #3e5c1e; opacity: 0.6; }
+        #res-msg { position: absolute; font-size: 28px; font-weight: 900; z-index: 40; display: none; text-shadow: 0 0 20px #000; text-align: center; width: 100%; }
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-thumb { background: #a3e635; }
     </style>
 </head>
-<body>
-    <div class="main-wrapper">
-        <header class="flex flex-col items-center mt-6 mb-10">
-            <img id="user-avatar" src="" class="w-28 h-28 rounded-full border-4 border-green-500/40 bg-gray-900 object-cover">
-            <h2 id="user-name" class="text-4xl font-black uppercase italic mt-6 tracking-tighter">ЗАГРУЗКА...</h2>
-            <div class="flex flex-wrap justify-center gap-3 mt-4">
-                <div id="user-id-label" class="bg-white/5 border border-white/10 px-4 py-1.5 rounded-full text-[10px] font-bold text-green-400">ID: 0</div>
-                <div id="stars-display" class="bg-yellow-400/10 border border-yellow-400/20 px-4 py-1.5 rounded-full text-[10px] font-black text-yellow-400">⭐ 0 STARS</div>
-                <div id="ton-display" class="bg-blue-400/10 border border-blue-400/20 px-4 py-1.5 rounded-full text-[10px] font-black text-blue-400">💎 0.00 TON</div>
-            </div>
-        </header>
+<body class="p-4">
 
-        <section class="glass-card p-7 mb-8">
-            <h3 class="text-[11px] font-black uppercase text-green-400 tracking-widest mb-5">Активация бонуса</h3>
-            <div class="flex flex-col gap-4">
-                <input type="text" id="promo-input" class="w-full uppercase font-bold" placeholder="ПРОМОКОД">
-                <button onclick="handlePromoActivation()" class="w-full btn-green py-5 text-sm">Активировать</button>
-            </div>
-        </section>
-
-        <section class="glass-card p-7 min-h-[400px]">
-            <div class="flex items-center justify-between mb-8">
-                <h3 class="text-sm font-black uppercase">Инвентарь</h3>
-                <span id="item-counter-label" class="text-[11px] font-black text-gray-500">0 ПРЕДМЕТОВ</span>
-            </div>
-            <div id="inventory-grid" class="inventory-grid"></div>
-        </section>
+    <div class="flex justify-between items-center mb-2">
+        <button onclick="window.history.back()" class="text-[10px] font-black opacity-40 uppercase">← Назад</button>
+        <div id="status" class="text-[8px] font-black text-white opacity-50 uppercase">Connecting...</div>
     </div>
 
-    <div id="item-modal">
-        <div class="glass-card p-10 w-[90%] max-w-[360px] text-center border-green-500/50">
-            <img id="modal-item-img" src="" class="w-24 h-24 mx-auto mb-6 object-contain">
-            <h2 id="modal-item-name" class="text-2xl font-black uppercase mb-6">НАЗВАНИЕ</h2>
-            <div class="flex flex-col gap-4">
-                <button onclick="initWithdrawalProcess()" class="w-full btn-green py-5 text-sm">ВЫВЕСТИ В БОТ</button>
-                <button id="modal-sell-btn" onclick="executeSellOrder()" class="w-full bg-white/5 border border-white/10 py-5 rounded-2xl font-black uppercase text-[11px]">ПРОДАТЬ ПРЕДМЕТ</button>
-                <button onclick="closeItemModal()" class="w-full py-2 text-gray-600 text-[10px] font-black uppercase">ЗАКРЫТЬ</button>
-            </div>
+    <div class="wheel-container">
+        <div id="wheel-progress"></div>
+        <div id="pointer-wrapper"><div id="pointer"></div></div>
+        <div id="res-msg"></div>
+        <div id="center-ui" class="relative z-10 text-center">
+            <img id="view-target" src="" class="w-24 h-24 object-contain hidden mx-auto">
+            <div id="view-empty" class="text-6xl font-black opacity-10 uppercase">UP</div>
         </div>
     </div>
 
-    <nav class="dock-bar">
-        <div class="dock-btn active"><span>ПРОФИЛЬ</span></div>
-    </nav>
+    <div id="info-chance" class="text-center text-[#a3e635] font-black text-[11px] mb-3 uppercase italic">Загрузка данных...</div>
 
-    <script>
-        const SB_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
-        const SB_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA'; 
-        const supabase = window.supabase.createClient(SB_URL, SB_KEY);
-        const tg = window.Telegram.WebApp;
+    <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="slot" id="slot-1">
+            <img id="img-1" src="" class="w-10 h-10 object-contain hidden">
+            <div class="text-[7px] font-black opacity-30 mt-1 uppercase">Инвентарь</div>
+        </div>
+        <div class="slot" id="slot-2">
+            <img id="img-2" src="" class="w-10 h-10 object-contain hidden">
+            <div class="text-[7px] font-black opacity-30 mt-1 uppercase">Цель</div>
+        </div>
+    </div>
 
-        // БАЗА ПОДАРКОВ (ITEMS)
-        const ITEMS = {
-            1: { name: "1 May", img: "1may.jpg", price: 100 },
-            2: { name: "2025", img: "2025.jpg", price: 500 },
-            3: { name: "Bear", img: "bear.png", price: 3500 },
-            4: { name: "Book", img: "book.jpg", price: 1000 },
-            5: { name: "Berry Box", img: "boooox.png", price: 700 },
-            6: { name: "Boot", img: "botinok.png", price: 400 },
-            7: { name: "Jack Box", img: "box.png", price: 600 },
-            8: { name: "Car", img: "car.png", price: 5000 },
-            9: { name: "Rocket", img: "raketa.png", price: 50 },
-            16: { name: "Star Ring", img: "ccolso2.png", price: 3000 },
-            17: { name: "Gingerbread", img: "cerrrdce.jpg", price: 500 },
-            18: { name: "Suitcase", img: "chemodan.jpg", price: 5000 },
-            19: { name: "Cigar", img: "ciga.png", price: 3000 },
-            20: { name: "Blue Ring", img: "colso.png", price: 2500 },
-            21: { name: "Costume", img: "costum.jpg", price: 10000 },
-            22: { name: "Flower", img: "cvetok.png", price: 1000 },
-            23: { name: "Rich Dog", img: "dog.png", price: 500 },
-            24: { name: "Perfume", img: "dyxi.png", price: 10000 },
-            25: { name: "Lantern", img: "fonarik.jpg", price: 100 },
-            26: { name: "Coffin", img: "grob.jpg", price: 5000 },
-            27: { name: "Lava Lips", img: "gyba.png", price: 5000 },
-            28: { name: "B-Day Cake", img: "happybirthday.jpg", price: 200 },
-            29: { name: "Heart Lock", img: "heart.png", price: 2000 },
-            30: { name: "Spartan", img: "helmet.png", price: 25000 },
-            39: { name: "Calendar", img: "kalendar.png", price: 400 },
-            40: { name: "Red Cap", img: "kepka.png", price: 100000 },
-            41: { name: "Brick", img: "kirpitch.jpg", price: 10000 },
-            42: { name: "Cocktail", img: "koks.jpg", price: 150 },
-            43: { name: "Green Mix", img: "koktel.png", price: 500 },
-            44: { name: "Atomic Cat", img: "kot.png", price: 10000 },
-            45: { name: "Cauldron", img: "kotel.png", price: 500 },
-            46: { name: "Bow Tie", img: "krovatka.jpg", price: 600 },
-            47: { name: "Lollipop", img: "lolipop.png", price: 500 },
-            48: { name: "Clover", img: "lucky.jpg", price: 500 },
-            49: { name: "Muffin", img: "mafin.jpg", price: 700 },
-            50: { name: "Lightsaber", img: "metch.png", price: 700 },
-            51: { name: "SD Token", img: "narkotiki.png", price: 600 },
-            53: { name: "Sneakers", img: "obyv.jpg", price: 10000 },
-            54: { name: "Glasses", img: "otchki.jpg", price: 30000 },
-            55: { name: "Eagle", img: "orel.jpg", price: 5000 },
-            56: { name: "Dove Post", img: "otkritka.jpg", price: 150 },
-            57: { name: "Easter Cake", img: "paska.jpg", price: 75 },
-            59: { name: "Rose", img: "rozza.png", price: 2000 },
-            60: { name: "Backpack", img: "rykzak.jpg", price: 500 },
-            61: { name: "Santa Hat", img: "shapka.png", price: 500 },
-            62: { name: "Crystal Ball", img: "shar.jpg", price: 1000 },
-            63: { name: "Helmet Biker", img: "shlem.png", price: 3500 },
-            64: { name: "Pacifier", img: "soska.jpg", price: 3000 },
-            65: { name: "Golden Star", img: "star.png", price: 15 },
-            66: { name: "Statue", img: "statyya.jpg", price: 41000 },
-            69: { name: "Wreath", img: "venok.jpg", price: 500 },
-            70: { name: "Spotted Egg", img: "yayko.png", price: 600 },
-            71: { name: "Green Slime", img: "zhele.png", price: 700 },
-            72: { name: "Snake", img: "zmei.png", price: 500 },
-            73: { name: "Ring", img: "kolechko.png", price: 100 }
-        };
+    <div class="grid grid-cols-2 gap-3">
+        <div>
+            <h3 class="text-[9px] font-black uppercase mb-2 opacity-40 text-center text-[#a3e635]">Твой шмот</h3>
+            <div id="mine-list" class="scroll-area"></div>
+        </div>
+        <div>
+            <h3 class="text-[9px] font-black uppercase mb-2 opacity-40 text-center">Магазин</h3>
+            <div id="target-list" class="scroll-area"></div>
+        </div>
+    </div>
 
-        let currentUser = null;
-        let activeSelectionIndex = null;
+    <button id="upg-btn" onclick="startUpgrade()" class="btn-main mt-4" disabled>Апгрейд</button>
 
-        function fixPath(p) { return p.startsWith('img/') ? p : 'img/' + p; }
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-        async function syncUserData() {
-            const user = tg.initDataUnsafe?.user || { id: 8015661230, first_name: "Admin" };
-            let { data } = await supabase.from('users').select('*').eq('user_id', user.id).single();
-            currentUser = data;
-            updateUI();
+    // --- КОНФИГУРАЦИЯ SUPABASE ---
+    const SUPABASE_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co'; 
+    const SUPABASE_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // БАЗА ДАННЫХ ПРЕДМЕТОВ (названия и цены)
+    const SHOP_ITEMS = [
+        { name: "1 May", img: "1may.jpg", price: 100 },
+        { name: "Bear", img: "bear.png", price: 3500 },
+        { name: "Book", img: "book.jpg", price: 1000 },
+        { name: "Berry Box", img: "boooox.png", price: 700 },
+        { name: "Boot", img: "botinok.png", price: 400 },
+        { name: "Jack Box", img: "box.png", price: 600 },
+        { name: "Car", img: "car.png", price: 5000 },
+        { name: "Star Ring", img: "ccolso2.png", price: 3000 },
+        { name: "Gingerbread", img: "cerrrdce.jpg", price: 500 },
+        { name: "Suitcase", img: "chemodan.jpg", price: 5000 },
+        { name: "Cigar", img: "ciga.png", price: 3000 },
+        { name: "Blue Ring", img: "colso.png", price: 2500 },
+        { name: "Costume", img: "costum.jpg", price: 10000 },
+        { name: "Flower", img: "cvetok.png", price: 1000 },
+        { name: "Rich Dog", img: "dog.png", price: 500 },
+        { name: "Perfume", img: "dyxi.png", price: 10000 },
+        { name: "Lantern", img: "fonarik.jpg", price: 100 },
+        { name: "Coffin", img: "grob.jpg", price: 5000 },
+        { name: "Lava Lips", img: "gyba.png", price: 5000 },
+        { name: "B-Day Cake", img: "happybirthday.jpg", price: 200 },
+        { name: "Heart Lock", img: "heart.png", price: 2000 },
+        { name: "Spartan", img: "helmet.png", price: 25000 },
+        { name: "Red Cap", img: "kepka.png", price: 100000 },
+        { name: "Brick", img: "kirpitch.jpg", price: 10000 },
+        { name: "Lightsaber", img: "metch.png", price: 700 },
+        { name: "Sneakers", img: "obyv.jpg", price: 10000 },
+        { name: "Glasses", img: "ochki.jpg", price: 30000 },
+        { name: "Eagle", img: "orel.jpg", price: 5000 },
+        { name: "Rose", img: "rozza.png", price: 2000 },
+        { name: "Helmet Biker", img: "shlem.png", price: 3500 },
+        { name: "Statue", img: "statyya.jpg", price: 41000 },
+        { name: "Snake", img: "zmei.png", price: 500 }
+    ];
+
+    let userInventory = [];
+    let selectedMine = null;
+    let selectedTarget = null;
+    const userId = tg.initDataUnsafe?.user?.id || 12345678; // 12345678 для теста в браузере
+
+    function fixPath(p) { return p.startsWith('img/') ? p : 'img/' + p; }
+
+    async function init() {
+        document.getElementById('status').innerText = "DB FETCHING...";
+        const { data, error } = await _supabase
+            .from('users')
+            .select('inventory')
+            .eq('user_id', userId)
+            .single();
+
+        if (error) {
+            console.error("DB Error:", error);
+            document.getElementById('status').innerText = "ERROR DB";
+        } else {
+            userInventory = Array.isArray(data.inventory) ? data.inventory : [];
+            document.getElementById('status').innerText = "CONNECTED";
+            render();
         }
+    }
 
-        function updateUI() {
-            if (!currentUser) return;
-            document.getElementById('stars-display').innerText = `⭐ ${currentUser.stars} STARS`;
-            document.getElementById('ton-display').innerText = `💎 ${currentUser.balance.toFixed(2)} TON`;
-            const grid = document.getElementById('inventory-grid');
-            const inv = Array.isArray(currentUser.inventory) ? currentUser.inventory : [];
-            grid.innerHTML = '';
-            document.getElementById('item-counter-label').innerText = `${inv.length} ПРЕДМЕТОВ`;
+    function render() {
+        const mList = document.getElementById('mine-list');
+        const tList = document.getElementById('target-list');
 
-            inv.forEach((item, index) => {
-                const slot = document.createElement('div');
-                slot.className = 'inventory-slot active-item';
-                slot.innerHTML = `<img src="${fixPath(item.img)}">`;
-                slot.onclick = () => handleItemSelection(index, item);
-                grid.appendChild(slot);
-            });
-        }
+        mList.innerHTML = userInventory.map((it, i) => `
+            <div class="item-card ${selectedMine?.idx === i ? 'active' : ''}" onclick="selMine(${i},'${it.img}',${it.price || 0},'${it.name}')">
+                <img src="${fixPath(it.img)}" class="w-8 h-8 object-contain">
+                <div class="text-[8px] font-black truncate">${it.name}</div>
+            </div>`).join('');
 
-        function handleItemSelection(index, item) {
-            activeSelectionIndex = index;
-            // Ищем цену в ITEMS по картинке, если ее нет в базе
-            let price = item.price;
-            if (!price) {
-                const fileName = item.img.split('/').pop();
-                const found = Object.values(ITEMS).find(i => i.img === fileName);
-                price = found ? found.price : 10;
-            }
+        tList.innerHTML = SHOP_ITEMS
+            .filter(it => !selectedMine || it.price > selectedMine.price)
+            .sort((a,b) => a.price - b.price)
+            .map(it => `
+                <div class="item-card ${selectedTarget?.name === it.name ? 'active' : ''}" onclick="selTarget('${it.img}',${it.price},'${it.name}')">
+                    <img src="${fixPath(it.img)}" class="w-8 h-8 object-contain">
+                    <div class="text-[8px] font-black truncate">${it.name}</div>
+                </div>`).join('');
+        
+        updateUI();
+    }
 
-            document.getElementById('modal-item-img').src = fixPath(item.img);
-            document.getElementById('modal-item-name').innerText = (item.name || "ITEM").toUpperCase();
-            document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${price} ⭐`;
-            document.getElementById('item-modal').style.display = 'flex';
-        }
+    function selMine(idx, img, price, name) {
+        selectedMine = {idx, img, price, name};
+        document.getElementById('img-1').src = fixPath(img);
+        document.getElementById('img-1').classList.remove('hidden');
+        selectedTarget = null; render();
+    }
 
-        async function handlePromoActivation() {
-            const code = document.getElementById('promo-input').value.trim().toUpperCase();
-            const PROMOS = { "ADMIN": 50000, "START": 100 };
-            const used = currentUser.used_promos || [];
-            if (used.includes(code)) return tg.showAlert("Уже использован!");
-            if (PROMOS[code]) {
-                await supabase.from('users').update({ stars: currentUser.stars + PROMOS[code], used_promos: [...used, code] }).eq('user_id', currentUser.user_id);
-                tg.showAlert("Успех!"); syncUserData();
-            } else tg.showAlert("Код неверный");
-        }
+    function selTarget(img, price, name) {
+        selectedTarget = {img, price, name};
+        document.getElementById('img-2').src = fixPath(img);
+        document.getElementById('img-2').classList.remove('hidden');
+        document.getElementById('view-target').src = fixPath(img);
+        document.getElementById('view-target').classList.remove('hidden');
+        document.getElementById('view-empty').classList.add('hidden');
+        render();
+    }
 
-        async function executeSellOrder() {
-            const item = currentUser.inventory[activeSelectionIndex];
-            const fileName = item.img.split('/').pop();
-            const found = Object.values(ITEMS).find(i => i.img === fileName);
-            const price = item.price || (found ? found.price : 10);
+    function updateUI() {
+        const btn = document.getElementById('upg-btn');
+        const info = document.getElementById('info-chance');
+        const wheel = document.getElementById('wheel-progress');
+        
+        if(selectedMine && selectedTarget) {
+            let chance = (selectedMine.price / selectedTarget.price) * 100;
+            if (selectedMine.price === 0) chance = 5; // Если цена не указана
+            chance = Math.min(Math.max(chance, 1), 80);
             
-            const newInv = currentUser.inventory.filter((_, i) => i !== activeSelectionIndex);
-            await supabase.from('users').update({ stars: currentUser.stars + price, inventory: newInv }).eq('user_id', currentUser.user_id);
-            closeItemModal(); syncUserData();
+            info.innerText = `ШАНС: ${chance.toFixed(1)}%`;
+            wheel.style.background = `conic-gradient(#a3e635 ${chance * 3.6}deg, #000 0deg)`;
+            btn.disabled = false;
+        } else {
+            btn.disabled = true;
+            info.innerText = "ВЫБЕРИТЕ ПРЕДМЕТЫ";
         }
+    }
 
-        async function initWithdrawalProcess() {
-            tg.showAlert("Заявка отправлена администратору!");
-            closeItemModal();
-        }
+    async function startUpgrade() {
+        const btn = document.getElementById('upg-btn');
+        const pointer = document.getElementById('pointer-wrapper');
+        const resMsg = document.getElementById('res-msg');
+        
+        btn.disabled = true;
+        
+        let chance = Math.min((selectedMine.price / selectedTarget.price) * 100, 80);
+        if (selectedMine.price === 0) chance = 5;
 
-        function closeItemModal() { document.getElementById('item-modal').style.display = 'none'; }
+        const isWin = (Math.random() * 100) <= chance;
+        const spins = 1800; // 5 оборотов
+        const winDeg = chance * 3.6;
+        const finalDeg = isWin ? (spins + Math.random() * winDeg) : (spins + winDeg + Math.random() * (360 - winDeg));
 
-        window.onload = () => {
-            const u = tg.initDataUnsafe?.user;
-            if (u) {
-                document.getElementById('user-name').innerText = (u.username || u.first_name).toUpperCase();
-                document.getElementById('user-id-label').innerText = `ID: ${u.id}`;
-                document.getElementById('user-avatar').src = u.photo_url || `https://ui-avatars.com/api/?name=${u.first_name}`;
+        pointer.style.transform = `rotate(${finalDeg}deg)`;
+        tg.HapticFeedback.impactOccurred('medium');
+
+        setTimeout(async () => {
+            let newInv = [...userInventory];
+            if (isWin) {
+                resMsg.innerText = "УСПЕХ!";
+                resMsg.style.color = "#a3e635";
+                newInv[selectedMine.idx] = { 
+                    name: selectedTarget.name, 
+                    img: fixPath(selectedTarget.img), 
+                    price: selectedTarget.price 
+                };
+                tg.HapticFeedback.notificationOccurred('success');
+            } else {
+                resMsg.innerText = "ПРОВАЛ";
+                resMsg.style.color = "#ff4d4d";
+                newInv.splice(selectedMine.idx, 1);
+                tg.HapticFeedback.notificationOccurred('error');
             }
-            syncUserData();
-        };
-    </script>
+
+            resMsg.style.display = "block";
+            document.getElementById('center-ui').style.opacity = "0.2";
+
+            // СОХРАНЕНИЕ В SUPABASE
+            const { error } = await _supabase
+                .from('users')
+                .update({ inventory: newInv })
+                .eq('user_id', userId);
+
+            if (error) console.error("Update Error:", error);
+
+            setTimeout(() => location.reload(), 2000);
+        }, 3600);
+    }
+
+    init();
+</script>
 </body>
 </html>
