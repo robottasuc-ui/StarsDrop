@@ -93,10 +93,6 @@
             filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3));
         }
 
-        .active-item:active {
-            transform: scale(0.85) rotate(-3deg);
-        }
-
         .btn-green {
             background: var(--accent-green);
             color: #000;
@@ -143,12 +139,6 @@
             filter: drop-shadow(0 0 5px var(--accent-green));
         }
 
-        .dock-btn span { 
-            font-size: 11px; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-        }
-
         #item-modal { 
             position: fixed;
             inset: 0;
@@ -168,12 +158,7 @@
             color: white;
             font-weight: 600;
             outline: none;
-            transition: 0.3s;
-        }
-
-        input:focus {
-            border-color: var(--accent-green);
-            background: rgba(163, 230, 53, 0.05);
+            text-align: center;
         }
     </style>
 </head>
@@ -213,7 +198,7 @@
         <section class="glass-card p-7 mb-8">
             <h3 class="text-[11px] font-black uppercase text-green-400 tracking-widest mb-5">Активация бонуса</h3>
             <div class="flex flex-col gap-4">
-                <input type="text" id="promo-input" class="w-full text-center uppercase tracking-widest" placeholder="Введите промокод...">
+                <input type="text" id="promo-input" class="w-full uppercase tracking-widest" placeholder="Введите промокод...">
                 <button onclick="handlePromoActivation()" class="w-full btn-green py-5 text-sm">Активировать</button>
             </div>
         </section>
@@ -228,9 +213,7 @@
             </div>
             
             <div id="inventory-grid" class="inventory-grid"></div>
-            
             <div id="empty-state" class="hidden flex flex-col items-center justify-center py-20 opacity-20">
-                <svg class="w-16 h-16 mb-4" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
                 <p class="font-black text-xs uppercase">Инвентарь пуст</p>
             </div>
         </section>
@@ -246,7 +229,7 @@
             <p id="modal-item-status" class="text-green-500 text-[10px] font-bold uppercase mb-10 tracking-[0.4em]">Доступен для вывода</p>
             
             <div class="flex flex-col gap-4">
-                <button onclick="tg.showAlert('Функция вывода в разработке')" class="w-full btn-green py-6 text-sm shadow-xl shadow-green-500/20">ВЫВЕСТИ В БОТ</button>
+                <button onclick="initWithdrawalProcess()" class="w-full btn-green py-6 text-sm shadow-xl shadow-green-500/20">ВЫВЕСТИ В БОТ</button>
                 <button id="modal-sell-btn" onclick="executeSellOrder()" class="w-full bg-white/5 border border-white/10 py-5 rounded-2xl font-black uppercase text-[11px] hover:bg-white/10 transition-all">ПРОДАТЬ ПРЕДМЕТ</button>
                 <button onclick="closeItemModal()" class="w-full py-2 text-gray-600 text-[10px] font-black uppercase mt-4 tracking-[0.2em] hover:text-white transition-colors">ОТМЕНИТЬ</button>
             </div>
@@ -255,15 +238,11 @@
 
     <nav class="dock-bar">
         <a href="index.html" class="dock-btn">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-            </svg>
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
             <span>Главная</span>
         </a>
         <div class="dock-btn active">
-            <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-            </svg>
+            <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
             <span>Профиль</span>
         </div>
     </nav>
@@ -272,7 +251,6 @@
 const tg = window.Telegram.WebApp;
 let activeSelectionIndex = null;
 
-// НАСТРОЙКИ БОТА (Взяты из вашей старой версии)
 const BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'; 
 const ADMIN_ID = '8015661230'; 
 
@@ -334,7 +312,6 @@ const MASTER_ITEMS_DATABASE = {
     "kolechko.png": { name: "Simple Ring", price: 100 }
 };
 
-// Функция обновления баланса (добавлена поддержка TON для визуала)
 function refreshFinancialStatus() {
     const stars = localStorage.getItem('user_stars') || "0";
     const ton = localStorage.getItem('user_ton') || "0.00";
@@ -342,7 +319,6 @@ function refreshFinancialStatus() {
     document.getElementById('ton-display').innerText = `💎 ${ton} TON`;
 }
 
-// Рендер инвентаря
 function renderInfiniteInventory() {
     const gridContainer = document.getElementById('inventory-grid');
     const emptyState = document.getElementById('empty-state');
@@ -353,18 +329,19 @@ function renderInfiniteInventory() {
     counterLabel.innerText = `${userInventory.length} ПРЕДМЕТОВ`;
 
     if (userInventory.length === 0) {
-        if(emptyState) emptyState.style.display = 'flex';
+        if(emptyState) emptyState.classList.remove('hidden');
         for(let i=0; i<6; i++) createEmptySlot(gridContainer);
         return;
     }
 
-    if(emptyState) emptyState.style.display = 'none';
+    if(emptyState) emptyState.classList.add('hidden');
 
     userInventory.forEach((itemData, index) => {
         const slotElement = document.createElement('div');
         slotElement.className = 'inventory-slot active-item';
         const img = document.createElement('img');
-        img.src = itemData.img;
+        // Защита от битых путей: если путь пустой, ставим заглушку
+        img.src = itemData.img || 'img/star.png'; 
         slotElement.appendChild(img);
         slotElement.onclick = () => handleItemSelection(index, itemData);
         gridContainer.appendChild(slotElement);
@@ -379,13 +356,13 @@ function renderInfiniteInventory() {
 function createEmptySlot(container) {
     const emptySlot = document.createElement('div');
     emptySlot.className = 'inventory-slot opacity-20';
-    emptySlot.innerHTML = `<span class="text-[8px] font-black uppercase text-green-900 tracking-tighter">Empty</span>`;
+    emptySlot.innerHTML = `<span class="text-[8px] font-black uppercase text-green-900">Empty</span>`;
     container.appendChild(emptySlot);
 }
 
-// Открытие модалки предмета
 function handleItemSelection(index, item) {
     activeSelectionIndex = index;
+    // Достаем имя файла правильно
     const fileName = item.img.split('/').pop().toLowerCase();
     const dbEntry = MASTER_ITEMS_DATABASE[fileName] || { name: item.name || "Unknown Item", price: 1 };
     
@@ -402,40 +379,42 @@ function closeItemModal() {
     activeSelectionIndex = null;
 }
 
-// РАБОЧАЯ ФУНКЦИЯ ВЫВОДА
+// ИСПРАВЛЕННАЯ ФУНКЦИЯ ВЫВОДА
 async function initWithdrawalProcess() {
     let walletBalance = parseInt(localStorage.getItem('user_stars')) || 0;
     const isVerified = localStorage.getItem('isPaid75') === 'true';
 
-    // Проверка верификации (как в старом коде)
     if (!isVerified) {
         if (walletBalance < 75) {
-            tg.showAlert("🛑 ОШИБКА ВЕРИФИКАЦИИ\n\nДля вывода предметов ваш аккаунт должен быть верифицирован (75 Stars).\n\nБаланс: " + walletBalance + " ⭐");
+            tg.showAlert("🛑 ОШИБКА ВЕРИФИКАЦИИ\n\nНужна верификация (75 Stars). Баланс: " + walletBalance + " ⭐");
             return;
         } else {
-            tg.showConfirm("Комиссия за верификацию (75 Stars) не оплачена. Списать с баланса?", async (confirmed) => {
+            tg.showConfirm("Списать 75 Stars для верификации?", async (confirmed) => {
                 if (confirmed) {
                     walletBalance -= 75;
                     localStorage.setItem('user_stars', walletBalance.toString());
                     localStorage.setItem('isPaid75', 'true');
                     refreshFinancialStatus();
-                    tg.showAlert("✅ Верификация пройдена! Нажмите кнопку вывода еще раз.");
+                    tg.showAlert("✅ Верификация пройдена! Нажмите ВЫВОД еще раз.");
                 }
             });
             return;
         }
     }
 
-    // Процесс отправки заявки
     const inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
     const item = inventory[activeSelectionIndex];
+    if(!item) return;
+
     const u = tg.initDataUnsafe?.user || { id: '000', first_name: 'Unknown', username: 'none' };
+    const fileName = item.img.split('/').pop().toLowerCase();
+    const realName = MASTER_ITEMS_DATABASE[fileName]?.name || "Предмет";
 
     const text = `🚀 <b>ЗАЯВКА НА ВЫВОД</b>\n\n` +
                  `👤 <b>Юзер:</b> ${u.first_name} (@${u.username})\n` +
                  `🆔 <b>ID:</b> <code>${u.id}</code>\n` +
-                 `🎁 <b>Предмет:</b> ${item.name || "Без названия"}\n` +
-                 `🖼️ <b>Путь:</b> ${item.img}`;
+                 `🎁 <b>Предмет:</b> ${realName}\n` +
+                 `🖼️ <b>Файл:</b> ${fileName}`;
 
     try {
         const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -445,21 +424,20 @@ async function initWithdrawalProcess() {
         });
 
         if (res.ok) {
-            tg.showAlert("✅ ЗАЯВКА ПРИНЯТА\n\nПредмет будет отправлен в течение 24 часов.");
+            tg.showAlert("✅ ЗАЯВКА ОТПРАВЛЕНА!\n\nОжидайте в течение 24 часов.");
             inventory.splice(activeSelectionIndex, 1);
             localStorage.setItem('user_inventory', JSON.stringify(inventory));
             closeItemModal();
             renderInfiniteInventory();
             tg.HapticFeedback.notificationOccurred('success');
         } else {
-            tg.showAlert("Ошибка сервера при отправке.");
+            tg.showAlert("Ошибка API.");
         }
     } catch (e) {
-        tg.showAlert("Ошибка соединения с API Telegram.");
+        tg.showAlert("Ошибка сети.");
     }
 }
 
-// Продажа предмета
 function executeSellOrder() {
     let inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
     const item = inventory[activeSelectionIndex];
@@ -478,11 +456,10 @@ function executeSellOrder() {
     tg.HapticFeedback.notificationOccurred('success');
 }
 
-// Реферальная система и промокоды (аналогично старому)
 function shareReferralLink() {
     const id = tg.initDataUnsafe?.user?.id || "0";
     const link = `https://t.me/StarsDropBot?start=${id}`;
-    const text = "🔥 Открывай кейсы и забирай Stars! По моей ссылке бонус +5 ⭐";
+    const text = "🔥 Открывай кейсы и забирай Stars! Бонус +5 ⭐";
     tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
 }
 
@@ -502,7 +479,7 @@ function handlePromoActivation() {
     }
 }
 
-// Анимация фона (звезды)
+// ЗВЕЗДНЫЙ ФОН
 const starContainer = document.getElementById('stars-canvas');
 const starCtx = starContainer.getContext('2d');
 let starArray = [];
@@ -515,8 +492,8 @@ function setupStarfield() {
         starArray.push({
             x: Math.random() * starContainer.width,
             y: Math.random() * starContainer.height,
-            s: Math.random() * 2.5,
-            v: Math.random() * 0.4 + 0.1,
+            s: Math.random() * 2,
+            v: Math.random() * 0.3 + 0.1,
             a: Math.random()
         });
     }
@@ -536,7 +513,6 @@ function animateStarfield() {
     requestAnimationFrame(animateStarfield);
 }
 
-// Инициализация при загрузке
 window.onload = function() {
     const u = tg.initDataUnsafe?.user;
     if (u) {
