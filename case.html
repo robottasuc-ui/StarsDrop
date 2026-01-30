@@ -44,10 +44,10 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
         #live-drop-wrapper {
-            width: 100%; height: 100px; overflow: hidden; position: relative;
+            width: 100%; height: 60px; overflow: hidden; position: relative;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.02), transparent);
         }
-        .live-rail { display: flex; position: absolute; left: 0; top: 0; height: 100%; gap: 12px; padding: 10px; }
+        .live-rail { display: flex; position: absolute; left: 0; top: 0; height: 100%; gap: 12px; padding: 10px; transition: transform 0.5s ease; }
 
         .roulette-container {
             position: relative; width: 100%; height: 160px; 
@@ -71,7 +71,18 @@
             background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px;
         }
         .roulette-item img { width: 80px; height: 80px; object-fit: contain; }
-        .win-glow { border-color: #a3e635 !important; background: rgba(163, 230, 53, 0.1) !important; box-shadow: 0 0 30px rgba(163, 230, 53, 0.2); }
+        
+        @keyframes win-pulse {
+            0% { transform: scale(1); box-shadow: 0 0 20px rgba(163, 230, 53, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 40px rgba(163, 230, 53, 0.6); }
+            100% { transform: scale(1); box-shadow: 0 0 20px rgba(163, 230, 53, 0.4); }
+        }
+        .win-glow { 
+            border-color: #a3e635 !important; 
+            background: rgba(163, 230, 53, 0.15) !important; 
+            animation: win-pulse 1s infinite ease-in-out; 
+            z-index: 20;
+        }
 
         .case-card {
             background: linear-gradient(145deg, #121612, #0a0c0a);
@@ -81,6 +92,9 @@
         .case-card:active { transform: scale(0.95); }
         .cnt-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: white; transition: 0.3s; }
         .cnt-btn.active { background: var(--neon-green); color: black; font-weight: 900; }
+        
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -183,7 +197,6 @@ let balance = {
     ton: parseFloat(localStorage.getItem('user_ton')) || 0
 };
 
-// ... ТВОИ ITEMS (оставь как были) ...
 const ITEMS = {
     1: { name: "1 May", img: "1may.jpg", price: 100 },
     2: { name: "2025", img: "2025.jpg", price: 500 },
@@ -261,7 +274,7 @@ async function syncData() {
             balance.ton = parseFloat(data.balance);
             saveAndRefresh();
         }
-    } catch (e) {}
+    } catch (e) { console.error("Sync error:", e); }
 }
 
 function saveAndRefresh() {
@@ -294,7 +307,7 @@ function openCase(i) {
     document.getElementById('loot-display').innerHTML = activeCase.loot.map(attr => {
         const itm = ITEMS[attr[0]];
         return `<div class="bg-white/5 rounded-2xl p-2 flex flex-col items-center border border-white/5">
-            <img src="img/${itm.img}" class="w-10 h-10 mb-1">
+            <img src="img/${itm.img}" class="w-10 h-10 mb-1 object-contain">
             <div class="text-[8px] text-green-500">⭐${itm.price}</div>
         </div>`;
     }).join('');
@@ -307,26 +320,45 @@ function setMul(n) {
     document.getElementById('p-ton').innerText = (activeCase.ton * n).toFixed(2);
 }
 
-function startRoll(type) {
+async function startRoll(type) {
+    if (isBusy) return;
     const cost = type === 'stars' ? activeCase.stars * mul : activeCase.ton * mul;
     if (balance[type] < cost) return alert("Недостаточно средств");
     
+    isBusy = true;
     balance[type] -= cost;
     saveAndRefresh();
 
-    document.getElementById('back-btn').style.display = 'none';
-    document.getElementById('view-preview').style.display = 'none';
-    document.getElementById('view-roulette').style.display = 'flex';
-    document.getElementById('roul-title').innerText = activeCase.name;
-    document.getElementById('roulette-rows').innerHTML = '';
+    try {
+        const updateField = type === 'stars' ? { stars: balance.stars } : { balance: balance.ton };
+        const response = await fetch(`${SB_URL}/rest/v1/users?user_id=eq.${userId}`, {
+            method: 'PATCH',
+            headers: headers,
+            body: JSON.stringify(updateField)
+        });
 
-    const winners = [];
-    for (let i = 0; i < mul; i++) {
-        const win = getWin();
-        winners.push(win);
-        createRow(i, win);
+        if (!response.ok) throw new Error("Database error");
+
+        document.getElementById('back-btn').style.display = 'none';
+        document.getElementById('view-preview').style.display = 'none';
+        document.getElementById('view-roulette').style.display = 'flex';
+        document.getElementById('roul-title').innerText = activeCase.name;
+        document.getElementById('roulette-rows').innerHTML = '';
+
+        const winners = [];
+        for (let i = 0; i < mul; i++) {
+            const win = getWin();
+            winners.push(win);
+            createRow(i, win);
+        }
+        setTimeout(() => showWin(winners), 7200);
+
+    } catch (e) {
+        alert("Ошибка транзакции");
+        balance[type] += cost;
+        saveAndRefresh();
+        isBusy = false;
     }
-    setTimeout(() => showWin(winners), 7200);
 }
 
 function getWin() {
@@ -373,7 +405,7 @@ function showWin(winners) {
     let grid = '';
     winners.forEach(w => {
         total += w.price;
-        grid += `<div class="bg-white/5 p-4 rounded-[30px] border border-white/10 flex flex-col items-center min-w-[100px]">
+        grid += `<div class="bg-white/5 p-4 rounded-[30px] border border-white/10 flex flex-col items-center min-w-[100px] animate-fade-in">
             <img src="img/${w.img}" class="w-14 h-14 object-contain">
             <div class="orbitron text-[8px] text-green-500 mt-2 uppercase font-black">${w.name}</div>
         </div>`;
@@ -384,23 +416,15 @@ function showWin(winners) {
     document.getElementById('sell-all-btn').innerText = `Продать: ${total} ⭐`;
     document.getElementById('back-btn').style.display = 'block';
     
-    // Сброс состояния кнопок
     isBusy = false;
-    document.getElementById('sell-all-btn').disabled = false;
-    document.getElementById('keep-all-btn').disabled = false;
-    document.getElementById('sell-all-btn').style.opacity = "1";
-    document.getElementById('keep-all-btn').style.opacity = "1";
 }
 
-// КНОПКА ПРОДАТЬ (как в рулетке)
 async function sellAllAndClose() {
     if (isBusy || currentWinners.length === 0) return;
     isBusy = true;
-    
     const sellBtn = document.getElementById('sell-all-btn');
     sellBtn.innerText = "ПРОДАЖА...";
-    sellBtn.style.opacity = "0.5";
-
+    
     let totalGain = currentWinners.reduce((sum, item) => sum + item.price, 0);
     const newStarsBalance = balance.stars + totalGain;
 
@@ -410,52 +434,55 @@ async function sellAllAndClose() {
             headers,
             body: JSON.stringify({ stars: newStarsBalance })
         });
-        
         balance.stars = newStarsBalance;
         saveAndRefresh();
         closeModal();
     } catch (e) {
         alert("Ошибка сети!");
         isBusy = false;
-        sellBtn.style.opacity = "1";
         sellBtn.innerText = `Продать: ${totalGain} ⭐`;
     }
 }
 
-// КНОПКА В ИНВЕНТАРЬ
 async function saveToInventoryAndClose() {
     if (isBusy || currentWinners.length === 0) return;
     isBusy = true;
-
     const keepBtn = document.getElementById('keep-all-btn');
     keepBtn.innerText = "СОХРАНЕНИЕ...";
-    keepBtn.style.opacity = "0.5";
 
     try {
-        // Получаем текущий инвентарь из базы (синхронизация)
         const res = await fetch(`${SB_URL}/rest/v1/users?select=inventory&user_id=eq.${userId}`, { headers });
         const data = await res.json();
         let dbInv = data[0]?.inventory || [];
         
-        // Добавляем новые
         currentWinners.forEach(w => {
             dbInv.push({ name: w.name, img: w.img, price: w.price, id: Date.now() + Math.random() });
         });
 
-        // Сохраняем обратно
         await fetch(`${SB_URL}/rest/v1/users?user_id=eq.${userId}`, {
             method: 'PATCH',
             headers,
             body: JSON.stringify({ inventory: dbInv })
         });
-
         closeModal();
     } catch (e) {
         alert("Ошибка сохранения!");
         isBusy = false;
-        keepBtn.style.opacity = "1";
         keepBtn.innerText = "В инвентарь";
     }
+}
+
+function updateLiveDrop() {
+    const rail = document.getElementById('live-drop-rail');
+    const keys = Object.keys(ITEMS);
+    const item = ITEMS[keys[Math.floor(Math.random() * keys.length)]];
+    
+    const drop = document.createElement('div');
+    drop.className = 'flex-shrink-0 flex items-center gap-2 bg-white/5 px-3 py-1 rounded-full border border-white/5 animate-fade-in';
+    drop.innerHTML = `<img src="img/${item.img}" class="w-5 h-5 object-contain"><span class="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">${item.name}</span>`;
+    
+    rail.prepend(drop);
+    if (rail.children.length > 8) rail.removeChild(rail.lastChild);
 }
 
 function closeModal() {
@@ -464,6 +491,7 @@ function closeModal() {
     isBusy = false;
 }
 
+setInterval(updateLiveDrop, 4000);
 render();
 syncData();
 </script>
