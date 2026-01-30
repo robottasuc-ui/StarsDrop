@@ -65,9 +65,12 @@
         .loader-ring { width: 60px; height: 60px; border: 4px solid #1a2e05; border-left-color: var(--accent-green); border-radius: 50%; animation: rotate 1s linear infinite; }
         @keyframes rotate { to { transform: rotate(360deg); } }
         .hidden { display: none !important; }
+
+        .tab-trigger { flex: 1; padding: 14px; text-align: center; font-weight: 900; font-size: 13px; color: #6b7280; transition: 0.3s; cursor: pointer; }
+        .tab-trigger.active { color: black; background: var(--accent-green); border-radius: 16px; }
     </style>
 </head>
-<body>
+<body class="loaded">
 
     <div id="pc-only-blocker">
         <div class="qr-frame"><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://t.me/StarsDropOfficial_Bot" alt="QR"></div>
@@ -96,21 +99,21 @@
                     </div>
                 </div>
 
-                <div class="balance-container-v2" onclick="openVault('ton')">
-                    <div class="balance-item-v2 text-blue-400">
-                        <span id="header-ton" class="font-black">0.00</span>
-                        <img src="img/ton.png" alt="TON" onerror="this.src='https://wallet.tg/ton-logo.png'">
+                <div class="balance-container-v2">
+                    <div class="balance-item-v2 text-blue-400" onclick="openVault('ton')">
+                        <span id="bal-ton" class="font-black">0.00</span>
+                        <img src="ton.png" alt="TON" onerror="this.src='https://wallet.tg/ton-logo.png'">
                     </div>
-                    <div class="balance-item-v2 text-yellow-400">
-                        <span id="header-stars" class="font-black">0</span>
-                        <img src="img/star.png" alt="STAR" onerror="this.src='https://telegram.org/img/emoji/40/2B50.png'">
+                    <div class="balance-item-v2 text-yellow-400" onclick="openVault('stars')">
+                        <span id="bal-stars" class="font-black">0</span>
+                        <img src="star.png" alt="STAR" onerror="this.src='https://telegram.org/img/emoji/40/2B50.png'">
                     </div>
                 </div>
             </div>
 
             <div class="hero-zone">
                 <div class="hero-glow"></div>
-                <img src="img/hero.png" alt="HERO" class="w-52 h-52 mx-auto object-contain" onerror="this.style.display='none'">
+                <img src="hero.png" alt="HERO" class="w-52 h-52 mx-auto object-contain">
                 <h1 class="text-5xl font-black italic mt-4 uppercase tracking-tighter text-white">Stars<span class="text-green-500">Drop</span></h1>
                 <div class="h-1.5 w-16 bg-green-500 rounded-full mx-auto mt-2 shadow-lg shadow-green-500/50"></div>
             </div>
@@ -147,7 +150,7 @@
                 <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011-1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
                 <span class="text-[10px] font-bold uppercase italic">Главная</span>
             </div>
-            <div onclick="navigateTo('profile.html')" class="dock-btn">
+            <div onclick="window.location.href='profile.html'" class="dock-btn">
                 <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                 <span class="text-[10px] font-bold uppercase italic">Профиль</span>
             </div>
@@ -158,13 +161,13 @@
         <div class="modal-sheet" onclick="event.stopPropagation()">
             <div class="w-16 h-1.5 bg-white/10 mx-auto mb-8 rounded-full"></div>
             <div class="flex p-1.5 bg-black/50 rounded-2xl border border-white/5 mb-8">
-                <div id="tab-btn-ton" onclick="setTab('ton')" class="tab-trigger flex-1 text-center py-3 rounded-xl font-black uppercase italic cursor-pointer transition-all">Ton Pay</div>
-                <div id="tab-btn-stars" onclick="setTab('stars')" class="tab-trigger flex-1 text-center py-3 rounded-xl font-black uppercase italic cursor-pointer transition-all">Stars</div>
+                <div id="tab-btn-ton" onclick="setTab('ton')" class="tab-trigger active">TON PAY</div>
+                <div id="tab-btn-stars" onclick="setTab('stars')" class="tab-trigger">STARS</div>
             </div>
             <div id="pane-ton" class="grid grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto"></div>
             <div id="pane-stars" class="hidden text-center py-4">
-                <p class="text-gray-400 text-sm mb-4 uppercase font-bold tracking-widest italic">Пополнение Stars</p>
-                <input type="number" id="stars-input" placeholder="Минимум 15" class="w-full bg-white/5 border border-white/10 py-5 px-6 rounded-2xl text-center text-2xl font-black text-white outline-none mb-6">
+                <p class="text-gray-400 text-sm mb-4">Введите количество звёзд:</p>
+                <input type="number" id="stars-input" placeholder="Напр. 50" class="w-full bg-white/5 border border-white/10 py-5 px-6 rounded-2xl text-center text-2xl font-black text-white outline-none mb-6">
                 <button onclick="verifyGift()" class="w-full bg-yellow-500 text-black font-black py-5 rounded-2xl uppercase text-sm tracking-widest shadow-lg">Оплатить через Telegram</button>
             </div>
             <button onclick="closeVault()" class="w-full mt-8 py-2 text-gray-500 font-bold uppercase text-[11px] tracking-widest">Вернуться назад</button>
@@ -173,119 +176,95 @@
 
 <script>
     const tg = window.Telegram.WebApp;
-    tg.expand();
-    tg.ready();
-
     const BACKEND_URL = 'https://stars-drop.vercel.app/api'; 
     const user = tg.initDataUnsafe?.user;
     let isProcessing = false;
 
-    // Инициализация приложения
-    async function initApp() {
-        document.body.classList.add('loaded');
-        
-        // Проверка на ПК
-        if (['desktop', 'tdesktop', 'macos', 'web'].includes(tg.platform) || window.innerWidth > 1024) {
+    // Платформа
+    function checkPlatform() {
+        const platform = tg.platform;
+        if (['desktop', 'tdesktop', 'macos', 'web'].includes(platform) || window.innerWidth > 1024) {
             document.getElementById('pc-only-blocker').style.display = 'flex';
-            const wrapper = document.querySelector('.main-wrapper');
-            if (wrapper) wrapper.remove();
-            hideLoader();
-            return;
+            const main = document.querySelector('.main-wrapper');
+            if(main) main.remove();
         }
-
-        if (user) {
-            document.getElementById('display-name').innerText = (user.username || user.first_name || "PLAYER").toUpperCase();
-            document.getElementById('display-id').innerText = `ID: ${user.id}`;
-            document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?background=166534&color=fff&name=${user.first_name}`;
-            await syncUserWithSupabase();
-        } else {
-            updateBalanceUI();
-        }
-
-        renderTonPacks();
-        setTimeout(hideLoader, 1000);
     }
+    checkPlatform();
 
-    // Синхронизация с БД
-    async function syncUserWithSupabase() {
+    // Синхронизация данных
+    async function syncData() {
         if (!user) return;
         try {
-            const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}`);
+            const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}?t=${Date.now()}`);
+            if (!res.ok) return;
             const data = await res.json();
-
-            if (data && !data.error) {
-                localStorage.setItem('user_stars', data.stars || '0');
-                localStorage.setItem('user_ton', data.balance || '0.00');
-            } else {
-                await createNewUser();
-            }
-            updateBalanceUI();
+            
+            document.getElementById('bal-ton').innerText = data.balance.toFixed(2);
+            document.getElementById('bal-stars').innerText = Math.floor(data.stars);
+            
+            localStorage.setItem('user_stars', data.stars);
+            localStorage.setItem('user_ton', data.balance);
         } catch (e) {
-            console.error("Sync Error:", e);
-            updateBalanceUI();
+            console.error("Sync error");
         }
     }
 
-    async function createNewUser() {
-        try {
-            const res = await fetch(`${BACKEND_URL}/update_balance`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: user.id,
-                    username: user.username || user.first_name,
-                    balance: 0.00,
-                    stars: 0
-                })
-            });
-            if (res.ok) {
-                localStorage.setItem('user_stars', '0');
-                localStorage.setItem('user_ton', '0.00');
-            }
-        } catch (e) {
-            console.error("Create User Error:", e);
-        }
-    }
-
-    // Обновление баланса (запрос к апи)
-    async function updateBalanceInDB(type, amount) {
+    // Платеж TON
+    async function processPayment(amount) {
         if (isProcessing || !user) return;
         isProcessing = true;
-        tg.HapticFeedback.impactOccurred('heavy');
-
-        const currentVal = parseFloat(localStorage.getItem(type === 'ton' ? 'user_ton' : 'user_stars') || '0');
-        const newVal = currentVal + amount;
-
-        const storageKey = type === 'ton' ? 'user_ton' : 'user_stars';
-        localStorage.setItem(storageKey, type === 'ton' ? newVal.toFixed(2) : Math.floor(newVal));
-        updateBalanceUI();
-
+        tg.HapticFeedback.impactOccurred('medium');
         try {
-            await fetch(`${BACKEND_URL}/update_balance`, {
+            const res = await fetch(`${BACKEND_URL}/create_pay`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: user.id,
-                    [type === 'ton' ? 'balance' : 'stars']: newVal
-                })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({user_id: user.id, amount})
             });
+            const data = await res.json();
+            if (data.pay_url) {
+                tg.openTelegramLink(data.pay_url);
+            }
         } catch (e) {
-            console.error("Update DB Error:", e);
+            tg.showAlert('Ошибка при создании счета TON');
         } finally {
             isProcessing = false;
         }
     }
 
-    // Обновление интерфейса баланса
-    function updateBalanceUI() {
-        const stars = localStorage.getItem('user_stars') || '0';
-        const ton = localStorage.getItem('user_ton') || '0.00';
+    // Платеж STARS
+    async function verifyGift() {
+        const val = document.getElementById('stars-input').value;
+        if (!val || val < 1) return tg.showAlert('Минимум 1 Stars');
         
-        const tonEl = document.getElementById('header-ton');
-        const starsEl = document.getElementById('header-stars');
+        isProcessing = true;
+        tg.HapticFeedback.impactOccurred('heavy');
         
-        if(tonEl) tonEl.innerText = parseFloat(ton).toFixed(2);
-        if(starsEl) starsEl.innerText = parseInt(stars).toLocaleString('ru-RU');
+        try {
+            const res = await fetch(`${BACKEND_URL}/create_stars_pay`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ user_id: user?.id, amount: val })
+            });
+            const data = await res.json();
+            
+            if (data.pay_url) {
+                tg.openInvoice(data.pay_url, (status) => {
+                    if (status === 'paid') {
+                        tg.showAlert('Оплата прошла успешно!');
+                        syncData();
+                        closeVault();
+                    } else if (status === 'cancelled') {
+                        tg.showAlert('Оплата отменена');
+                    }
+                });
+            } else {
+                tg.showAlert('Не удалось получить ссылку на оплату');
+            }
+        } catch (e) {
+            tg.showAlert('Ошибка сервера при оплате Stars');
+        } finally {
+            isProcessing = false;
+        }
     }
 
     function renderTonPacks() {
@@ -293,62 +272,52 @@
         const tonBox = document.getElementById('pane-ton');
         if (!tonBox) return;
         tonBox.innerHTML = PACKS.map(amt => `
-            <div onclick="updateBalanceInDB('ton', ${amt})" class="bg-white/5 border border-white/10 p-6 rounded-3xl text-center active:scale-95 transition-all cursor-pointer">
+            <div onclick="processPayment(${amt})" class="bg-white/5 border border-white/10 p-6 rounded-3xl text-center active:scale-95 transition-all cursor-pointer">
                 <div class="text-[10px] text-blue-400 font-black uppercase mb-1">Пополнить</div>
                 <div class="font-black text-white text-xl">${amt} TON</div>
             </div>
         `).join('');
     }
 
-    function hideLoader() {
-        const loader = document.getElementById('global-loader');
-        if(loader) { 
-            loader.style.opacity = '0'; 
-            setTimeout(() => { loader.style.display = 'none'; }, 500); 
-        }
-    }
-
+    // UI Функции
     function setTab(type) {
         const isTon = type === 'ton';
-        const btnTon = document.getElementById('tab-btn-ton');
-        const btnStars = document.getElementById('tab-btn-stars');
-        const paneTon = document.getElementById('pane-ton');
-        const paneStars = document.getElementById('pane-stars');
-
-        if(btnTon) {
-            btnTon.style.background = isTon ? '#a3e635' : 'transparent';
-            btnTon.style.color = isTon ? 'black' : '#555';
-        }
-        if(btnStars) {
-            btnStars.style.background = !isTon ? '#a3e635' : 'transparent';
-            btnStars.style.color = !isTon ? 'black' : '#555';
-        }
-        if(paneTon) paneTon.classList.toggle('hidden', !isTon);
-        if(paneStars) paneStars.classList.toggle('hidden', isTon);
+        document.getElementById('tab-btn-ton').classList.toggle('active', isTon);
+        document.getElementById('tab-btn-stars').classList.toggle('active', !isTon);
+        document.getElementById('pane-ton').classList.toggle('hidden', !isTon);
+        document.getElementById('pane-stars').classList.toggle('hidden', isTon);
     }
 
     function openVault(tab) { 
         tg.HapticFeedback.impactOccurred('light');
-        const modal = document.getElementById('vault-modal');
-        if(modal) modal.style.display = 'flex'; 
+        document.getElementById('vault-modal').style.display = 'flex'; 
         setTab(tab); 
     }
     
-    function closeVault() { 
-        const modal = document.getElementById('vault-modal');
-        if(modal) modal.style.display = 'none'; 
-    }
+    function closeVault() { document.getElementById('vault-modal').style.display = 'none'; }
+    function navigateTo(url) { tg.HapticFeedback.impactOccurred('medium'); window.location.href = url; }
 
-    function navigateTo(url) { 
-        tg.HapticFeedback.impactOccurred('medium'); 
-        window.location.href = url; 
-    }
-
-    async function verifyGift() {
-        const val = document.getElementById('stars-input').value;
-        if (!val || val < 1) return tg.showAlert('Минимум 1 Stars');
-        updateBalanceInDB('stars', parseInt(val));
-    }
+    // Инициализация
+    window.onload = () => {
+        tg.expand();
+        tg.ready();
+        
+        if (user) {
+            document.getElementById('display-name').innerText = (user.username || user.first_name || "PLAYER").toUpperCase();
+            document.getElementById('display-id').innerText = `ID: ${user.id}`;
+            document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?background=166534&color=fff&name=${user.first_name}`;
+            syncData();
+        }
+        
+        renderTonPacks();
+        setTimeout(() => {
+            const loader = document.getElementById('global-loader');
+            if(loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 500);
+            }
+        }, 1000);
+    };
 
     // Анимация звезд
     const canvas = document.getElementById('stars-canvas');
@@ -376,19 +345,7 @@
             requestAnimationFrame(animateStars);
         }
         initStars(); animateStars();
-        window.addEventListener('resize', initStars);
     }
-
-    window.onload = initApp;
-
-    // Синхронизация между вкладками
-    window.addEventListener('storage', (event) => {
-        if (event.key === 'user_stars' || event.key === 'user_ton') {
-            updateBalanceUI();
-            console.log("Система: Баланс синхронизирован");
-        }
-    });
-
 </script>
 </body>
 </html>
