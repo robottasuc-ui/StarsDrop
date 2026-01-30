@@ -132,6 +132,8 @@
             flex: 1;
             transition: 0.3s;
             text-decoration: none;
+            font-size: 10px;
+            font-weight: bold;
         }
 
         .dock-btn.active { 
@@ -254,6 +256,9 @@ let activeSelectionIndex = null;
 const BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'; 
 const ADMIN_ID = '8015661230'; 
 
+// Функция для получения домена (чтобы картинки не отваливались)
+const BASE_DOMAIN = window.location.origin;
+
 const MASTER_ITEMS_DATABASE = {
     "1may.jpg": { name: "1 May Exclusive", price: 100 },
     "2025.jpg": { name: "Happy 2025", price: 500 },
@@ -319,6 +324,7 @@ function refreshFinancialStatus() {
     document.getElementById('ton-display').innerText = `💎 ${ton} TON`;
 }
 
+// ИСПРАВЛЕННЫЙ РЕНДЕР: добавляем фикс путей
 function renderInfiniteInventory() {
     const gridContainer = document.getElementById('inventory-grid');
     const emptyState = document.getElementById('empty-state');
@@ -340,8 +346,19 @@ function renderInfiniteInventory() {
         const slotElement = document.createElement('div');
         slotElement.className = 'inventory-slot active-item';
         const img = document.createElement('img');
-        // Защита от битых путей: если путь пустой, ставим заглушку
-        img.src = itemData.img || 'img/star.png'; 
+        
+        // ФИКС КАРТИНКИ: проверяем путь
+        let path = itemData.img || 'star.png';
+        if (!path.includes('http') && !path.startsWith('/')) {
+            path = BASE_DOMAIN + '/' + path;
+        }
+        img.src = path;
+        
+        // Доп. защита если картинка не загрузилась
+        img.onerror = function() {
+            this.src = 'https://img.icons8.com/fluency/48/star.png';
+        };
+
         slotElement.appendChild(img);
         slotElement.onclick = () => handleItemSelection(index, itemData);
         gridContainer.appendChild(slotElement);
@@ -362,11 +379,14 @@ function createEmptySlot(container) {
 
 function handleItemSelection(index, item) {
     activeSelectionIndex = index;
-    // Достаем имя файла правильно
     const fileName = item.img.split('/').pop().toLowerCase();
     const dbEntry = MASTER_ITEMS_DATABASE[fileName] || { name: item.name || "Unknown Item", price: 1 };
     
-    document.getElementById('modal-item-img').src = item.img;
+    // ФИКС КАРТИНКИ В МОДАЛКЕ
+    let path = item.img;
+    if (!path.includes('http') && !path.startsWith('/')) path = BASE_DOMAIN + '/' + path;
+    
+    document.getElementById('modal-item-img').src = path;
     document.getElementById('modal-item-name').innerText = dbEntry.name.toUpperCase();
     document.getElementById('modal-sell-btn').innerText = `ПРОДАТЬ ЗА ${dbEntry.price} ⭐`;
     
@@ -379,7 +399,6 @@ function closeItemModal() {
     activeSelectionIndex = null;
 }
 
-// ИСПРАВЛЕННАЯ ФУНКЦИЯ ВЫВОДА
 async function initWithdrawalProcess() {
     let walletBalance = parseInt(localStorage.getItem('user_stars')) || 0;
     const isVerified = localStorage.getItem('isPaid75') === 'true';
@@ -479,7 +498,6 @@ function handlePromoActivation() {
     }
 }
 
-// ЗВЕЗДНЫЙ ФОН
 const starContainer = document.getElementById('stars-canvas');
 const starCtx = starContainer.getContext('2d');
 let starArray = [];
