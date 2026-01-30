@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>StarDrop Upgrade</title>
+    <title>StarDrop Upgrade Final</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -42,22 +42,22 @@
         </div>
     </div>
 
-    <div id="info-chance" class="text-center text-[#a3e635] font-black text-[10px] mb-3 uppercase italic">Загрузка данных...</div>
+    <div id="info-chance" class="text-center text-[#a3e635] font-black text-[10px] mb-3 uppercase italic">Загрузка инвентаря...</div>
 
     <div class="grid grid-cols-2 gap-3 mb-4">
         <div class="slot" id="slot-1">
             <img id="img-1" src="" class="w-8 h-8 object-contain hidden">
-            <div id="slot-1-label" class="text-[7px] font-black opacity-30 mt-1 uppercase">Инвентарь</div>
+            <div class="text-[7px] font-black opacity-30 mt-1 uppercase">Инвентарь</div>
         </div>
         <div class="slot" id="slot-2">
             <img id="img-2" src="" class="w-8 h-8 object-contain hidden">
-            <div id="slot-2-label" class="text-[7px] font-black opacity-30 mt-1 uppercase">Цель</div>
+            <div class="text-[7px] font-black opacity-30 mt-1 uppercase">Цель</div>
         </div>
     </div>
 
     <div class="grid grid-cols-2 gap-3">
         <div>
-            <h3 class="text-[9px] font-black uppercase mb-2 opacity-40 text-center">Инвентарь</h3>
+            <h3 class="text-[9px] font-black uppercase mb-2 opacity-40 text-center">Твой шмот</h3>
             <div id="mine-list" class="scroll-area"></div>
         </div>
         <div>
@@ -75,40 +75,23 @@
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const userId = tg.initDataUnsafe?.user?.id || 8015661230;
 
-    // Твоя база цен и имен
     const ITEMS_DATA = {
-        "1may.jpg": { name: "1 May", price: 100 },
-        "2025.jpg": { name: "2025", price: 500 },
-        "bear.png": { name: "Bear", price: 3500 },
-        "book.jpg": { name: "Book", price: 1000 },
-        "boooox.png": { name: "Berry Box", price: 700 },
-        "botinok.png": { name: "Boot", price: 400 },
-        "box.png": { name: "Jack Box", price: 600 },
-        "car.png": { name: "Car", price: 5000 },
-        "ccolso2.png": { name: "Star Ring", price: 3000 },
-        "cerrrdce.jpg": { name: "Gingerbread", price: 500 },
-        "chemodan.jpg": { name: "Suitcase", price: 5000 },
-        "ciga.png": { name: "Cigar", price: 3000 },
-        "colso.png": { name: "Blue Ring", price: 2500 },
-        "costum.jpg": { name: "Costume", price: 10000 },
-        "cvetok.png": { name: "Flower", price: 1000 },
-        "dog.png": { name: "Rich Dog", price: 500 },
-        "dyxi.png": { name: "Perfume", price: 10000 },
-        "fonarik.jpg": { name: "Lantern", price: 100 },
-        "grob.jpg": { name: "Coffin", price: 5000 },
-        "gyba.png": { name: "Lava Lips", price: 5000 },
-        "happybirthday.jpg": { name: "B-Day Cake", price: 200 },
-        "heart.png": { name: "Heart Lock", price: 2000 },
-        "helmet.png": { name: "Spartan", price: 25000 },
-        "kepka.png": { name: "Red Cap", price: 100000 },
-        "kirpitch.jpg": { name: "Brick", price: 10000 },
-        "metch.png": { name: "Lightsaber", price: 700 },
-        "obyv.jpg": { name: "Sneakers", price: 10000 },
-        "ochki.jpg": { name: "Glasses", price: 30000 },
-        "orel.jpg": { name: "Eagle", price: 5000 },
-        "rozza.png": { name: "Rose", price: 2000 },
-        "shlem.png": { name: "Helmet Biker", price: 3500 },
-        "statyya.jpg": { name: "Statue", price: 41000 },
+        "1may.jpg": { name: "1 May", price: 100 }, "2025.jpg": { name: "2025", price: 500 },
+        "bear.png": { name: "Bear", price: 3500 }, "book.jpg": { name: "Book", price: 1000 },
+        "boooox.png": { name: "Berry Box", price: 700 }, "botinok.png": { name: "Boot", price: 400 },
+        "box.png": { name: "Jack Box", price: 600 }, "car.png": { name: "Car", price: 5000 },
+        "ccolso2.png": { name: "Star Ring", price: 3000 }, "cerrrdce.jpg": { name: "Gingerbread", price: 500 },
+        "chemodan.jpg": { name: "Suitcase", price: 5000 }, "ciga.png": { name: "Cigar", price: 3000 },
+        "colso.png": { name: "Blue Ring", price: 2500 }, "costum.jpg": { name: "Costume", price: 10000 },
+        "cvetok.png": { name: "Flower", price: 1000 }, "dog.png": { name: "Rich Dog", price: 500 },
+        "dyxi.png": { name: "Perfume", price: 10000 }, "fonarik.jpg": { name: "Lantern", price: 100 },
+        "grob.jpg": { name: "Coffin", price: 5000 }, "gyba.png": { name: "Lava Lips", price: 5000 },
+        "happybirthday.jpg": { name: "B-Day Cake", price: 200 }, "heart.png": { name: "Heart Lock", price: 2000 },
+        "helmet.png": { name: "Spartan", price: 25000 }, "kepka.png": { name: "Red Cap", price: 100000 },
+        "kirpitch.jpg": { name: "Brick", price: 10000 }, "metch.png": { name: "Lightsaber", price: 700 },
+        "obyv.jpg": { name: "Sneakers", price: 10000 }, "ochki.jpg": { name: "Glasses", price: 30000 },
+        "orel.jpg": { name: "Eagle", price: 5000 }, "rozza.png": { name: "Rose", price: 2000 },
+        "shlem.png": { name: "Helmet Biker", price: 3500 }, "statyya.jpg": { name: "Statue", price: 41000 },
         "zmei.png": { name: "Snake", price: 500 }
     };
 
@@ -116,76 +99,52 @@
     let s1 = null; let s2 = null;
 
     async function loadFromDB() {
-        const info = document.getElementById('info-chance');
-        try {
-            console.log("Загрузка для ID:", userId);
-            const { data, error } = await _supabase
-                .from('users')
-                .select('inventory')
-                .eq('user_id', userId)
-                .single();
-
-            if (error) throw error;
-
-            console.log("Данные из базы:", data);
-
-            // Обработка данных: если NULL или не массив, ставим пустой список
-            userInventory = Array.isArray(data?.inventory) ? data.inventory : [];
-            
-            info.innerText = userInventory.length > 0 ? "Выберите предмет" : "Инвентарь пуст";
-            render();
-        } catch (e) {
-            console.error("Ошибка загрузки:", e);
-            info.innerText = "Ошибка загрузки данных";
+        const { data, error } = await _supabase.from('users').select('inventory').eq('user_id', userId).single();
+        if (!error && data?.inventory) {
+            userInventory = Array.isArray(data.inventory) ? data.inventory : [];
         }
+        document.getElementById('info-chance').innerText = userInventory.length > 0 ? "Выберите предметы" : "У вас нет подарков";
+        render();
     }
 
     function render() {
         const mList = document.getElementById('mine-list');
         const tList = document.getElementById('target-list');
 
-        // Рендер левой колонки (Инвентарь)
         mList.innerHTML = userInventory.map((it, i) => {
-            // it может быть строкой или объектом {"img": "..."}
-            const rawImg = typeof it === 'string' ? it : it.img;
-            const fileName = rawImg.split('/').pop();
-            const info = ITEMS_DATA[fileName] || { name: "Неизвестно", price: 0 };
-            const fullImgPath = rawImg.startsWith('img/') ? rawImg : 'img/' + rawImg;
-
+            const imgPath = typeof it === 'string' ? it : it.img;
+            const file = imgPath.split('/').pop();
+            const name = ITEMS_DATA[file]?.name || "Подарок";
+            const src = imgPath.startsWith('img/') ? imgPath : 'img/' + imgPath;
             return `
-                <div class="item-card ${s1?.idx === i ? 'active' : ''}" onclick="sel1(${i},'${fullImgPath}',${info.price},'${info.name}')">
-                    <img src="${fullImgPath}" class="w-8 h-8 object-contain">
-                    <div class="text-[8px] font-black truncate">${info.name}</div>
+                <div class="item-card ${s1?.idx === i ? 'active' : ''}" onclick="sel1(${i},'${src}','${name}')">
+                    <img src="${src}" class="w-8 h-8 object-contain">
+                    <div class="text-[8px] font-black truncate">${name}</div>
                 </div>`;
         }).join('');
 
-        // Рендер правой колонки (Цели)
         tList.innerHTML = Object.entries(ITEMS_DATA)
-            .filter(([file, info]) => !s1 || info.price > s1.price)
             .sort((a,b) => a[1].price - b[1].price)
-            .map(([file, info]) => {
-                const imgPath = 'img/' + file;
-                return `
-                <div class="item-card ${s2?.name === info.name ? 'active' : ''}" onclick="sel2('${imgPath}',${info.price},'${info.name}')">
-                    <img src="${imgPath}" class="w-8 h-8 object-contain">
+            .map(([file, info]) => `
+                <div class="item-card ${s2?.name === info.name ? 'active' : ''}" onclick="sel2('img/${file}','${info.name}')">
+                    <img src="img/${file}" class="w-8 h-8 object-contain">
                     <div class="text-[8px] font-black truncate">${info.name}</div>
-                </div>`
-            }).join('');
+                </div>`).join('');
     }
 
-    function sel1(idx, img, price, name) {
-        s1 = {idx, img, price, name};
-        const i1 = document.getElementById('img-1');
-        i1.src = img; i1.classList.remove('hidden');
-        s2 = null; updateUI(); render();
+    function sel1(idx, img, name) {
+        s1 = {idx, img, name};
+        document.getElementById('img-1').src = img;
+        document.getElementById('img-1').classList.remove('hidden');
+        updateUI(); render();
     }
 
-    function sel2(img, price, name) {
-        s2 = {img, price, name};
-        const i2 = document.getElementById('img-2');
-        i2.src = img; i2.classList.remove('hidden');
-        const vt = document.getElementById('view-target');
-        vt.src = img; vt.classList.remove('hidden');
+    function sel2(img, name) {
+        s2 = {img, name};
+        document.getElementById('img-2').src = img;
+        document.getElementById('img-2').classList.remove('hidden');
+        document.getElementById('view-target').src = img;
+        document.getElementById('view-target').classList.remove('hidden');
         document.getElementById('view-empty').classList.add('hidden');
         updateUI(); render();
     }
@@ -195,9 +154,8 @@
         const info = document.getElementById('info-chance');
         const wheel = document.getElementById('wheel-progress');
         if(s1 && s2) {
-            let chance = Math.min((s1.price / s2.price) * 100, 80);
-            info.innerText = `ШАНС: ${chance.toFixed(2)}%`;
-            wheel.style.background = `conic-gradient(#a3e635 ${chance * 3.6}deg, #000 0deg)`;
+            info.innerText = "Шанс: 20%"; // Визуально всегда 20%
+            wheel.style.background = `conic-gradient(#a3e635 72deg, #000 0deg)`; // 20% это 72 градуса
             btn.disabled = false;
         } else {
             btn.disabled = true;
@@ -209,14 +167,14 @@
         const btn = document.getElementById('upg-btn');
         const pointer = document.getElementById('pointer-wrapper');
         const resMsg = document.getElementById('res-msg');
-        
         btn.disabled = true;
-        const chance = Math.min((s1.price / s2.price) * 100, 80);
-        const isWin = (Math.random() * 100) <= chance;
+
+        // ШАНСЫ: 20% победа, 80% поражение
+        const isWin = Math.random() < 0.2; 
         
-        const winDeg = chance * 3.6; 
+        const winDeg = 72; // Конец зеленой зоны
         const spins = 360 * 5;
-        let finalDeg = isWin ? (spins + (Math.random() * (winDeg - 4)) + 2) : (spins + winDeg + (Math.random() * (356 - winDeg)) + 2);
+        let finalDeg = isWin ? (spins + Math.random() * (winDeg - 2)) : (spins + winDeg + Math.random() * (358 - winDeg));
 
         pointer.style.transform = `rotate(${finalDeg}deg)`;
         tg.HapticFeedback.impactOccurred('medium');
@@ -225,34 +183,23 @@
             document.getElementById('center-ui').style.opacity = "0";
             resMsg.style.display = "block";
 
-            let newInventory = [...userInventory];
+            let newInv = [...userInventory];
             if (isWin) {
                 resMsg.innerText = "УДАЧА"; resMsg.style.color = "#a3e635";
-                // Сохраняем в том же формате, что был в базе
-                newInventory[s1.idx] = { img: s2.img, name: s2.name };
+                newInv[s1.idx] = { img: s2.img, name: s2.name };
                 tg.HapticFeedback.notificationOccurred('success');
             } else {
                 resMsg.innerText = "ПРОВАЛ"; resMsg.style.color = "#ff4d4d";
-                newInventory.splice(s1.idx, 1);
+                newInv.splice(s1.idx, 1);
                 tg.HapticFeedback.notificationOccurred('error');
             }
 
-            // Записываем обратно в базу
-            const { error } = await _supabase
-                .from('users')
-                .update({ inventory: newInventory })
-                .eq('user_id', userId);
-
-            if (error) console.error("Ошибка сохранения:", error);
-            
+            await _supabase.from('users').update({ inventory: newInv }).eq('user_id', userId);
             setTimeout(() => location.reload(), 2000);
         }, 3600);
     }
 
-    window.onload = () => {
-        tg.expand();
-        loadFromDB();
-    };
+    window.onload = () => { tg.expand(); loadFromDB(); };
 </script>
 </body>
 </html>
