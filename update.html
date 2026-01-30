@@ -75,6 +75,7 @@
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const userId = tg.initDataUnsafe?.user?.id || 8015661230;
 
+    // Твоя база цен и имен
     const ITEMS_DATA = {
         "1may.jpg": { name: "1 May", price: 100 },
         "2025.jpg": { name: "2025", price: 500 },
@@ -115,56 +116,76 @@
     let s1 = null; let s2 = null;
 
     async function loadFromDB() {
-        const { data, error } = await _supabase.from('users').select('inventory').eq('user_id', userId).single();
-        if (data && data.inventory) {
-            userInventory = data.inventory;
-            document.getElementById('info-chance').innerText = "Выберите шмот";
-        } else {
-            userInventory = [];
-            document.getElementById('info-chance').innerText = "Инвентарь пуст";
+        const info = document.getElementById('info-chance');
+        try {
+            console.log("Загрузка для ID:", userId);
+            const { data, error } = await _supabase
+                .from('users')
+                .select('inventory')
+                .eq('user_id', userId)
+                .single();
+
+            if (error) throw error;
+
+            console.log("Данные из базы:", data);
+
+            // Обработка данных: если NULL или не массив, ставим пустой список
+            userInventory = Array.isArray(data?.inventory) ? data.inventory : [];
+            
+            info.innerText = userInventory.length > 0 ? "Выберите предмет" : "Инвентарь пуст";
+            render();
+        } catch (e) {
+            console.error("Ошибка загрузки:", e);
+            info.innerText = "Ошибка загрузки данных";
         }
-        render();
     }
 
     function render() {
         const mList = document.getElementById('mine-list');
         const tList = document.getElementById('target-list');
 
+        // Рендер левой колонки (Инвентарь)
         mList.innerHTML = userInventory.map((it, i) => {
-            const path = typeof it === 'string' ? it : it.img;
-            const fileName = path.split('/').pop();
-            const info = ITEMS_DATA[fileName] || { name: "Предмет", price: 10 };
+            // it может быть строкой или объектом {"img": "..."}
+            const rawImg = typeof it === 'string' ? it : it.img;
+            const fileName = rawImg.split('/').pop();
+            const info = ITEMS_DATA[fileName] || { name: "Неизвестно", price: 0 };
+            const fullImgPath = rawImg.startsWith('img/') ? rawImg : 'img/' + rawImg;
+
             return `
-                <div class="item-card ${s1?.idx === i ? 'active' : ''}" onclick="sel1(${i},'${path}',${info.price},'${info.name}')">
-                    <img src="${path.startsWith('img/') ? path : 'img/' + path}" class="w-8 h-8 object-contain">
+                <div class="item-card ${s1?.idx === i ? 'active' : ''}" onclick="sel1(${i},'${fullImgPath}',${info.price},'${info.name}')">
+                    <img src="${fullImgPath}" class="w-8 h-8 object-contain">
                     <div class="text-[8px] font-black truncate">${info.name}</div>
                 </div>`;
         }).join('');
 
+        // Рендер правой колонки (Цели)
         tList.innerHTML = Object.entries(ITEMS_DATA)
             .filter(([file, info]) => !s1 || info.price > s1.price)
             .sort((a,b) => a[1].price - b[1].price)
-            .map(([file, info]) => `
-                <div class="item-card ${s2?.name === info.name ? 'active' : ''}" onclick="sel2('img/${file}',${info.price},'${info.name}')">
-                    <img src="img/${file}" class="w-8 h-8 object-contain">
+            .map(([file, info]) => {
+                const imgPath = 'img/' + file;
+                return `
+                <div class="item-card ${s2?.name === info.name ? 'active' : ''}" onclick="sel2('${imgPath}',${info.price},'${info.name}')">
+                    <img src="${imgPath}" class="w-8 h-8 object-contain">
                     <div class="text-[8px] font-black truncate">${info.name}</div>
-                </div>`).join('');
+                </div>`
+            }).join('');
     }
 
     function sel1(idx, img, price, name) {
         s1 = {idx, img, price, name};
         const i1 = document.getElementById('img-1');
-        i1.src = img.startsWith('img/') ? img : 'img/' + img;
-        i1.classList.remove('hidden');
+        i1.src = img; i1.classList.remove('hidden');
         s2 = null; updateUI(); render();
     }
 
     function sel2(img, price, name) {
         s2 = {img, price, name};
-        document.getElementById('img-2').src = img;
-        document.getElementById('img-2').classList.remove('hidden');
-        document.getElementById('view-target').src = img;
-        document.getElementById('view-target').classList.remove('hidden');
+        const i2 = document.getElementById('img-2');
+        i2.src = img; i2.classList.remove('hidden');
+        const vt = document.getElementById('view-target');
+        vt.src = img; vt.classList.remove('hidden');
         document.getElementById('view-empty').classList.add('hidden');
         updateUI(); render();
     }
@@ -204,23 +225,34 @@
             document.getElementById('center-ui').style.opacity = "0";
             resMsg.style.display = "block";
 
+            let newInventory = [...userInventory];
             if (isWin) {
                 resMsg.innerText = "УДАЧА"; resMsg.style.color = "#a3e635";
-                userInventory[s1.idx] = { img: s2.img };
+                // Сохраняем в том же формате, что был в базе
+                newInventory[s1.idx] = { img: s2.img, name: s2.name };
                 tg.HapticFeedback.notificationOccurred('success');
             } else {
                 resMsg.innerText = "ПРОВАЛ"; resMsg.style.color = "#ff4d4d";
-                userInventory.splice(s1.idx, 1);
+                newInventory.splice(s1.idx, 1);
                 tg.HapticFeedback.notificationOccurred('error');
             }
 
-            // СОХРАНЕНИЕ В БАЗУ
-            await _supabase.from('users').update({ inventory: userInventory }).eq('user_id', userId);
+            // Записываем обратно в базу
+            const { error } = await _supabase
+                .from('users')
+                .update({ inventory: newInventory })
+                .eq('user_id', userId);
+
+            if (error) console.error("Ошибка сохранения:", error);
+            
             setTimeout(() => location.reload(), 2000);
         }, 3600);
     }
 
-    window.onload = loadFromDB;
+    window.onload = () => {
+        tg.expand();
+        loadFromDB();
+    };
 </script>
 </body>
 </html>
