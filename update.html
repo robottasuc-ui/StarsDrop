@@ -1,345 +1,253 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>StarsDrop - Profile</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        :root { --bg-dark: #0a1205; --accent-green: #a3e635; --panel-bg: rgba(0, 0, 0, 0.4); }
-        body { background: var(--bg-dark); color: white; font-family: 'Inter', sans-serif; margin: 0; overflow-x: hidden; -webkit-user-select: none; user-select: none; }
-        #stars-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-        .main-wrapper { position: relative; z-index: 1; padding: 24px 20px 140px; background: radial-gradient(circle at 50% 30%, #166534 0%, #0a1205 80%); min-height: 100vh; }
-        .glass-card { background: var(--panel-bg); border: 1px solid rgba(163, 230, 53, 0.1); backdrop-filter: blur(20px); border-radius: 32px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
-        .inventory-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        .inventory-slot { aspect-ratio: 1/1; background: rgba(163, 230, 53, 0.05); border: 1px dashed rgba(163, 230, 53, 0.2); border-radius: 24px; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
-        .active-item { border: 1.5px solid var(--accent-green); background: rgba(163, 230, 53, 0.1); cursor: pointer; }
-        .active-item img { width: 70%; height: 70%; object-fit: contain; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3)); }
-        .btn-green { background: var(--accent-green); color: #000; font-weight: 900; text-transform: uppercase; border-radius: 20px; box-shadow: 0 6px 0 #65a30d; transition: 0.1s; outline: none; }
-        .btn-green:active { transform: translateY(3px); box-shadow: 0 3px 0 #65a30d; }
-        #item-modal { position: fixed; inset: 0; z-index: 10000; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); }
-        .dock-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10, 18, 5, 0.95); border-top: 1px solid rgba(163,230,53,0.2); display: flex; padding: 15px 10px 40px; z-index: 1000; }
-        .dock-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #4b5563; font-size: 10px; font-weight: bold; text-decoration: none; transition: 0.3s; }
-        .dock-btn.active { color: var(--accent-green); filter: drop-shadow(0 0 5px var(--accent-green)); }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>StarDrop Upgrade Cloud</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+        body { background: #050a04; color: white; font-family: 'Montserrat', sans-serif; height: 100vh; overflow: hidden; }
+        .wheel-container { width: 210px; height: 210px; border-radius: 50%; background: #000; border: 4px solid #1a2e0a; margin: 10px auto; position: relative; display: flex; align-items: center; justify-content: center; }
+        #wheel-progress { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(#a3e635 0deg, #000 0deg); opacity: 0.7; }
+        #pointer-wrapper { position: absolute; inset: -15px; z-index: 30; transition: transform 3.5s cubic-bezier(0.15, 0, 0.15, 1); }
+        #pointer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 4px; height: 35px; background: #fff; border-radius: 10px; box-shadow: 0 0 15px #fff; }
+        .scroll-area { height: 200px; overflow-y: auto; background: rgba(255,255,255,0.02); border-radius: 12px; padding: 8px; border: 1px solid rgba(163,230,53,0.1); }
+        .item-card { display: flex; align-items: center; gap: 8px; padding: 8px; margin-bottom: 6px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 2px solid transparent; cursor: pointer; transition: 0.2s; }
+        .item-card.active { border-color: #a3e635; background: rgba(163, 230, 53, 0.1); }
+        .slot { width: 100%; height: 70px; background: rgba(255,255,255,0.03); border: 1px solid rgba(163,230,53,0.2); border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .btn-main { background: #a3e635; color: #000; font-weight: 900; text-transform: uppercase; width: 100%; padding: 16px; border-radius: 20px; box-shadow: 0 0 20px rgba(163, 230, 53, 0.3); }
+        .btn-main:disabled { background: #1a2e0a; color: #3e5c1e; opacity: 0.6; }
+        #res-msg { position: absolute; font-size: 28px; font-weight: 900; z-index: 40; display: none; text-shadow: 0 0 20px #000; text-align: center; width: 100%; }
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-thumb { background: #a3e635; }
+    </style>
 </head>
-<body>
-    <canvas id="stars-canvas"></canvas>
+<body class="p-4">
 
-    <div class="main-wrapper">
-        <header class="flex flex-col items-center mt-6 mb-10">
-            <div class="relative group">
-                <img id="u-avatar" src="" class="w-28 h-28 rounded-full border-4 border-green-500/40 bg-gray-900 object-cover shadow-2xl">
-                <div class="absolute bottom-1 right-2 w-7 h-7 bg-green-500 border-4 border-[#0a1205] rounded-full"></div>
-            </div>
-            <h2 id="u-name" class="text-4xl font-black uppercase italic mt-6 tracking-tighter text-white">ЗАГРУЗКА...</h2>
-            <div class="flex flex-wrap justify-center gap-3 mt-4">
-                <div id="u-id-label" class="bg-white/5 border border-white/10 px-4 py-1.5 rounded-full text-[10px] font-bold text-green-400 uppercase">ID: 00000000</div>
-                <div id="u-stars" class="bg-yellow-400/10 border border-yellow-400/20 px-4 py-1.5 rounded-full text-[10px] font-black text-yellow-400 uppercase">⭐ 0 STARS</div>
-                <div id="u-ton" class="bg-blue-400/10 border border-blue-400/20 px-4 py-1.5 rounded-full text-[10px] font-black text-blue-400 uppercase">💎 0.00 TON</div>
-            </div>
-        </header>
+    <div class="flex justify-between items-center mb-2">
+        <button onclick="window.history.back()" class="text-[10px] font-black opacity-40 uppercase">← Назад</button>
+        <div id="status" class="text-[8px] font-black text-white opacity-50 uppercase">Connecting...</div>
+    </div>
 
-        <section class="glass-card p-7 mb-8 text-center">
-            <h3 class="text-[11px] font-black uppercase text-green-400 tracking-widest mb-4">Активация бонуса</h3>
-            <input type="text" id="promo-input" class="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-center mb-4 outline-none uppercase font-bold text-white tracking-widest" placeholder="ВВЕДИТЕ ПРОМОКОД">
-            <button onclick="handlePromo()" class="w-full btn-green py-5 text-sm">Активировать</button>
-        </section>
+    <div class="wheel-container">
+        <div id="wheel-progress"></div>
+        <div id="pointer-wrapper"><div id="pointer"></div></div>
+        <div id="res-msg"></div>
+        <div id="center-ui" class="relative z-10 text-center">
+            <img id="view-target" src="" class="w-24 h-24 object-contain hidden mx-auto">
+            <div id="view-empty" class="text-6xl font-black opacity-10 uppercase">UP</div>
+        </div>
+    </div>
 
-        <section class="glass-card p-7 min-h-[400px]">
-            <div class="flex justify-between items-center mb-8">
-                <h3 class="text-sm font-black uppercase tracking-tighter">Ваш Инвентарь</h3>
-                <span id="inv-count" class="text-[11px] font-black text-gray-500 bg-black/30 px-3 py-1 rounded-full uppercase">0 ПРЕДМЕТОВ</span>
-            </div>
-            <div id="grid" class="inventory-grid"></div>
-        </section>
-    </div>
+    <div id="info-chance" class="text-center text-[#a3e635] font-black text-[11px] mb-3 uppercase italic">Загрузка данных...</div>
 
-    <div id="item-modal">
-        <div class="glass-card p-10 w-[90%] max-w-[360px] text-center border-green-500/50 shadow-[0_0_50px_rgba(163,230,53,0.2)]">
-            <div class="relative w-32 h-32 mx-auto mb-8 bg-green-500/5 rounded-[40px] flex items-center justify-center border border-green-500/10">
-                <img id="modal-img" src="" class="w-20 h-20 object-contain">
-            </div>
-            <h2 id="modal-name" class="text-3xl font-black uppercase italic mb-2 tracking-tighter">НАЗВАНИЕ</h2>
-            <p id="modal-status" class="text-green-500 text-[10px] font-bold uppercase mb-10 tracking-[0.4em]">Доступен для вывода</p>
-            <div class="flex flex-col gap-4">
-                <button onclick="withdrawToBot()" class="w-full btn-green py-6 text-sm shadow-xl shadow-green-500/20">ВЫВЕСТИ В БОТ</button>
-                <button id="sell-btn" onclick="sellItem()" class="w-full bg-white/5 border border-white/10 py-5 rounded-2xl font-black uppercase text-[11px] hover:bg-white/10 transition-all">ПРОДАТЬ ПРЕДМЕТ</button>
-                <button onclick="closeModal()" class="w-full py-2 text-gray-600 text-[10px] font-black uppercase mt-4 tracking-[0.2em] hover:text-white transition-colors">ОТМЕНИТЬ</button>
-            </div>
-        </div>
-    </div>
+    <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="slot" id="slot-1">
+            <img id="img-1" src="" class="w-10 h-10 object-contain hidden">
+            <div class="text-[7px] font-black opacity-30 mt-1 uppercase">Инвентарь</div>
+        </div>
+        <div class="slot" id="slot-2">
+            <img id="img-2" src="" class="w-10 h-10 object-contain hidden">
+            <div class="text-[7px] font-black opacity-30 mt-1 uppercase">Цель</div>
+        </div>
+    </div>
 
-    <nav class="dock-bar">
-        <a href="index.html" class="dock-btn">🏠 <span>Кейсы</span></a>
-        <div class="dock-btn active">👤 <span>Профиль</span></div>
-    </nav>
+    <div class="grid grid-cols-2 gap-3">
+        <div>
+            <h3 class="text-[9px] font-black uppercase mb-2 opacity-40 text-center text-[#a3e635]">Твой шмот</h3>
+            <div id="mine-list" class="scroll-area"></div>
+        </div>
+        <div>
+            <h3 class="text-[9px] font-black uppercase mb-2 opacity-40 text-center">Магазин</h3>
+            <div id="target-list" class="scroll-area"></div>
+        </div>
+    </div>
+
+    <button id="upg-btn" onclick="startUpgrade()" class="btn-main mt-4" disabled>Апгрейд</button>
 
 <script>
-    const tg = window.Telegram.WebApp;
-    const SUPABASE_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-    const BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I';
-    const ADMIN_ID = '8015661230';
+    // --- КОНФИГУРАЦИЯ SUPABASE ---
+    const SUPABASE_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co'; 
+    const SUPABASE_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const ITEMS = {
-        "1may.jpg": { name: "1 May Exclusive", price: 100 },
-        "2025.jpg": { name: "Happy 2025", price: 500 },
-        "bear.png": { name: "Honey Bear", price: 3500 },
-        "book.jpg": { name: "Ancient Book", price: 1000 },
-        "boooox.png": { name: "Berry Box", price: 700 },
-        "botinok.png": { name: "Old Boot", price: 400 },
-        "box.png": { name: "Jack in Box", price: 600 },
-        "car.png": { name: "Sports Car", price: 5000 },
-        "raketa.png": { name: "Space Rocket", price: 50 },
-        "ccolso2.png": { name: "Star Ring", price: 3000 },
-        "cerrrdce.jpg": { name: "Gingerbread", price: 500 },
-        "chemodan.jpg": { name: "Traveler Case", price: 5000 },
-        "ciga.png": { name: "Luxury Cigar", price: 3000 },
-        "colso.png": { name: "Blue Diamond", price: 2500 },
-        "costum.jpg": { name: "Royal Costume", price: 10000 },
-        "cvetok.png": { name: "Wild Flower", price: 1000 },
-        "dog.png": { name: "Rich Dog", price: 500 },
-        "dyxi.png": { name: "Gold Perfume", price: 10000 },
-        "fonarik.jpg": { name: "Night Lantern", price: 100 },
-        "grob.jpg": { name: "Ancient Coffin", price: 5000 },
-        "gyba.png": { name: "Lava Lips", price: 5000 },
-        "happybirthday.jpg": { name: "Birthday Cake", price: 200 },
-        "heart.png": { name: "Heart Lock", price: 2000 },
-        "helmet.png": { name: "Spartan Helmet", price: 25000 },
-        "kalendar.png": { name: "Event Calendar", price: 400 },
-        "kepka.png": { name: "Legendary Cap", price: 100000 },
-        "kirpitch.jpg": { name: "Golden Brick", price: 10000 },
-        "koks.jpg": { name: "Party Cocktail", price: 150 },
-        "koktel.png": { name: "Toxic Mix", price: 500 },
-        "kot.png": { name: "Atomic Cat", price: 10000 },
-        "kotel.png": { name: "Witch Cauldron", price: 500 },
-        "krovatka.jpg": { name: "Baby Bow", price: 600 },
-        "lolipop.png": { name: "Sweet Lollipop", price: 500 },
-        "lucky.jpg": { name: "Clover Lucky", price: 500 },
-        "mafin.jpg": { name: "Sugar Muffin", price: 700 },
-        "metch.png": { name: "Star Saber", price: 700 },
-        "narkotiki.png": { name: "Star Token", price: 600 },
-        "obyv.jpg": { name: "Sneakers Pro", price: 10000 },
-        "otchki.jpg": { name: "Cyber Glasses", price: 30000 },
-        "orel.jpg": { name: "Golden Eagle", price: 5000 },
-        "otkritka.jpg": { name: "Peace Dove", price: 150 },
-        "paska.jpg": { name: "Easter Cake", price: 75 },
-        "rozza.png": { name: "Velvet Rose", price: 2000 },
-        "rykzak.jpg": { name: "Adventurer Bag", price: 500 },
-        "shapka.png": { name: "Santa Hat", price: 500 },
-        "shar.jpg": { name: "Magic Ball", price: 1000 },
-        "shlem.png": { name: "Biker Helmet", price: 3500 },
-        "soska.jpg": { name: "Diamond Pacifier", price: 3000 },
-        "star.png": { name: "Pure Star", price: 15 },
-        "statyya.jpg": { name: "Hero Statue", price: 41000 },
-        "venok.jpg": { name: "Wreath Flower", price: 500 },
-        "yayko.png": { name: "Dragon Egg", price: 600 },
-        "zhele.png": { name: "Slime Jelly", price: 700 },
-        "zmei.png": { name: "Snake Friend", price: 500 },
-        "kolechko.png": { name: "Simple Ring", price: 100 }
-    };
+    // БАЗА ДАННЫХ ПРЕДМЕТОВ (названия и цены)
+    const SHOP_ITEMS = [
+        { name: "1 May", img: "1may.jpg", price: 100 },
+        { name: "Bear", img: "bear.png", price: 3500 },
+        { name: "Book", img: "book.jpg", price: 1000 },
+        { name: "Berry Box", img: "boooox.png", price: 700 },
+        { name: "Boot", img: "botinok.png", price: 400 },
+        { name: "Jack Box", img: "box.png", price: 600 },
+        { name: "Car", img: "car.png", price: 5000 },
+        { name: "Star Ring", img: "ccolso2.png", price: 3000 },
+        { name: "Gingerbread", img: "cerrrdce.jpg", price: 500 },
+        { name: "Suitcase", img: "chemodan.jpg", price: 5000 },
+        { name: "Cigar", img: "ciga.png", price: 3000 },
+        { name: "Blue Ring", img: "colso.png", price: 2500 },
+        { name: "Costume", img: "costum.jpg", price: 10000 },
+        { name: "Flower", img: "cvetok.png", price: 1000 },
+        { name: "Rich Dog", img: "dog.png", price: 500 },
+        { name: "Perfume", img: "dyxi.png", price: 10000 },
+        { name: "Lantern", img: "fonarik.jpg", price: 100 },
+        { name: "Coffin", img: "grob.jpg", price: 5000 },
+        { name: "Lava Lips", img: "gyba.png", price: 5000 },
+        { name: "B-Day Cake", img: "happybirthday.jpg", price: 200 },
+        { name: "Heart Lock", img: "heart.png", price: 2000 },
+        { name: "Spartan", img: "helmet.png", price: 25000 },
+        { name: "Red Cap", img: "kepka.png", price: 100000 },
+        { name: "Brick", img: "kirpitch.jpg", price: 10000 },
+        { name: "Lightsaber", img: "metch.png", price: 700 },
+        { name: "Sneakers", img: "obyv.jpg", price: 10000 },
+        { name: "Glasses", img: "ochki.jpg", price: 30000 },
+        { name: "Eagle", img: "orel.jpg", price: 5000 },
+        { name: "Rose", img: "rozza.png", price: 2000 },
+        { name: "Helmet Biker", img: "shlem.png", price: 3500 },
+        { name: "Statue", img: "statyya.jpg", price: 41000 },
+        { name: "Snake", img: "zmei.png", price: 500 }
+    ];
 
-    let user = null;
-    let selectedIdx = -1;
-    const userId = tg.initDataUnsafe?.user?.id || 8015661230;
+    let userInventory = [];
+    let selectedMine = null;
+    let selectedTarget = null;
+    const userId = tg.initDataUnsafe?.user?.id || 12345678; // 12345678 для теста в браузере
 
-    function fixPath(p) { return p.startsWith('img/') ? p : 'img/' + p; }
+    function fixPath(p) { return p.startsWith('img/') ? p : 'img/' + p; }
 
-    async function loadUser() {
-        const { data, error } = await _supabase.from('users').select('*').eq('user_id', userId).single();
-        if (data) {
-            user = data;
-            const displayName = (tg.initDataUnsafe?.user?.username || tg.initDataUnsafe?.user?.first_name || "USER").toUpperCase();
-            document.getElementById('u-name').innerText = displayName;
-            document.getElementById('u-id-label').innerText = `ID: ${user.user_id || userId}`;
-            document.getElementById('u-stars').innerText = `⭐ ${user.stars || 0} STARS`;
-            document.getElementById('u-ton').innerText = `💎 ${(user.balance || 0).toFixed(2)} TON`;
-            document.getElementById('u-avatar').src = tg.initDataUnsafe?.user?.photo_url || `https://ui-avatars.com/api/?name=${displayName}&background=166534&color=fff`;
-            renderGrid();
-        }
-    }
+    async function init() {
+        document.getElementById('status').innerText = "DB FETCHING...";
+        const { data, error } = await _supabase
+            .from('users')
+            .select('inventory')
+            .eq('user_id', userId)
+            .single();
 
-    function renderGrid() {
-        const grid = document.getElementById('grid');
-        const inv = user.inventory || [];
-        document.getElementById('inv-count').innerText = `${inv.length} ПРЕДМЕТОВ`;
-        
-        let html = inv.map((it, i) => `
-            <div class="inventory-slot active-item" onclick="openItem(${i})">
-                <img src="${fixPath(it.img)}">
-            </div>
-        `).join('');
+        if (error) {
+            console.error("DB Error:", error);
+            document.getElementById('status').innerText = "ERROR DB";
+        } else {
+            userInventory = Array.isArray(data.inventory) ? data.inventory : [];
+            document.getElementById('status').innerText = "CONNECTED";
+            render();
+        }
+    }
 
-        // Добавляем пустые слоты для красоты
-        const emptyCount = Math.max(0, 9 - inv.length);
-        for(let i=0; i<emptyCount; i++) {
-            html += `<div class="inventory-slot opacity-20"><span class="text-[8px] font-black uppercase text-green-900">Empty</span></div>`;
-        }
-        
-        grid.innerHTML = html;
-    }
+    function render() {
+        const mList = document.getElementById('mine-list');
+        const tList = document.getElementById('target-list');
 
-    function openItem(i) {
-        selectedIdx = i;
-        const it = user.inventory[i];
-        const fileName = it.img.split('/').pop().toLowerCase();
-        const info = ITEMS[fileName] || { name: "Item", price: 10 };
-        document.getElementById('modal-img').src = fixPath(it.img);
-        document.getElementById('modal-name').innerText = info.name.toUpperCase();
-        document.getElementById('sell-btn').innerText = `ПРОДАТЬ ЗА ${info.price} ⭐`;
-        document.getElementById('item-modal').style.display = 'flex';
-        tg.HapticFeedback.impactOccurred('medium');
-    }
+        mList.innerHTML = userInventory.map((it, i) => `
+            <div class="item-card ${selectedMine?.idx === i ? 'active' : ''}" onclick="selMine(${i},'${it.img}',${it.price || 0},'${it.name}')">
+                <img src="${fixPath(it.img)}" class="w-8 h-8 object-contain">
+                <div class="text-[8px] font-black truncate">${it.name}</div>
+            </div>`).join('');
 
-    function closeModal() { document.getElementById('item-modal').style.display = 'none'; }
+        tList.innerHTML = SHOP_ITEMS
+            .filter(it => !selectedMine || it.price > selectedMine.price)
+            .sort((a,b) => a.price - b.price)
+            .map(it => `
+                <div class="item-card ${selectedTarget?.name === it.name ? 'active' : ''}" onclick="selTarget('${it.img}',${it.price},'${it.name}')">
+                    <img src="${fixPath(it.img)}" class="w-8 h-8 object-contain">
+                    <div class="text-[8px] font-black truncate">${it.name}</div>
+                </div>`).join('');
+        
+        updateUI();
+    }
 
-    async function sellItem() {
-        const it = user.inventory[selectedIdx];
-        const fileName = it.img.split('/').pop().toLowerCase();
-        const price = ITEMS[fileName]?.price || 0;
-        let newInv = [...user.inventory];
-        newInv.splice(selectedIdx, 1);
-        
-        const { error } = await _supabase.from('users').update({ 
-            inventory: newInv, 
-            stars: (user.stars || 0) + price 
-        }).eq('user_id', userId);
+    function selMine(idx, img, price, name) {
+        selectedMine = {idx, img, price, name};
+        document.getElementById('img-1').src = fixPath(img);
+        document.getElementById('img-1').classList.remove('hidden');
+        selectedTarget = null; render();
+    }
 
-        if (!error) { 
-            closeModal(); 
-            loadUser(); 
-            tg.HapticFeedback.notificationOccurred('success'); 
-        }
-    }
+    function selTarget(img, price, name) {
+        selectedTarget = {img, price, name};
+        document.getElementById('img-2').src = fixPath(img);
+        document.getElementById('img-2').classList.remove('hidden');
+        document.getElementById('view-target').src = fixPath(img);
+        document.getElementById('view-target').classList.remove('hidden');
+        document.getElementById('view-empty').classList.add('hidden');
+        render();
+    }
 
-    async function withdrawToBot() {
-        // Проверка верификации 75 Stars
-        const isVerified = user.is_paid_75 === true;
-        if (!isVerified) {
-            if ((user.stars || 0) < 75) {
-                tg.showAlert(`🛑 ОШИБКА ВЕРИФИКАЦИИ\n\nДля вывода нужна разовая верификация (75 Stars).\nВаш баланс: ${user.stars} ⭐`);
-                return;
-            } else {
-                tg.showConfirm("Списать 75 Stars для верификации аккаунта?", async (ok) => {
-                    if (ok) {
-                        const { error } = await _supabase.from('users').update({ 
-                            stars: user.stars - 75, 
-                            is_paid_75: true 
-                        }).eq('user_id', userId);
-                        if(!error) {
-                            tg.showAlert("✅ Верификация пройдена! Нажмите ВЫВОД еще раз.");
-                            loadUser();
-                        }
-                    }
-                });
-                return;
-            }
-        }
+    function updateUI() {
+        const btn = document.getElementById('upg-btn');
+        const info = document.getElementById('info-chance');
+        const wheel = document.getElementById('wheel-progress');
+        
+        if(selectedMine && selectedTarget) {
+            let chance = (selectedMine.price / selectedTarget.price) * 100;
+            if (selectedMine.price === 0) chance = 5; // Если цена не указана
+            chance = Math.min(Math.max(chance, 1), 80);
+            
+            info.innerText = `ШАНС: ${chance.toFixed(1)}%`;
+            wheel.style.background = `conic-gradient(#a3e635 ${chance * 3.6}deg, #000 0deg)`;
+            btn.disabled = false;
+        } else {
+            btn.disabled = true;
+            info.innerText = "ВЫБЕРИТЕ ПРЕДМЕТЫ";
+        }
+    }
 
-        const it = user.inventory[selectedIdx];
-        const fileName = it.img.split('/').pop().toLowerCase();
-        const info = ITEMS[fileName] || { name: it.name };
-        const u = tg.initDataUnsafe?.user || { first_name: 'User', id: userId, username: 'unknown' };
+    async function startUpgrade() {
+        const btn = document.getElementById('upg-btn');
+        const pointer = document.getElementById('pointer-wrapper');
+        const resMsg = document.getElementById('res-msg');
+        
+        btn.disabled = true;
+        
+        let chance = Math.min((selectedMine.price / selectedTarget.price) * 100, 80);
+        if (selectedMine.price === 0) chance = 5;
 
-        const text = `🚀 <b>ЗАЯВКА НА ВЫВОД</b>\n\n👤 <b>Юзер:</b> ${u.first_name} (@${u.username})\n🆔 <b>ID:</b> <code>${u.id}</code>\n🎁 <b>Предмет:</b> ${info.name}\n🖼️ <b>Файл:</b> ${fileName}`;
+        const isWin = (Math.random() * 100) <= chance;
+        const spins = 1800; // 5 оборотов
+        const winDeg = chance * 3.6;
+        const finalDeg = isWin ? (spins + Math.random() * winDeg) : (spins + winDeg + Math.random() * (360 - winDeg));
 
-        try {
-            const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: ADMIN_ID, text: text, parse_mode: 'HTML' })
-            });
+        pointer.style.transform = `rotate(${finalDeg}deg)`;
+        tg.HapticFeedback.impactOccurred('medium');
 
-            if (res.ok) {
-                let newInv = [...user.inventory];
-                newInv.splice(selectedIdx, 1);
-                await _supabase.from('users').update({ inventory: newInv }).eq('user_id', userId);
-                tg.showAlert("✅ ЗАЯВКА ОТПРАВЛЕНА!\n\nОжидайте выплату в течение 24 часов.");
-                closeModal();
-                loadUser();
-                tg.HapticFeedback.notificationOccurred('success');
-            } else {
-                tg.showAlert("Ошибка связи с ботом.");
-            }
-        } catch (e) {
-            tg.showAlert("Ошибка сети.");
-        }
-    }
+        setTimeout(async () => {
+            let newInv = [...userInventory];
+            if (isWin) {
+                resMsg.innerText = "УСПЕХ!";
+                resMsg.style.color = "#a3e635";
+                newInv[selectedMine.idx] = { 
+                    name: selectedTarget.name, 
+                    img: fixPath(selectedTarget.img), 
+                    price: selectedTarget.price 
+                };
+                tg.HapticFeedback.notificationOccurred('success');
+            } else {
+                resMsg.innerText = "ПРОВАЛ";
+                resMsg.style.color = "#ff4d4d";
+                newInv.splice(selectedMine.idx, 1);
+                tg.HapticFeedback.notificationOccurred('error');
+            }
 
-    async function handlePromo() {
-        const input = document.getElementById('promo-input');
-        const code = input.value.trim().toUpperCase();
-        if (!code) return;
+            resMsg.style.display = "block";
+            document.getElementById('center-ui').style.opacity = "0.2";
 
-        const used = (user.used_promos || "").split(',');
-        if (used.includes(code)) {
-            tg.showAlert("Этот код уже использован!");
-            return;
-        }
+            // СОХРАНЕНИЕ В SUPABASE
+            const { error } = await _supabase
+                .from('users')
+                .update({ inventory: newInv })
+                .eq('user_id', userId);
 
-        const PROMOS = { "START": 100, "ADMIN": 500000, "GIFT": 500 };
-        if (PROMOS[code]) {
-            const newUsed = user.used_promos ? `${user.used_promos},${code}` : code;
-            const { error } = await _supabase.from('users').update({ 
-                stars: (user.stars || 0) + PROMOS[code], 
-                used_promos: newUsed 
-            }).eq('user_id', userId);
-            
-            if (!error) {
-                tg.showAlert(`✅ УСПЕХ!\nНачислено: ${PROMOS[code]} ⭐`);
-                input.value = '';
-                loadUser();
-            }
-        } else {
-            tg.showAlert("Код не найден.");
-        }
-    }
+            if (error) console.error("Update Error:", error);
 
-    // Анимация звезд
-    const canvas = document.getElementById('stars-canvas');
-    const ctx = canvas.getContext('2d');
-    let stars = [];
+            setTimeout(() => location.reload(), 2000);
+        }, 3600);
+    }
 
-    function initStars() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        stars = Array.from({length: 70}, () => ({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            s: Math.random() * 2,
-            v: Math.random() * 0.3 + 0.1,
-            a: Math.random()
-        }));
-    }
-
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#a3e635";
-        stars.forEach(s => {
-            ctx.globalAlpha = s.a;
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.s, 0, Math.PI * 2);
-            ctx.fill();
-            s.y += s.v;
-            if(s.y > canvas.height) s.y = -5;
-        });
-        requestAnimationFrame(draw);
-    }
-
-    window.onload = () => {
-        initStars();
-        draw();
-        loadUser();
-        tg.expand();
-        tg.ready();
-    };
-    window.onresize = initStars;
+    init();
 </script>
 </body>
 </html>
