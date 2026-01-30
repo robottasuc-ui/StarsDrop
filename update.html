@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>StarDrop Upgrade Fix</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
@@ -17,7 +16,7 @@
         .scroll-area { height: 210px; overflow-y: auto; background: rgba(255,255,255,0.02); border-radius: 12px; padding: 8px; border: 1px solid rgba(163,230,53,0.1); }
         .item-card { display: flex; align-items: center; gap: 8px; padding: 8px; margin-bottom: 6px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 2px solid transparent; cursor: pointer; }
         .item-card.active { border-color: #a3e635; background: rgba(163, 230, 53, 0.1); }
-        .slot { width: 100%; height: 70px; background: rgba(255,255,255,0.03); border: 1px solid rgba(163,230,53,0.2); border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+        .slot { width: 100%; height: 70px; background: rgba(255,255,255,0.03); border: 1px solid rgba(163,230,53,0.2); border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .btn-main { background: #a3e635; color: #000; font-weight: 900; text-transform: uppercase; width: 100%; padding: 16px; border-radius: 20px; box-shadow: 0 0 20px rgba(163, 230, 53, 0.3); transition: 0.3s; }
         .btn-main:disabled { background: #1a2e0a; color: #3e5c1e; opacity: 0.6; }
         #res-msg { position: absolute; font-size: 24px; font-weight: 900; z-index: 40; display: none; text-shadow: 0 0 20px #000; text-align: center; width: 100%; }
@@ -29,7 +28,7 @@
 
     <div class="flex justify-between items-center mb-2">
         <button onclick="window.history.back()" class="text-[10px] font-black opacity-40 uppercase">← Назад</button>
-        <div id="status-label" class="text-[10px] font-black text-[#a3e635]">UPGRADE SYSTEM</div>
+        <div class="text-[10px] font-black text-[#a3e635]">UPGRADE SYSTEM</div>
     </div>
 
     <div class="wheel-container">
@@ -42,16 +41,16 @@
         </div>
     </div>
 
-    <div id="info-chance" class="text-center text-[#a3e635] font-black text-[10px] mb-3 uppercase italic">Загрузка данных...</div>
+    <div id="info-chance" class="text-center text-[#a3e635] font-black text-[10px] mb-3 uppercase italic">Выберите предметы</div>
 
     <div class="grid grid-cols-2 gap-3 mb-4">
         <div class="slot" id="slot-1">
-            <img id="img-1" src="" class="w-10 h-10 object-contain hidden">
-            <div id="slot-1-label" class="text-[7px] font-black opacity-30 mt-1 uppercase">Инвентарь</div>
+            <img id="img-1" src="" class="w-8 h-8 object-contain hidden">
+            <div class="text-[7px] font-black opacity-30 mt-1 uppercase">Инвентарь</div>
         </div>
         <div class="slot" id="slot-2">
-            <img id="img-2" src="" class="w-10 h-10 object-contain hidden">
-            <div id="slot-2-label" class="text-[7px] font-black opacity-30 mt-1 uppercase">Цель</div>
+            <img id="img-2" src="" class="w-8 h-8 object-contain hidden">
+            <div class="text-[7px] font-black opacity-30 mt-1 uppercase">Цель</div>
         </div>
     </div>
 
@@ -71,114 +70,82 @@
 <script>
     const tg = window.Telegram.WebApp;
     
-    // НАСТРОЙКИ SUPABASE
-    const SUPABASE_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const userId = tg.initDataUnsafe?.user?.id || 8015661230;
-
-    // ТВОИ ДАННЫЕ ПРЕДМЕТОВ (Цена должна быть актуальной)
+    // БАЗА ДАННЫХ (Пути теперь совпадают с профилем)
     const ITEMS_DATA = {
-        "1may.jpg": { name: "1 May", price: 100 },
-        "2025.jpg": { name: "2025", price: 500 },
-        "bear.png": { name: "Bear", price: 3500 },
-        "book.jpg": { name: "Book", price: 1000 },
-        "boooox.png": { name: "Berry Box", price: 700 },
-        "botinok.png": { name: "Boot", price: 400 },
-        "box.png": { name: "Jack Box", price: 600 },
-        "car.png": { name: "Car", price: 5000 },
-        "ccolso2.png": { name: "Star Ring", price: 3000 },
-        "cerrrdce.jpg": { name: "Gingerbread", price: 500 },
-        "chemodan.jpg": { name: "Suitcase", price: 5000 },
-        "ciga.png": { name: "Cigar", price: 3000 },
-        "colso.png": { name: "Blue Ring", price: 2500 },
-        "costum.jpg": { name: "Costume", price: 10000 },
-        "cvetok.png": { name: "Flower", price: 1000 },
-        "dog.png": { name: "Rich Dog", price: 500 },
-        "dyxi.png": { name: "Perfume", price: 10000 },
-        "fonarik.jpg": { name: "Lantern", price: 100 },
-        "grob.jpg": { name: "Coffin", price: 5000 },
-        "gyba.png": { name: "Lava Lips", price: 5000 },
-        "happybirthday.jpg": { name: "B-Day Cake", price: 200 },
-        "heart.png": { name: "Heart Lock", price: 2000 },
-        "helmet.png": { name: "Spartan", price: 25000 },
-        "kepka.png": { name: "Red Cap", price: 100000 },
-        "kirpitch.jpg": { name: "Brick", price: 10000 },
-        "metch.png": { name: "Lightsaber", price: 700 },
-        "obyv.jpg": { name: "Sneakers", price: 10000 },
-        "ochki.jpg": { name: "Glasses", price: 30000 },
-        "orel.jpg": { name: "Eagle", price: 5000 },
-        "rozza.png": { name: "Rose", price: 2000 },
-        "shlem.png": { name: "Helmet Biker", price: 3500 },
-        "statyya.jpg": { name: "Statue", price: 41000 },
-        "zmei.png": { name: "Snake", price: 500 }
+        1: { name: "1 May", img: "1may.jpg", price: 100 },
+        2: { name: "2025", img: "2025.jpg", price: 500 },
+        3: { name: "Bear", img: "bear.png", price: 3500 },
+        4: { name: "Book", img: "book.jpg", price: 1000 },
+        5: { name: "Berry Box", img: "boooox.png", price: 700 }, // исправлено опечатка в пути
+        6: { name: "Boot", img: "botinok.png", price: 400 },
+        7: { name: "Jack Box", img: "box.png", price: 600 },
+        8: { name: "Car", img: "car.png", price: 5000 },
+        16: { name: "Star Ring", img: "ccolso2.png", price: 3000 },
+        17: { name: "Gingerbread", img: "cerrrdce.jpg", price: 500 },
+        18: { name: "Suitcase", img: "chemodan.jpg", price: 5000 },
+        19: { name: "Cigar", img: "ciga.png", price: 3000 },
+        20: { name: "Blue Ring", img: "colso.png", price: 2500 },
+        21: { name: "Costume", img: "costum.jpg", price: 10000 },
+        22: { name: "Flower", img: "cvetok.png", price: 1000 },
+        23: { name: "Rich Dog", img: "dog.png", price: 500 },
+        24: { name: "Perfume", img: "dyxi.png", price: 10000 },
+        25: { name: "Lantern", img: "fonarik.jpg", price: 100 },
+        26: { name: "Coffin", img: "grob.jpg", price: 5000 },
+        27: { name: "Lava Lips", img: "gyba.png", price: 5000 },
+        28: { name: "B-Day Cake", img: "happybirthday.jpg", price: 200 },
+        29: { name: "Heart Lock", img: "heart.png", price: 2000 },
+        30: { name: "Spartan", img: "helmet.png", price: 25000 },
+        40: { name: "Red Cap", img: "kepka.png", price: 100000 },
+        41: { name: "Brick", img: "kirpitch.jpg", price: 10000 },
+        50: { name: "Lightsaber", img: "metch.png", price: 700 },
+        53: { name: "Sneakers", img: "obyv.jpg", price: 10000 },
+        54: { name: "Glasses", img: "ochki.jpg", price: 30000 },
+        55: { name: "Eagle", img: "orel.jpg", price: 5000 },
+        59: { name: "Rose", img: "rozza.png", price: 2000 },
+        63: { name: "Helmet Biker", img: "shlem.png", price: 3500 },
+        66: { name: "Statue", img: "statyya.jpg", price: 41000 },
+        72: { name: "Snake", img: "zmei.png", price: 500 }
     };
 
-    let user = null;
-    let s1 = null; 
-    let s2 = null;
-
-    function fixPath(p) { return p.startsWith('img/') ? p : 'img/' + p; }
-
-    async function loadData() {
-        const { data, error } = await _supabase.from('users').select('*').eq('user_id', userId).single();
-        if (data) {
-            user = data;
-            render();
-            document.getElementById('info-chance').innerText = "Выберите предметы";
-        } else {
-            console.error("User not found", error);
-        }
-    }
+    let s1 = null; let s2 = null;
 
     function render() {
-        const inv = user.inventory || [];
+        // Читаем из того же ключа, что и профиль
+        const inv = JSON.parse(localStorage.getItem('user_inventory')) || [];
         const mList = document.getElementById('mine-list');
         const tList = document.getElementById('target-list');
 
-        // Список твоего инвентаря
-        mList.innerHTML = inv.map((it, i) => {
-            const fileName = it.img.split('/').pop();
-            const info = ITEMS_DATA[fileName] || { name: "Unknown", price: 0 };
-            return `
-                <div class="item-card ${s1?.idx === i ? 'active' : ''}" onclick="sel1(${i},'${it.img}',${info.price},'${info.name}')">
-                    <img src="${fixPath(it.img)}" class="w-8 h-8 object-contain">
-                    <div class="text-[8px] font-black truncate">${info.name}</div>
-                </div>`;
-        }).join('');
+        mList.innerHTML = inv.map((it, i) => `
+            <div class="item-card ${s1?.idx === i ? 'active' : ''}" onclick="sel1(${i},'${it.img}',${it.price},'${it.name}')">
+                <img src="${it.img.startsWith('img/') ? it.img : 'img/' + it.img}" class="w-8 h-8 object-contain">
+                <div class="text-[8px] font-black truncate">${it.name}</div>
+            </div>`).join('');
 
-        // Список целей (только те, что дороже выбранного)
-        tList.innerHTML = Object.entries(ITEMS_DATA)
-            .filter(([img, info]) => !s1 || info.price > s1.price)
-            .sort((a,b) => a[1].price - b[1].price)
-            .map(([img, info]) => `
-                <div class="item-card ${s2?.img === img ? 'active' : ''}" onclick="sel2('${img}',${info.price},'${info.name}')">
-                    <img src="${fixPath(img)}" class="w-8 h-8 object-contain">
-                    <div class="text-[8px] font-black truncate">${info.name}</div>
+        tList.innerHTML = Object.values(ITEMS_DATA)
+            .filter(it => !s1 || it.price > s1.price)
+            .sort((a,b) => a.price - b.price)
+            .map(it => `
+                <div class="item-card ${s2?.name === it.name ? 'active' : ''}" onclick="sel2('img/${it.img}',${it.price},'${it.name}')">
+                    <img src="img/${it.img}" class="w-8 h-8 object-contain">
+                    <div class="text-[8px] font-black truncate">${it.name}</div>
                 </div>`).join('');
     }
 
     function sel1(idx, img, price, name) {
         s1 = {idx, img, price, name};
-        document.getElementById('img-1').src = fixPath(img);
+        document.getElementById('img-1').src = img.startsWith('img/') ? img : 'img/' + img;
         document.getElementById('img-1').classList.remove('hidden');
-        document.getElementById('slot-1-label').innerText = name;
-        s2 = null; // Сброс цели при смене своего предмета
-        updateUI(); 
-        render();
+        s2 = null; updateUI(); render();
     }
 
     function sel2(img, price, name) {
         s2 = {img, price, name};
-        document.getElementById('img-2').src = fixPath(img);
+        document.getElementById('img-2').src = img;
         document.getElementById('img-2').classList.remove('hidden');
-        document.getElementById('slot-2-label').innerText = name;
-        
-        document.getElementById('view-target').src = fixPath(img);
+        document.getElementById('view-target').src = img;
         document.getElementById('view-target').classList.remove('hidden');
         document.getElementById('view-empty').classList.add('hidden');
-        updateUI(); 
-        render();
+        updateUI(); render();
     }
 
     function updateUI() {
@@ -188,7 +155,7 @@
         if(s1 && s2) {
             let chance = (s1.price / s2.price) * 100;
             if(chance > 80) chance = 80;
-            info.innerText = `ШАНС УСПЕХА: ${chance.toFixed(2)}%`;
+            info.innerText = `ШАНС: ${chance.toFixed(2)}%`;
             wheel.style.background = `conic-gradient(#a3e635 ${chance * 3.6}deg, #000 0deg)`;
             btn.disabled = false;
         } else {
@@ -197,7 +164,7 @@
         }
     }
 
-    async function startUpgrade() {
+    function startUpgrade() {
         const btn = document.getElementById('upg-btn');
         const pointer = document.getElementById('pointer-wrapper');
         const resMsg = document.getElementById('res-msg');
@@ -205,51 +172,48 @@
         
         btn.disabled = true;
 
-        const chance = Math.min((s1.price / s2.price) * 100, 80);
-        const isWin = (Math.random() * 100) <= chance;
+        const visualChance = (s1.price / s2.price) * 100;
+        const limitedVisual = Math.min(visualChance, 80); 
+        const isWin = (Math.random() * 100) <= limitedVisual; // Исправлено: теперь шанс реальный
         
-        const winDeg = chance * 3.6; 
+        const winDeg = limitedVisual * 3.6; 
         const spins = 360 * 5;
-        let finalDeg = isWin ? 
-            (spins + (Math.random() * (winDeg - 4)) + 2) : 
-            (spins + winDeg + (Math.random() * (356 - winDeg)) + 2);
+        let finalDeg;
+
+        if (isWin) {
+            finalDeg = spins + (Math.random() * (winDeg - 2)) + 1;
+        } else {
+            finalDeg = spins + winDeg + (Math.random() * (358 - winDeg)) + 2;
+        }
 
         pointer.style.transform = `rotate(${finalDeg}deg)`;
         tg.HapticFeedback.impactOccurred('medium');
 
-        setTimeout(async () => {
+        setTimeout(() => {
             center.style.opacity = "0";
             resMsg.style.display = "block";
-            
-            let newInventory = [...user.inventory];
+            let inv = JSON.parse(localStorage.getItem('user_inventory')) || [];
 
             if (isWin) {
                 resMsg.innerText = "УДАЧА";
                 resMsg.style.color = "#a3e635";
-                // Заменяем старый предмет на новый
-                newInventory[s1.idx] = { img: s2.img };
+                // СОХРАНЯЕМ В ПРОФИЛЬ (чистое имя картинки)
+                const cleanImg = s2.img.replace('img/', '');
+                inv[s1.idx] = { name: s2.name, img: 'img/' + cleanImg, price: s2.price };
                 tg.HapticFeedback.notificationOccurred('success');
             } else {
                 resMsg.innerText = "ПРОВАЛ";
                 resMsg.style.color = "#ff4d4d";
-                // Удаляем предмет
-                newInventory.splice(s1.idx, 1);
+                inv.splice(s1.idx, 1);
                 tg.HapticFeedback.notificationOccurred('error');
             }
 
-            // ЗАПИСЬ В БАЗУ ДАННЫХ
-            const { error } = await _supabase
-                .from('users')
-                .update({ inventory: newInventory })
-                .eq('user_id', userId);
-
-            if (error) console.error("Update error", error);
-
-            setTimeout(() => location.reload(), 2500);
+            localStorage.setItem('user_inventory', JSON.stringify(inv));
+            setTimeout(() => location.reload(), 2000);
         }, 3600);
     }
 
-    window.onload = loadData;
+    window.onload = render;
 </script>
 </body>
 </html>
