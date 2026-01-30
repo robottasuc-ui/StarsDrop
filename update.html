@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>StarDrop Upgrade Final</title>
+    <title>StarDrop Smart Upgrade</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -42,7 +42,7 @@
         </div>
     </div>
 
-    <div id="info-chance" class="text-center text-[#a3e635] font-black text-[10px] mb-3 uppercase italic">Загрузка инвентаря...</div>
+    <div id="info-chance" class="text-center text-[#a3e635] font-black text-[10px] mb-3 uppercase italic">Загрузка...</div>
 
     <div class="grid grid-cols-2 gap-3 mb-4">
         <div class="slot" id="slot-1">
@@ -75,61 +75,34 @@
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const userId = tg.initDataUnsafe?.user?.id || 8015661230;
 
-const ITEMS_DATA = {
-        "1may.jpg": { name: "1 May", price: 100 },
-        "2025.jpg": { name: "2025", price: 500 },
-        "bear.png": { name: "Bear", price: 3500 },
-        "book.jpg": { name: "Book", price: 1000 },
-        "boooox.png": { name: "Berry Box", price: 700 },
-        "botinok.png": { name: "Boot", price: 400 },
-        "box.png": { name: "Jack Box", price: 600 },
-        "car.png": { name: "Car", price: 5000 },
-        "raketa.png": { name: "Rocket", price: 50 },
-        "ccolso2.png": { name: "Star Ring", price: 3000 },
-        "cerrrdce.jpg": { name: "Gingerbread", price: 500 },
-        "chemodan.jpg": { name: "Suitcase", price: 5000 },
-        "ciga.png": { name: "Cigar", price: 3000 },
-        "colso.png": { name: "Blue Ring", price: 2500 },
-        "costum.jpg": { name: "Costume", price: 10000 },
-        "cvetok.png": { name: "Flower", price: 1000 },
-        "dog.png": { name: "Rich Dog", price: 500 },
-        "dyxi.png": { name: "Perfume", price: 10000 },
-        "fonarik.jpg": { name: "Lantern", price: 100 },
-        "grob.jpg": { name: "Coffin", price: 5000 },
-        "gyba.png": { name: "Lava Lips", price: 5000 },
-        "happybirthday.jpg": { name: "B-Day Cake", price: 200 },
-        "heart.png": { name: "Heart Lock", price: 2000 },
-        "helmet.png": { name: "Spartan", price: 25000 },
-        "kalendar.png": { name: "Calendar", price: 400 },
-        "kepka.png": { name: "Red Cap", price: 100000 },
-        "kirpitch.jpg": { name: "Brick", price: 10000 },
-        "koks.jpg": { name: "Cocktail", price: 150 },
-        "koktel.png": { name: "Green Mix", price: 500 },
-        "kot.png": { name: "Atomic Cat", price: 10000 },
-        "kotel.png": { name: "Cauldron", price: 500 },
-        "krovatka.jpg": { name: "Bow Tie", price: 600 },
-        "lolipop.png": { name: "Lollipop", price: 500 },
-        "lucky.jpg": { name: "Clover", price: 500 },
-        "mafin.jpg": { name: "Muffin", price: 700 },
-        "metch.png": { name: "Lightsaber", price: 700 },
-        "narkotiki.png": { name: "SD Token", price: 600 },
-        "obyv.jpg": { name: "Sneakers", price: 10000 },
-        "otchki.jpg": { name: "Glasses", price: 30000 },
-        "orel.jpg": { name: "Eagle", price: 5000 },
-        "otkritka.jpg": { name: "Dove Post", price: 150 },
-        "paska.jpg": { name: "Easter Cake", price: 75 },
-        "rozza.png": { name: "Rose", price: 2000 },
-        "rykzak.jpg": { name: "Backpack", price: 500 },
-        "shapka.png": { name: "Santa Hat", price: 500 },
-        "shar.jpg": { name: "Crystal Ball", price: 1000 },
-        "shlem.png": { name: "Helmet Biker", price: 3500 },
-        "soska.jpg": { name: "Pacifier", price: 3000 },
-        "star.png": { name: "Golden Star", price: 15 },
-        "statyya.jpg": { name: "Statue", price: 41000 },
-        "venok.jpg": { name: "Wreath", price: 500 },
-        "yayko.png": { name: "Spotted Egg", price: 600 },
-        "zhele.png": { name: "Green Slime", price: 700 },
-        "zmei.png": { name: "Snake", price: 500 },
+    const ITEMS_DATA = {
+        "1may.jpg": { name: "1 May", price: 100 }, "2025.jpg": { name: "2025", price: 500 },
+        "bear.png": { name: "Bear", price: 3500 }, "book.jpg": { name: "Book", price: 1000 },
+        "boooox.png": { name: "Berry Box", price: 700 }, "botinok.png": { name: "Boot", price: 400 },
+        "box.png": { name: "Jack Box", price: 600 }, "car.png": { name: "Car", price: 5000 },
+        "raketa.png": { name: "Rocket", price: 50 }, "ccolso2.png": { name: "Star Ring", price: 3000 },
+        "cerrrdce.jpg": { name: "Gingerbread", price: 500 }, "chemodan.jpg": { name: "Suitcase", price: 5000 },
+        "ciga.png": { name: "Cigar", price: 3000 }, "colso.png": { name: "Blue Ring", price: 2500 },
+        "costum.jpg": { name: "Costume", price: 10000 }, "cvetok.png": { name: "Flower", price: 1000 },
+        "dog.png": { name: "Rich Dog", price: 500 }, "dyxi.png": { name: "Perfume", price: 10000 },
+        "fonarik.jpg": { name: "Lantern", price: 100 }, "grob.jpg": { name: "Coffin", price: 5000 },
+        "gyba.png": { name: "Lava Lips", price: 5000 }, "happybirthday.jpg": { name: "B-Day Cake", price: 200 },
+        "heart.png": { name: "Heart Lock", price: 2000 }, "helmet.png": { name: "Spartan", price: 25000 },
+        "kalendar.png": { name: "Calendar", price: 400 }, "kepka.png": { name: "Red Cap", price: 100000 },
+        "kirpitch.jpg": { name: "Brick", price: 10000 }, "koks.jpg": { name: "Cocktail", price: 150 },
+        "koktel.png": { name: "Green Mix", price: 500 }, "kot.png": { name: "Atomic Cat", price: 10000 },
+        "kotel.png": { name: "Cauldron", price: 500 }, "krovatka.jpg": { name: "Bow Tie", price: 600 },
+        "lolipop.png": { name: "Lollipop", price: 500 }, "lucky.jpg": { name: "Clover", price: 500 },
+        "mafin.jpg": { name: "Muffin", price: 700 }, "metch.png": { name: "Lightsaber", price: 700 },
+        "narkotiki.png": { name: "SD Token", price: 600 }, "obyv.jpg": { name: "Sneakers", price: 10000 },
+        "otchki.jpg": { name: "Glasses", price: 30000 }, "orel.jpg": { name: "Eagle", price: 5000 },
+        "otkritka.jpg": { name: "Dove Post", price: 150 }, "paska.jpg": { name: "Easter Cake", price: 75 },
+        "rozza.png": { name: "Rose", price: 2000 }, "rykzak.jpg": { name: "Backpack", price: 500 },
+        "shapka.png": { name: "Santa Hat", price: 500 }, "shar.jpg": { name: "Crystal Ball", price: 1000 },
+        "shlem.png": { name: "Helmet Biker", price: 3500 }, "soska.jpg": { name: "Pacifier", price: 3000 },
+        "star.png": { name: "Golden Star", price: 15 }, "statyya.jpg": { name: "Statue", price: 41000 },
+        "venok.jpg": { name: "Wreath", price: 500 }, "yayko.png": { name: "Spotted Egg", price: 600 },
+        "zhele.png": { name: "Green Slime", price: 700 }, "zmei.png": { name: "Snake", price: 500 },
         "kolechko.png": { name: "Ring", price: 100 }
     };
 
@@ -141,7 +114,7 @@ const ITEMS_DATA = {
         if (!error && data?.inventory) {
             userInventory = Array.isArray(data.inventory) ? data.inventory : [];
         }
-        document.getElementById('info-chance').innerText = userInventory.length > 0 ? "Выберите предметы" : "У вас нет подарков";
+        document.getElementById('info-chance').innerText = userInventory.length > 0 ? "Выберите подарок" : "Инвентарь пуст";
         render();
     }
 
@@ -149,36 +122,46 @@ const ITEMS_DATA = {
         const mList = document.getElementById('mine-list');
         const tList = document.getElementById('target-list');
 
+        // Мой инвентарь
         mList.innerHTML = userInventory.map((it, i) => {
             const imgPath = typeof it === 'string' ? it : it.img;
             const file = imgPath.split('/').pop();
-            const name = ITEMS_DATA[file]?.name || "Подарок";
+            const info = ITEMS_DATA[file] || { name: "Подарок", price: 0 };
             const src = imgPath.startsWith('img/') ? imgPath : 'img/' + imgPath;
             return `
-                <div class="item-card ${s1?.idx === i ? 'active' : ''}" onclick="sel1(${i},'${src}','${name}')">
+                <div class="item-card ${s1?.idx === i ? 'active' : ''}" onclick="sel1(${i},'${src}','${info.name}', ${info.price})">
                     <img src="${src}" class="w-8 h-8 object-contain">
-                    <div class="text-[8px] font-black truncate">${name}</div>
+                    <div>
+                        <div class="text-[8px] font-black truncate">${info.name}</div>
+                        <div class="text-[6px] opacity-50">${info.price} ⭐</div>
+                    </div>
                 </div>`;
         }).join('');
 
+        // Список целей (ФИЛЬТР: только те, что дороже s1)
         tList.innerHTML = Object.entries(ITEMS_DATA)
+            .filter(([file, info]) => !s1 || info.price > s1.price) // Вот тут фикс даунгрейда
             .sort((a,b) => a[1].price - b[1].price)
             .map(([file, info]) => `
-                <div class="item-card ${s2?.name === info.name ? 'active' : ''}" onclick="sel2('img/${file}','${info.name}')">
+                <div class="item-card ${s2?.name === info.name ? 'active' : ''}" onclick="sel2('img/${file}','${info.name}', ${info.price})">
                     <img src="img/${file}" class="w-8 h-8 object-contain">
-                    <div class="text-[8px] font-black truncate">${info.name}</div>
+                    <div>
+                        <div class="text-[8px] font-black truncate">${info.name}</div>
+                        <div class="text-[6px] text-[#a3e635]">${info.price} ⭐</div>
+                    </div>
                 </div>`).join('');
     }
 
-    function sel1(idx, img, name) {
-        s1 = {idx, img, name};
+    function sel1(idx, img, name, price) {
+        s1 = {idx, img, name, price};
         document.getElementById('img-1').src = img;
         document.getElementById('img-1').classList.remove('hidden');
+        s2 = null; // Сброс цели при смене своего предмета
         updateUI(); render();
     }
 
-    function sel2(img, name) {
-        s2 = {img, name};
+    function sel2(img, name, price) {
+        s2 = {img, name, price};
         document.getElementById('img-2').src = img;
         document.getElementById('img-2').classList.remove('hidden');
         document.getElementById('view-target').src = img;
@@ -187,17 +170,27 @@ const ITEMS_DATA = {
         updateUI(); render();
     }
 
+    function calculateChance() {
+        if (!s1 || !s2) return 0;
+        // Математика: (цена_мин / цена_макс) * 100 * коэф_казино(0.8)
+        let chance = (s1.price / s2.price) * 100 * 0.8;
+        return Math.min(chance, 85); // Максимальный шанс успеха 85%
+    }
+
     function updateUI() {
         const btn = document.getElementById('upg-btn');
         const info = document.getElementById('info-chance');
         const wheel = document.getElementById('wheel-progress');
+        
         if(s1 && s2) {
-            info.innerText = "Шанс: 20%"; // Визуально всегда 20%
-            wheel.style.background = `conic-gradient(#a3e635 72deg, #000 0deg)`; // 20% это 72 градуса
+            const chance = calculateChance();
+            info.innerText = `Шанс успеха: ${chance.toFixed(2)}%`;
+            wheel.style.background = `conic-gradient(#a3e635 ${chance * 3.6}deg, #000 0deg)`;
             btn.disabled = false;
         } else {
             btn.disabled = true;
             wheel.style.background = `conic-gradient(#a3e635 0deg, #000 0deg)`;
+            info.innerText = s1 ? "Выберите цель для апгрейда" : "Выберите подарок из списка";
         }
     }
 
@@ -207,10 +200,10 @@ const ITEMS_DATA = {
         const resMsg = document.getElementById('res-msg');
         btn.disabled = true;
 
-        // ШАНСЫ: 20% победа, 80% поражение
-        const isWin = Math.random() < 0.2; 
+        const chance = calculateChance();
+        const isWin = (Math.random() * 100) < chance; 
         
-        const winDeg = 72; // Конец зеленой зоны
+        const winDeg = chance * 3.6; 
         const spins = 360 * 5;
         let finalDeg = isWin ? (spins + Math.random() * (winDeg - 2)) : (spins + winDeg + Math.random() * (358 - winDeg));
 
