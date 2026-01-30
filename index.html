@@ -21,8 +21,9 @@
             color: white; 
             font-family: 'Inter', sans-serif; 
             margin: 0; 
-            min-height: 100vh; 
-            overflow-x: hidden; 
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden; /* Запрещаем общий скролл для body */
             user-select: none; 
             -webkit-tap-highlight-color: transparent; 
             touch-action: manipulation;
@@ -35,20 +36,38 @@
         #pc-only-blocker { display: none; position: fixed; inset: 0; background: #000; z-index: 999999; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
         .qr-frame { background: white; padding: 15px; border-radius: 25px; box-shadow: 0 0 40px var(--accent-green); margin-bottom: 25px; }
         #stars-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-        .main-wrapper { background: radial-gradient(circle at 50% 30%, #163008 0%, #0a1205 75%); min-height: 100vh; position: relative; z-index: 1; display: flex; flex-direction: column; }
         
-        .hero-glow { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 320px; height: 320px; background: radial-gradient(circle, var(--glow-green) 0%, transparent 70%); z-index: -1; filter: blur(50px); animation: pulseGlow 4s ease-in-out infinite; }
-        @keyframes pulseGlow { 0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.3); } }
+        /* Исправленная обертка */
+        .main-wrapper { 
+            background: radial-gradient(circle at 50% 30%, #163008 0%, #0a1205 75%); 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative; 
+            z-index: 1; 
+        }
+
+        /* Область контента со скроллом */
+        .scrollable-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 24px 100px 24px; /* Отступ снизу под док-бар */
+            scrollbar-width: none;
+        }
+        .scrollable-content::-webkit-scrollbar { display: none; }
         
-        .balance-container-v2 { display: flex; flex-direction: column; gap: 6px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(163, 230, 53, 0.2); padding: 10px 14px; border-radius: 20px; backdrop-filter: blur(20px); }
-        .balance-item-v2 { display: flex; align-items: center; justify-content: flex-end; gap: 8px; cursor: pointer; }
-        .balance-item-v2 img { width: 18px; height: 18px; object-fit: contain; }
+        .hero-glow { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 280px; height: 280px; background: radial-gradient(circle, var(--glow-green) 0%, transparent 70%); z-index: -1; filter: blur(50px); animation: pulseGlow 4s ease-in-out infinite; }
+        @keyframes pulseGlow { 0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.2); } }
         
-        .hero-zone { position: relative; animation: heroFloat 4s ease-in-out infinite; filter: drop-shadow(0 0 40px var(--glow-green)); text-align: center; margin: 40px 0; }
-        @keyframes heroFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        .balance-container-v2 { display: flex; flex-direction: column; gap: 4px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(163, 230, 53, 0.2); padding: 8px 12px; border-radius: 18px; backdrop-filter: blur(20px); }
+        .balance-item-v2 { display: flex; align-items: center; justify-content: flex-end; gap: 6px; cursor: pointer; }
+        .balance-item-v2 img { width: 16px; height: 16px; object-fit: contain; }
         
-        .btn-base { border-radius: 26px; padding: 22px 26px; display: flex; align-items: center; gap: 20px; width: 100%; border: 1px solid rgba(255,255,255,0.08); position: relative; overflow: hidden; margin-bottom: 12px; transition: transform 0.1s; }
-        .btn-base:active { transform: scale(0.98); }
+        .hero-zone { position: relative; animation: heroFloat 4s ease-in-out infinite; filter: drop-shadow(0 0 30px var(--glow-green)); text-align: center; margin: 20px 0; }
+        @keyframes heroFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        
+        .btn-base { border-radius: 22px; padding: 18px 22px; display: flex; align-items: center; gap: 16px; width: 100%; border: 1px solid rgba(255,255,255,0.08); position: relative; overflow: hidden; margin-bottom: 10px; transition: transform 0.1s; }
+        .btn-base:active { transform: scale(0.97); }
         .btn-cases { background: linear-gradient(135deg, #052e16 0%, #000000 100%); border-left: 5px solid var(--deep-green); }
         .btn-wheel { background: linear-gradient(135deg, var(--accent-green) 0%, #ffffff 280%); }
         .btn-upgrade { background: linear-gradient(135deg, #431407 0%, #000000 100%); border-left: 5px solid #92400e; }
@@ -86,16 +105,16 @@
     <canvas id="stars-canvas"></canvas>
     
     <div class="main-wrapper">
-        <div class="p-6 pb-32">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center gap-4">
+        <div class="scrollable-content">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-3">
                     <div class="relative">
-                        <img id="user-avatar" src="" class="w-16 h-16 rounded-full border-2 border-green-500/40 object-cover shadow-lg bg-gray-900">
-                        <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-2 border-black rounded-full"></div>
+                        <img id="user-avatar" src="" class="w-14 h-14 rounded-full border-2 border-green-500/40 object-cover shadow-lg bg-gray-900">
+                        <div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-black rounded-full"></div>
                     </div>
                     <div>
-                        <div id="display-name" class="text-[14px] font-black text-white tracking-wide uppercase italic">ЗАГРУЗКА...</div>
-                        <div id="display-id" class="text-[11px] text-green-400 font-bold opacity-60 italic">ID: 00000000</div>
+                        <div id="display-name" class="text-[13px] font-black text-white tracking-wide uppercase italic leading-tight">ЗАГРУЗКА...</div>
+                        <div id="display-id" class="text-[10px] text-green-400 font-bold opacity-60 italic">ID: 00000000</div>
                     </div>
                 </div>
                 <div class="balance-container-v2">
@@ -112,9 +131,9 @@
 
             <div class="hero-zone">
                 <div class="hero-glow"></div>
-                <img src="hero.png" alt="HERO" class="w-52 h-52 mx-auto object-contain" onerror="this.onerror=null; this.src='https://img.icons8.com/clouds/256/crown.png'">
-                <h1 class="text-5xl font-black italic mt-4 uppercase tracking-tighter text-white">Stars<span class="text-green-500">Drop</span></h1>
-                <div class="h-1.5 w-16 bg-green-500 rounded-full mx-auto mt-2 shadow-lg shadow-green-500/50"></div>
+                <img src="hero.png" alt="HERO" class="w-44 h-44 mx-auto object-contain" onerror="this.onerror=null; this.src='https://img.icons8.com/clouds/256/crown.png'">
+                <h1 class="text-4xl font-black italic mt-3 uppercase tracking-tighter text-white">Stars<span class="text-green-500">Drop</span></h1>
+                <div class="h-1.5 w-14 bg-green-500 rounded-full mx-auto mt-2 shadow-lg shadow-green-500/50"></div>
             </div>
 
             <div class="flex flex-col gap-1">
@@ -163,7 +182,7 @@
                 <div id="tab-btn-ton" onclick="setTab('ton')" class="tab-trigger active">TON PAY</div>
                 <div id="tab-btn-stars" onclick="setTab('stars')" class="tab-trigger">STARS</div>
             </div>
-            <div id="pane-ton" class="grid grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto"></div>
+            <div id="pane-ton" class="grid grid-cols-2 gap-4 max-h-[45vh] overflow-y-auto"></div>
             <div id="pane-stars" class="hidden text-center py-4">
                 <p class="text-gray-400 text-sm mb-4">Количество звёзд (мин. 50):</p>
                 <input type="number" id="stars-input" placeholder="50" class="w-full bg-white/5 border border-white/10 py-5 px-6 rounded-2xl text-center text-2xl font-black text-white outline-none mb-6">
@@ -179,7 +198,6 @@
     const user = tg.initDataUnsafe?.user;
     let isProcessing = false;
 
-    // Платформа
     function checkPlatform() {
         if (['desktop', 'tdesktop', 'macos', 'web'].includes(tg.platform) || window.innerWidth > 1024) {
             document.getElementById('pc-only-blocker').style.display = 'flex';
@@ -187,33 +205,25 @@
         }
     }
 
-    // Синхронизация баланса
     async function syncData() {
         if (!user) return;
         try {
             const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}?t=${Date.now()}`);
             if (!res.ok) throw new Error();
             const data = await res.json();
-            
             const tonVal = data.balance !== undefined ? data.balance : (data.ton_balance || 0);
             const starsVal = data.stars || 0;
-
             document.getElementById('bal-ton').innerText = parseFloat(tonVal).toFixed(2);
             document.getElementById('bal-stars').innerText = Math.floor(starsVal);
-            
             localStorage.setItem('user_stars', starsVal);
             localStorage.setItem('user_ton', tonVal);
-        } catch (e) {
-            console.warn("Balance sync failed");
-        }
+        } catch (e) { console.warn("Balance sync failed"); }
     }
 
-    // Платеж TON
     async function processPayment(amount) {
         if (isProcessing || !user) return;
         isProcessing = true;
         tg.HapticFeedback.impactOccurred('medium');
-        
         try {
             const res = await fetch(`${BACKEND_URL}/create_pay`, {
                 method: 'POST',
@@ -221,27 +231,17 @@
                 body: JSON.stringify({user_id: user.id, amount})
             });
             const data = await res.json();
-            if (data.pay_url) {
-                tg.openTelegramLink(data.pay_url);
-                closeVault();
-            } else {
-                tg.showAlert('Крипто-бот временно недоступен');
-            }
-        } catch (e) {
-            tg.showAlert('Ошибка сети при создании счета');
-        } finally {
-            isProcessing = false;
-        }
+            if (data.pay_url) { tg.openTelegramLink(data.pay_url); closeVault(); }
+            else { tg.showAlert('Крипто-бот временно недоступен'); }
+        } catch (e) { tg.showAlert('Ошибка сети'); } 
+        finally { isProcessing = false; }
     }
 
-    // Платеж STARS
     async function verifyGift() {
         const val = parseInt(document.getElementById('stars-input').value);
         if (!val || val < 1) return tg.showAlert('Введите количество Stars');
-        
         isProcessing = true;
         tg.HapticFeedback.impactOccurred('heavy');
-        
         try {
             const res = await fetch(`${BACKEND_URL}/create_stars_pay`, {
                 method: 'POST',
@@ -249,37 +249,29 @@
                 body: JSON.stringify({ user_id: user.id, amount: val })
             });
             const data = await res.json();
-            
             if (data.pay_url) {
                 tg.openInvoice(data.pay_url, (status) => {
                     if (status === 'paid') {
-                        tg.showAlert('Оплата принята! Баланс обновится скоро.');
+                        tg.showAlert('Оплата принята!');
                         closeVault();
                         setTimeout(syncData, 2000);
                     }
                 });
-            } else {
-                tg.showAlert('Ошибка создания инвойса Stars');
             }
-        } catch (e) {
-            tg.showAlert('Ошибка сервера');
-        } finally {
-            isProcessing = false;
-        }
+        } catch (e) { tg.showAlert('Ошибка сервера'); } 
+        finally { isProcessing = false; }
     }
 
     function renderTonPacks() {
         const PACKS = [1, 3, 5, 10, 20, 50, 100, 250];
-        const tonBox = document.getElementById('pane-ton');
-        tonBox.innerHTML = PACKS.map(amt => `
-            <div onclick="processPayment(${amt})" class="bg-white/5 border border-white/10 p-6 rounded-3xl text-center active:scale-95 transition-all cursor-pointer">
+        document.getElementById('pane-ton').innerHTML = PACKS.map(amt => `
+            <div onclick="processPayment(${amt})" class="bg-white/5 border border-white/10 p-5 rounded-3xl text-center active:scale-95 transition-all cursor-pointer">
                 <div class="text-[10px] text-blue-400 font-black uppercase mb-1">Купить</div>
-                <div class="font-black text-white text-xl">${amt} TON</div>
+                <div class="font-black text-white text-lg">${amt} TON</div>
             </div>
         `).join('');
     }
 
-    // UI
     function setTab(type) {
         const isTon = type === 'ton';
         document.getElementById('tab-btn-ton').className = isTon ? 'tab-trigger active' : 'tab-trigger';
@@ -297,19 +289,16 @@
     function closeVault() { document.getElementById('vault-modal').style.display = 'none'; }
     function navigateTo(url) { tg.HapticFeedback.impactOccurred('medium'); window.location.href = url; }
 
-    // Init
     window.onload = () => {
         checkPlatform();
         tg.expand();
         tg.ready();
-        
         if (user) {
             document.getElementById('display-name').innerText = (user.username || user.first_name || "PLAYER").toUpperCase();
             document.getElementById('display-id').innerText = `ID: ${user.id}`;
             document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?background=166534&color=fff&name=${user.first_name}`;
             syncData();
         }
-        
         renderTonPacks();
         setTimeout(() => {
             const loader = document.getElementById('global-loader');
@@ -319,14 +308,13 @@
         }, 800);
     };
 
-    // Stars Background
     const canvas = document.getElementById('stars-canvas');
     const ctx = canvas.getContext('2d');
     let starsArr = [];
     function initStars() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        starsArr = Array.from({length: 50}, () => ({ 
+        starsArr = Array.from({length: 40}, () => ({ 
             x: Math.random() * canvas.width, 
             y: Math.random() * canvas.height, 
             size: Math.random() * 1.5, 
