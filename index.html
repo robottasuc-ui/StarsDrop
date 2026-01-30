@@ -346,7 +346,7 @@
 
     async function verifyGift() {
         const val = document.getElementById('stars-input').value;
-        if (!val || val < 15) return tg.showAlert('Минимум 15 Stars');
+        if (!val || val < 1) return tg.showAlert('Минимум 1 Stars');
         updateBalanceInDB('stars', parseInt(val));
     }
 
