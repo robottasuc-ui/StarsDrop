@@ -42,7 +42,7 @@
         
         .balance-container-v2 { display: flex; flex-direction: column; gap: 6px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(163, 230, 53, 0.2); padding: 10px 14px; border-radius: 20px; backdrop-filter: blur(20px); }
         .balance-item-v2 { display: flex; align-items: center; justify-content: flex-end; gap: 8px; cursor: pointer; }
-        .balance-item-v2 img { width: 18px; height: 18px; }
+        .balance-item-v2 img { width: 18px; height: 18px; object-fit: contain; }
         
         .hero-zone { position: relative; animation: heroFloat 4s ease-in-out infinite; filter: drop-shadow(0 0 40px var(--glow-green)); text-align: center; margin: 40px 0; }
         @keyframes heroFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
@@ -98,20 +98,21 @@
                         <div id="display-id" class="text-[11px] text-green-400 font-bold opacity-60 italic">ID: 00000000</div>
                     </div>
                 </div>
-                  <div class="balance-container-v2">
+                <div class="balance-container-v2">
                     <div class="balance-item-v2 text-blue-400" onclick="openVault('ton')">
                         <span id="bal-ton" class="font-black">0.00</span>
-                        <img src="./ton.png" alt="TON" onerror="this.src='./img/ton.png'">
+                        <img src="ton.png" alt="TON" onerror="this.onerror=null; this.src='https://cryptologos.cc/logos/toncoin-ton-logo.png?v=025'">
                     </div>
                     <div class="balance-item-v2 text-yellow-400" onclick="openVault('stars')">
                         <span id="bal-stars" class="font-black">0</span>
-                        <img src="./star.png" alt="STAR" onerror="this.src='./img/star.png'">
+                        <img src="star.png" alt="STAR" onerror="this.onerror=null; this.src='https://img.icons8.com/fluency/48/star.png'">
                     </div>
                 </div>
+            </div>
 
             <div class="hero-zone">
                 <div class="hero-glow"></div>
-                <img src="hero.png" alt="HERO" class="w-52 h-52 mx-auto object-contain" onerror="this.src='https://telegram.org/img/t_logo.png'">
+                <img src="hero.png" alt="HERO" class="w-52 h-52 mx-auto object-contain" onerror="this.onerror=null; this.src='https://img.icons8.com/clouds/256/crown.png'">
                 <h1 class="text-5xl font-black italic mt-4 uppercase tracking-tighter text-white">Stars<span class="text-green-500">Drop</span></h1>
                 <div class="h-1.5 w-16 bg-green-500 rounded-full mx-auto mt-2 shadow-lg shadow-green-500/50"></div>
             </div>
@@ -194,7 +195,6 @@
             if (!res.ok) throw new Error();
             const data = await res.json();
             
-            // Обрабатываем разные возможные названия колонок из базы
             const tonVal = data.balance !== undefined ? data.balance : (data.ton_balance || 0);
             const starsVal = data.stars || 0;
 
