@@ -49,6 +49,17 @@
             <button onclick="handlePromo()" class="w-full btn-green py-5 text-sm">Активировать</button>
         </section>
 
+        <section class="glass-card p-7 mb-8 text-center border-yellow-400/20">
+            <h3 class="text-[11px] font-black uppercase text-yellow-400 tracking-widest mb-4">Реферальная система</h3>
+            <p class="text-[10px] text-gray-400 mb-4 uppercase">Получай 5 ⭐ за каждого друга!</p>
+            <div class="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4 text-[10px] font-mono break-all text-gray-300" id="ref-link-display">
+                Загрузка ссылки...
+            </div>
+            <button onclick="shareInvite()" class="w-full py-4 bg-yellow-400 text-black font-black rounded-2xl text-xs uppercase shadow-lg shadow-yellow-400/10 active:scale-95 transition-transform">
+                Пригласить друга
+            </button>
+        </section>
+
         <section class="glass-card p-7 min-h-[400px]">
             <div class="flex justify-between items-center mb-8">
                 <h3 class="text-sm font-black uppercase tracking-tighter">Ваш Инвентарь</h3>
@@ -74,7 +85,7 @@
     </div>
 
     <nav class="dock-bar">
-        <a href="index.html" class="dock-btn">🏠 <span>Кейсы</span></a>
+        <a href="index.html" class="dock-btn">🏠 <span>Главная</span></a>
         <div class="dock-btn active">👤 <span>Профиль</span></div>
     </nav>
 
@@ -331,14 +342,70 @@
         });
         requestAnimationFrame(draw);
     }
+// ЛОГИКА РЕФЕРАЛОВ
+    function getRefLink() {
+        const botUsername = 'StarsDropOfficial_Bot'; // <--- ОБЯЗАТЕЛЬНО ЗАМЕНИ (например, 'MyStarDropBot')
+        return `https://t.me/${botUsername}/app?startapp=${userId}`;
+    }
 
-    window.onload = () => {
+    function shareInvite() {
+        const url = getRefLink();
+        const text = "🎁 Забирай бесплатные подарки вместе со мной! Дарят звезды при регистрации!";
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
+    }
+
+    async function checkReferral() {
+        if (!user) return; // Если данные юзера еще не подгрузились, выходим
+        
+        const startParam = tg.initDataUnsafe?.start_param;
+        
+        // Если зашли по ссылке, и это не наша собственная ссылка
+        if (startParam && startParam != userId) {
+            // Если в базе у текущего юзера еще нет отметки о пригласителе
+            if (!user.referred_by) {
+                try {
+                    // 1. Находим пригласителя и даем ему 5 звезд
+                    const { data: inviter } = await _supabase.from('users').select('stars').eq('user_id', startParam).single();
+                    
+                    if (inviter) {
+                        await _supabase.from('users').update({ 
+                            stars: (inviter.stars || 0) + 5 
+                        }).eq('user_id', startParam);
+                        
+                        // 2. Записываем текущему юзеру, кто его пригласил
+                        await _supabase.from('users').update({ 
+                            referred_by: startParam 
+                        }).eq('user_id', userId);
+                        
+                        tg.showAlert("🎉 Вы перешли по приглашению! Ваш друг получил 5 ⭐");
+                        loadUser(); // Обновляем данные на экране
+                    }
+                } catch (e) {
+                    console.error("Referral error:", e);
+                }
+            }
+        }
+    }
+
+    // ЕДИНЫЙ БЛОК ЗАГРУЗКИ (Исправлено)
+    window.onload = async () => {
         initStars();
         draw();
-        loadUser();
+        
+        // 1. Сначала грузим юзера
+        await loadUser(); 
+        
+        // 2. Показываем ссылку
+        const linkElem = document.getElementById('ref-link-display');
+        if (linkElem) linkElem.innerText = getRefLink();
+        
+        // 3. Проверяем рефералку
+        checkReferral();
+        
         tg.expand();
         tg.ready();
     };
+
     window.onresize = initStars;
 </script>
 </body>
