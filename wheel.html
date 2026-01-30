@@ -218,6 +218,7 @@
     let userRowData = null;
     let isSpinning = false;
     let winningItem = null;
+    let isFreeSpinAvailable = false;
 
     const headers = {
         'apikey': SB_KEY,
@@ -235,34 +236,69 @@
             if (data && data.length > 0) {
                 userRowData = data[0];
                 updateUI();
+                setInterval(updateUI, 1000); // Запуск таймера
             }
         } catch (e) { console.error(e); }
     }
 
     function updateUI() {
+        if (!userRowData) return;
+        
         const balance = parseInt(userRowData.stars) || 0;
-        document.getElementById('timer-display').innerText = `БАЛАНС: ${balance} ⭐`;
+        const now = new Date().getTime();
+        const lastFree = userRowData.last_free_spin ? new Date(userRowData.last_free_spin).getTime() : 0;
+        const diff = now - lastFree;
+        const cooldown = 24 * 60 * 60 * 1000;
+
         const btn = document.getElementById('spin-btn');
-        btn.disabled = balance < SPIN_COST || isSpinning;
-        btn.innerText = balance < SPIN_COST ? `НУЖНО ${SPIN_COST} ⭐` : `КРУТИТЬ ЗА ${SPIN_COST} ⭐`;
+        const timerDisp = document.getElementById('timer-display');
+
+        if (diff >= cooldown) {
+            isFreeSpinAvailable = true;
+            btn.innerText = "БЕСПЛАТНЫЙ КРУТИТЬ";
+            btn.disabled = isSpinning;
+            timerDisp.innerText = `БАЛАНС: ${balance} ⭐ | БЕСПЛАТНО ДОСТУПНО`;
+        } else {
+            isFreeSpinAvailable = false;
+            const remaining = cooldown - diff;
+            const h = Math.floor(remaining / 3600000);
+            const m = Math.floor((remaining % 3600000) / 60000);
+            const s = Math.floor((remaining % 60000) / 1000);
+            
+            btn.innerText = balance < SPIN_COST ? `НУЖНО ${SPIN_COST} ⭐` : `КРУТИТЬ ЗА ${SPIN_COST} ⭐`;
+            btn.disabled = balance < SPIN_COST || isSpinning;
+            timerDisp.innerText = `СЛЕДУЮЩИЙ БЕСПЛАТНЫЙ ЧЕРЕЗ: ${h}ч ${m}м ${s}с`;
+        }
     }
 
     async function handleSpin() {
         if (isSpinning) return;
         const balance = parseInt(userRowData.stars) || 0;
-        if (balance < SPIN_COST) return;
+        
+        let updatePayload = {};
+
+        if (isFreeSpinAvailable) {
+            // Бесплатный прокрут
+            updatePayload = { last_free_spin: new Date().toISOString() };
+        } else {
+            // Платный прокрут
+            if (balance < SPIN_COST) return;
+            const newBalance = balance - SPIN_COST;
+            updatePayload = { stars: newBalance };
+            userRowData.stars = newBalance;
+        }
 
         isSpinning = true;
         updateUI();
 
-        // Снимаем деньги сразу в базе
-        const newBalance = balance - SPIN_COST;
+        // Обновляем базу
         await fetch(`${SB_URL}/rest/v1/${TABLE}?user_id=eq.${userId}`, {
             method: 'PATCH',
             headers,
-            body: JSON.stringify({ stars: newBalance })
+            body: JSON.stringify(updatePayload)
         });
-        userRowData.stars = newBalance;
+        
+        if (isFreeSpinAvailable) userRowData.last_free_spin = updatePayload.last_free_spin;
 
         // Расчет выигрыша (99% на звезду ID 65)
         const rand = Math.random() * 100;
@@ -289,7 +325,7 @@
         }
 
         setTimeout(() => {
-            const itemWidth = 136; // 120px + 16px margin
+            const itemWidth = 136; 
             const shift = (count * itemWidth) - (window.innerWidth / 2) + (itemWidth / 2);
             wheel.style.transition = 'transform 8s cubic-bezier(0.1, 0, 0.05, 1)';
             wheel.style.transform = `translateX(-${shift}px)`;
@@ -305,7 +341,6 @@
         }, 8500);
     }
 
-    // КНОПКА ПРОДАТЬ
     document.getElementById('sell-btn').onclick = async () => {
         const finalBalance = (parseInt(userRowData.stars) || 0) + winningItem.price;
         await fetch(`${SB_URL}/rest/v1/${TABLE}?user_id=eq.${userId}`, {
@@ -316,22 +351,18 @@
         window.location.reload(); 
     };
 
-    // КНОПКА В ИНВЕНТАРЬ
     document.getElementById('keep-btn').onclick = async () => {
         let currentInv = userRowData.inventory;
         if (typeof currentInv === 'string') {
             try { currentInv = JSON.parse(currentInv); } catch(e) { currentInv = []; }
         }
         if (!Array.isArray(currentInv)) currentInv = [];
-
         const updatedInv = [...currentInv, { name: winningItem.name, img: winningItem.img }];
-
         await fetch(`${SB_URL}/rest/v1/${TABLE}?user_id=eq.${userId}`, {
             method: 'PATCH',
             headers,
             body: JSON.stringify({ inventory: updatedInv })
         });
-
         window.location.href = 'profile.html';
     };
 
