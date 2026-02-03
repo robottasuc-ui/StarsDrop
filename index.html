@@ -91,12 +91,6 @@
 </head>
 <body class="loaded">
 
-    <div id="pc-only-blocker">
-        <div class="qr-frame"><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://t.me/StarsDropOfficial_Bot" alt="QR"></div>
-        <h1 class="text-2xl font-black italic uppercase tracking-tighter text-white">С ПК играть <span class="text-green-500">нельзя!</span></h1>
-        <p class="text-gray-400 font-bold text-sm mt-2 max-w-[280px]">Отсканируйте QR код, чтобы играть с телефона</p>
-    </div>
-
     <div id="global-loader">
         <div class="loader-ring"></div>
         <div class="mt-4 text-green-500 font-black italic tracking-widest animate-pulse">STARS DROP</div>
@@ -198,13 +192,6 @@
     const user = tg.initDataUnsafe?.user;
     let isProcessing = false;
 
-    function checkPlatform() {
-        if (['desktop', 'tdesktop', 'macos', 'web'].includes(tg.platform) || window.innerWidth > 1024) {
-            document.getElementById('pc-only-blocker').style.display = 'flex';
-            document.querySelector('.main-wrapper').remove();
-        }
-    }
-
     async function syncData() {
         if (!user) return;
         try {
@@ -288,25 +275,6 @@
     
     function closeVault() { document.getElementById('vault-modal').style.display = 'none'; }
     function navigateTo(url) { tg.HapticFeedback.impactOccurred('medium'); window.location.href = url; }
-
-    window.onload = () => {
-        checkPlatform();
-        tg.expand();
-        tg.ready();
-        if (user) {
-            document.getElementById('display-name').innerText = (user.username || user.first_name || "PLAYER").toUpperCase();
-            document.getElementById('display-id').innerText = `ID: ${user.id}`;
-            document.getElementById('user-avatar').src = user.photo_url || `https://ui-avatars.com/api/?background=166534&color=fff&name=${user.first_name}`;
-            syncData();
-        }
-        renderTonPacks();
-        setTimeout(() => {
-            const loader = document.getElementById('global-loader');
-            loader.style.opacity = '0';
-            setTimeout(() => loader.style.display = 'none', 500);
-            document.body.classList.add('loaded');
-        }, 800);
-    };
 
     const canvas = document.getElementById('stars-canvas');
     const ctx = canvas.getContext('2d');
