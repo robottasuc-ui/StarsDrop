@@ -147,7 +147,7 @@ const ITEMS = {
     "soska.jpg": { name: "Diamond Pacifier", price: 3000, img: "soska.jpg" },
     "star.png": { name: "Pure Star", price: 15, img: "star.png" },
     "statyya.jpg": { name: "Hero Statue", price: 41000, img: "statyya.jpg" },
-    "venok.png": { name: "Wreath Flower", price: 500, img: "venok.png" },
+    "venok.jpg": { name: "Wreath Flower", price: 500, img: "venok.png" },
     "yayko.png": { name: "Dragon Egg", price: 600, img: "yayko.png" },
     "zhele.png": { name: "Slime Jelly", price: 700, img: "zhele.png" },
     "zmei.png": { name: "Snake Friend", price: 500, img: "zmei.png" },
@@ -159,14 +159,103 @@ const ITEMS = {
     "sshapka.PNG": { name: "Khabib's Papakha", price: 2300, img: "sshapka.PNG" },
     "tyfli.PNG": { name: "Sky Stilettos", price: 1800, img: "tyfli.PNG" }
 };
-
 const CASES = [
-    { name: "Кейс Новичка", type: 'tickets', price: 10, img: "case1.png", loot: [["star.png", 85], ["raketa.png", 10], ["paska.jpg", 5]] },
-    { name: "Шкатулка Удачи", type: 'multi', priceStars: 50, priceTon: 0.5, img: "case2.png", loot: [["star.png", 70], ["bear.png", 5], ["book.jpg", 25]] },
-    { name: "Мистический Шторм", type: 'multi', priceStars: 100, priceTon: 1.0, img: "case3.png", loot: [["car.png", 1], ["paska.jpg", 99]] },
-    { name: "Пиратский Клад", type: 'multi', priceStars: 419, priceTon: 5.5, img: "case7.png", loot: [["chemodan.jpg", 10], ["dog.png", 90]] }
+    { 
+        name: "Кейс Новичка", 
+        type: 'tickets', 
+        price: 10, 
+        img: "case1.png", 
+        loot: [
+            ["star.png", 85], ["raketa.png", 5], ["paska.jpg", 3], ["1may.jpg", 2], ["fonarik.jpg", 1.5],
+            ["otkritka.jpg", 1], ["happybirthday.jpg", 0.5], ["koks.jpg", 0.4], ["dog.png", 0.3], ["botinok.png", 0.2],
+            ["kalendar.png", 0.1], ["cerrrdce.jpg", 0.1], ["venok.png", 0.1], ["lucky.jpg", 0.1], ["box.png", 0.1]
+        ] 
+    },
+    { 
+        name: "Шкатулка Удачи", 
+        type: 'multi', 
+        priceStars: 50, 
+        priceTon: 0.5, 
+        img: "case2.png", 
+        loot: [
+            ["star.png", 80], ["raketa.png", 10], ["paska.jpg", 5], ["1may.jpg", 1.5], ["fonarik.jpg", 1],
+            ["otkritka.jpg", 0.5], ["happybirthday.jpg", 0.4], ["koks.jpg", 0.3], ["dog.png", 0.2], ["botinok.png", 0.2],
+            ["kalendar.png", 0.1], ["cerrrdce.jpg", 0.1], ["venok.png", 0.1], ["lucky.jpg", 0.1], ["bear.png", 0.1] // Джекпот 3500 при цене 50
+        ] 
+    },
+    { 
+        name: "Мистический Шторм", 
+        type: 'multi', 
+        priceStars: 100, 
+        priceTon: 1.0, 
+        img: "case3.png", 
+        loot: [
+            ["paska.jpg", 70], ["1may.jpg", 15], ["fonarik.jpg", 7], ["otkritka.jpg", 3], ["happybirthday.jpg", 2],
+            ["koks.jpg", 1], ["dog.png", 0.5], ["botinok.png", 0.4], ["kalendar.png", 0.3], ["cerrrdce.jpg", 0.2],
+            ["venok.png", 0.2], ["lucky.jpg", 0.1], ["box.png", 0.1], ["book.jpg", 0.1], ["car.png", 0.05]
+        ] 
+    },
+    { 
+        name: "Лесной Оазис", 
+        type: 'multi', 
+        priceStars: 250, 
+        priceTon: 3.0, 
+        img: "case5.png", 
+        loot: [
+            ["otkritka.jpg", 65], ["happybirthday.jpg", 15], ["koks.jpg", 10], ["dog.png", 5], ["botinok.png", 2],
+            ["kalendar.png", 1], ["cerrrdce.jpg", 0.5], ["venok.png", 0.4], ["lucky.jpg", 0.3], ["box.png", 0.3],
+            ["zlei.png", 0.2], ["yayko.png", 0.2], ["meczcc.png", 0.1], ["cvetok.png", 0.1], ["helmet.png", 0.1]
+        ] 
+    },
+    { 
+        name: "Пиратский Клад", 
+        type: 'multi', 
+        priceStars: 419, 
+        priceTon: 5.5, 
+        img: "case7.png", 
+        loot: [
+            ["dog.png", 60], ["botinok.png", 20], ["kalendar.png", 10], ["cerrrdce.jpg", 5], ["venok.png", 2],
+            ["lucky.jpg", 1], ["box.png", 0.5], ["zlei.png", 0.4], ["yayko.png", 0.3], ["meczcc.png", 0.2],
+            ["boooox.png", 0.2], ["zhele.png", 0.1], ["mafin.jpg", 0.1], ["book.jpg", 0.1], ["ciga.png", 0.1]
+        ] 
+    },
+    { 
+        name: "Детективный поиск", 
+        type: 'multi', 
+        priceStars: 549, 
+        priceTon: 7.0, 
+        img: "case4.png", 
+        loot: [
+            ["botinok.png", 55], ["kalendar.png", 20], ["cerrrdce.jpg", 10], ["venok.png", 7], ["lucky.jpg", 3],
+            ["box.png", 2], ["zlei.png", 1], ["yayko.png", 0.5], ["meczcc.png", 0.4], ["boooox.png", 0.3],
+            ["zhele.png", 0.2], ["mafin.jpg", 0.2], ["zirka.PNG", 0.1], ["cvetk.PNG", 0.1], ["dyxi.png", 0.1]
+        ] 
+    },
+    { 
+        name: "Зимняя история", 
+        type: 'multi', 
+        priceStars: 799, 
+        priceTon: 9.0, 
+        img: "case8.png", 
+        loot: [
+            ["box.png", 50], ["zlei.png", 20], ["yayko.png", 15], ["meczcc.png", 7], ["boooox.png", 4],
+            ["zhele.png", 2], ["mafin.jpg", 1], ["zirka.PNG", 0.5], ["kryg.PNG", 0.2], ["gribb.PNG", 0.1],
+            ["cvetk.PNG", 0.1], ["shapka.png", 0.1], ["sshapka.PNG", 0.1], ["tyfli.PNG", 0.1], ["costum.jpg", 0.05]
+        ] 
+    },
+    { 
+        name: "Лунная Легенда", 
+        type: 'multi', 
+        priceStars: 0, 
+        priceTon: 19.0, 
+        img: "case9.png", 
+        loot: [
+            ["booox.png", 45], ["zhele.png", 25], ["mafin.jpg", 15], ["zirka.PNG", 7], ["kryg.PNG", 3],
+            ["gribb.PNG", 2], ["cvetk.PNG", 1], ["sshapka.PNG", 0.5], ["tyfli.PNG", 0.4], ["rozza.png", 0.3],
+            ["heart.png", 0.2], ["colso.png", 0.2], ["ccolso2.png", 0.1], ["orel.jpg", 0.1], ["kepka.png", 0.01] // Супер джекпот за 100к
+        ] 
+    }
 ];
-
 let balance = { stars: 0, ton: 0, tickets: 0 };
 let mul = 1, activeCase = null, isBusy = false, currentWinners = [];
 
