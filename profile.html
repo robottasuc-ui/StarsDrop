@@ -181,21 +181,45 @@
     let user = null;
     let selectedIdx = -1;
 
-    async function loadUser() {
-        try {
-            let { data, error } = await _supabase.from('users').select('*').eq('user_id', userId).single();
-            if (data) {
-                user = data;
-                document.getElementById('u-name').innerText = (tg.initDataUnsafe?.user?.first_name || "USER").toUpperCase();
-                document.getElementById('u-id-label').innerText = `ID: ${user.user_id}`;
-                document.getElementById('u-stars').innerText = (user.stars || 0).toLocaleString();
-                document.getElementById('u-ton').innerText = (user.balance || 0).toFixed(2);
-                document.getElementById('u-tickets').innerText = (user.tickets || 0);
-                document.getElementById('u-avatar').src = tg.initDataUnsafe?.user?.photo_url || `https://ui-avatars.com/api/?name=U&background=166534&color=fff`;
-                renderGrid();
+async function loadUser() {
+    try {
+        // 1. Получаем ID из Телеграма
+        const tg = window.Telegram.WebApp;
+        let rawId = tg.initDataUnsafe?.user?.id || 8015661230; // Твой ID как запасной
+
+        // 2. ВАЖНО: Превращаем ID в число, чтобы Supabase его узнал
+        const userIdNum = Number(rawId);
+
+        // 3. Запрос к базе
+        let { data, error } = await _supabase
+            .from('users')
+            .select('*')
+            .eq('user_id', userIdNum)
+            .single();
+
+        if (data) {
+            user = data;
+            // Обновляем текст на экране
+            document.getElementById('u-name').innerText = (tg.initDataUnsafe?.user?.first_name || "USER").toUpperCase();
+            document.getElementById('u-id-label').innerText = `ID: ${user.user_id}`;
+            document.getElementById('u-stars').innerText = (user.stars || 0).toLocaleString();
+            document.getElementById('u-ton').innerText = (user.balance || 0).toFixed(2);
+            document.getElementById('u-tickets').innerText = (user.tickets || 0);
+            
+            // Аватарка
+            const avatarImg = document.getElementById('u-avatar');
+            if (avatarImg) {
+                avatarImg.src = tg.initDataUnsafe?.user?.photo_url || `https://ui-avatars.com/api/?name=U&background=166534&color=fff`;
             }
-        } catch (e) { console.error(e); }
+            
+            renderGrid();
+        } else {
+            console.error("Пользователь не найден в базе данных");
+        }
+    } catch (e) { 
+        console.error("Ошибка загрузки:", e); 
     }
+}
 
     function renderGrid() {
         const grid = document.getElementById('grid');
