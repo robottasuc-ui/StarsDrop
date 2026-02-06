@@ -109,6 +109,7 @@
         <div class="balance-container-v2">
             <div class="balance-item-v2 text-blue-400"><span id="header-ton">0.00</span><img src="img/ton.png"></div>
             <div class="balance-item-v2 text-yellow-400"><span id="header-stars">0</span><img src="img/star.png"></div>
+            <div class="balance-item-v2 text-yellow-200"><span id="header-tickets">0</span><img src="img/ticket.png" onerror="this.src='https://img.icons8.com/emoji/48/ticket-emoji.png'"></div>
         </div>
     </header>
 
@@ -134,14 +135,14 @@
                     <button onclick="setMul(2)" class="cnt-btn w-12 h-12 rounded-xl font-black">2</button>
                     <button onclick="setMul(3)" class="cnt-btn w-12 h-12 rounded-xl font-black">3</button>
                 </div>
-                <div class="grid grid-cols-2 gap-4 w-full">
-                    <button onclick="startRoll('stars')" class="bg-green-500 text-black py-4 rounded-3xl font-black flex justify-center items-center gap-2 active:scale-95 transition-transform">
+                <div class="grid grid-cols-2 gap-4 w-full" id="roll-buttons-container">
+                    <button id="btn-stars" onclick="startRoll('stars')" class="bg-green-500 text-black py-4 rounded-3xl font-black flex justify-center items-center gap-2 active:scale-95 transition-transform">
                         <img src="img/star.png" class="w-5 h-5"> <span id="p-stars">0</span>
                     </button>
-                    <button onclick="startRoll('ton')" class="bg-[#0088cc] text-white py-4 rounded-3xl font-black flex justify-center items-center gap-2 active:scale-95 transition-transform">
+                    <button id="btn-ton" onclick="startRoll('ton')" class="bg-[#0088cc] text-white py-4 rounded-3xl font-black flex justify-center items-center gap-2 active:scale-95 transition-transform">
                         <img src="img/ton.png" class="w-5 h-5"> <span id="p-ton">0</span>
                     </button>
-                </div>
+                    </div>
             </div>
             <div id="loot-display" class="grid grid-cols-3 gap-2 pb-10"></div>
         </div>
@@ -194,7 +195,8 @@ let isBusy = false;
 
 let balance = {
     stars: parseInt(localStorage.getItem('user_stars')) || 0,
-    ton: parseFloat(localStorage.getItem('user_ton')) || 0
+    ton: parseFloat(localStorage.getItem('user_ton')) || 0,
+    tickets: parseInt(localStorage.getItem('user_tickets')) || 0
 };
 
 const ITEMS = {
@@ -255,14 +257,15 @@ const ITEMS = {
     73: { name: "Ring", img: "kolechko.png", price: 100 }
 };
 
+// МАССИВ КЕЙСОВ - Поправил поля
 const CASES = [
-    { name: "Шкатулка Удачи", stars: 100, ton: 1, img: "case2.png", loot: [[9, 99], [70, 0.6], [1, 0.1], [56, 0.1], [57, 0.1], [28, 0.1]] },
-    { name: "Мистический", stars: 300, ton: 3, img: "case3.png", loot: [[73, 98], [42, 1], [9, 0.1], [7, 0.8], [62, 0.1]] },
-    { name: "Лесной Оазис", stars: 1000, ton: 12, img: "case4.png", loot: [[29, 0], [20, 0], [8, 0], [17, 99], [51, 1]] },
-    { name: "Пиратский Клад", stars: 3500, ton: 35, img: "case5.png", loot: [[55, 0], [27, 0], [63, 30], [59, 65], [20, 5]] },
-    { name: "Детективный", stars: 5000, ton: 50, img: "case7.png", loot: [[30, 0], [41, 1], [18, 5], [16, 70], [27, 25]] },
-    { name: "Технологический", stars: 7500, ton: 70, img: "case8.png", loot: [[40, 0], [41, 0], [24, 0], [63, 10], [59, 90]] },
-    { name: "Лимонный", stars: 25000, ton: 150, img: "case9.png", loot: [[40, 0], [66, 0], [55, 0], [21, 50], [18, 40], [4, 10]] }
+    { name: "Шкатулка Удачи", type: 'stars', price: 100, stars: 100, ton: 1, img: "case2.png", loot: [[9, 99], [70, 0.6], [1, 0.1], [56, 0.1], [57, 0.1], [28, 0.1]] },
+    { name: "Мистический", type: 'stars', price: 300, stars: 300, ton: 3, img: "case3.png", loot: [[73, 98], [42, 1], [9, 0.1], [7, 0.8], [62, 0.1]] },
+    { name: "Лесной Оазис", type: 'stars', price: 1000, stars: 1000, ton: 12, img: "case4.png", loot: [[29, 0], [20, 0], [8, 0], [17, 99], [51, 1]] },
+    { name: "Пиратский Клад", type: 'stars', price: 3500, stars: 3500, ton: 35, img: "case5.png", loot: [[55, 0], [27, 0], [63, 30], [59, 65], [20, 5]] },
+    { name: "Детективный", type: 'stars', price: 5000, stars: 5000, ton: 50, img: "case7.png", loot: [[30, 0], [41, 1], [18, 5], [16, 70], [27, 25]] },
+    { name: "Технологический", type: 'stars', price: 7500, stars: 7500, ton: 70, img: "case8.png", loot: [[40, 0], [41, 0], [24, 0], [63, 10], [59, 90]] },
+    { name: "Лимонный", type: 'stars', price: 25000, stars: 25000, ton: 150, img: "case9.png", loot: [[40, 0], [66, 0], [55, 0], [21, 50], [18, 40], [4, 10]] }
 ];
 
 async function syncData() {
@@ -272,6 +275,7 @@ async function syncData() {
         if (data.stars !== undefined) {
             balance.stars = parseInt(data.stars);
             balance.ton = parseFloat(data.balance);
+            balance.tickets = parseInt(data.tickets || 0);
             saveAndRefresh();
         }
     } catch (e) { console.error("Sync error:", e); }
@@ -280,18 +284,44 @@ async function syncData() {
 function saveAndRefresh() {
     localStorage.setItem('user_stars', balance.stars);
     localStorage.setItem('user_ton', balance.ton.toFixed(2));
+    localStorage.setItem('user_tickets', balance.tickets);
+    
     document.getElementById('header-stars').innerText = balance.stars.toLocaleString('ru-RU').replace(/\s/g, '.');
     document.getElementById('header-ton').innerText = balance.ton.toFixed(2);
+    document.getElementById('header-tickets').innerText = balance.tickets;
 }
 
 function render() {
-    document.getElementById('main-grid').innerHTML = CASES.map((c, i) => `
-        <div class="case-card p-6 flex flex-col items-center" onclick="openCase(${i})">
-            <img src="img/${c.img}" class="w-24 h-24 mb-4 object-contain">
-            <div class="orbitron text-[10px] text-green-500 font-black mb-1 uppercase">${c.name}</div>
-            <div class="text-[11px] font-bold opacity-40 uppercase">${c.stars === 0 ? 'TON ' + c.ton : '⭐ ' + c.stars}</div>
-        </div>
-    `).join('');
+    const grid = document.getElementById('main-grid');
+    grid.innerHTML = '';
+    
+    CASES.forEach((c, idx) => {
+        const isTickets = c.type === 'tickets';
+        if (isTickets) {
+            grid.innerHTML += `
+                <div class="col-span-2 case-card p-6 flex items-center justify-between border-2 border-yellow-400/20" onclick="openCase(${idx})">
+                    <div class="flex items-center gap-4">
+                        <img src="img/${c.img}" class="w-20 h-20 object-contain">
+                        <div>
+                            <div class="orbitron text-sm text-yellow-400 font-black uppercase">${c.name}</div>
+                            <div class="text-[10px] opacity-40 uppercase">Эксклюзив за тикеты</div>
+                        </div>
+                    </div>
+                    <div class="bg-yellow-400 text-black px-4 py-2 rounded-2xl font-black text-sm">
+                        ${c.price} 🎫
+                    </div>
+                </div>
+            `;
+        } else {
+            grid.innerHTML += `
+                <div class="case-card p-6 flex flex-col items-center" onclick="openCase(${idx})">
+                    <img src="img/${c.img}" class="w-24 h-24 mb-4 object-contain">
+                    <div class="orbitron text-[10px] text-green-500 font-black mb-1 uppercase">${c.name}</div>
+                    <div class="text-[11px] font-bold opacity-40 uppercase">⭐ ${c.price}</div>
+                </div>
+            `;
+        }
+    });
 }
 
 function openCase(i) {
@@ -303,6 +333,31 @@ function openCase(i) {
     document.getElementById('view-win').style.display = 'none';
     document.getElementById('m-img').src = `img/${activeCase.img}`;
     document.getElementById('m-title').innerText = activeCase.name;
+
+    const btnStars = document.getElementById('btn-stars');
+    const btnTon = document.getElementById('btn-ton');
+    let btnTickets = document.getElementById('btn-tickets-roll');
+
+    if (!btnTickets) {
+        btnTickets = document.createElement('button');
+        btnTickets.id = 'btn-tickets-roll';
+        btnTickets.onclick = () => startRoll('tickets');
+        btnTickets.className = "col-span-2 bg-yellow-400 text-black py-4 rounded-3xl font-black flex justify-center items-center gap-2 active:scale-95 transition-transform hidden";
+        document.getElementById('roll-buttons-container').appendChild(btnTickets);
+    }
+
+    if (activeCase.type === 'tickets') {
+        btnStars.classList.add('hidden');
+        btnTon.classList.add('hidden');
+        btnTickets.classList.remove('hidden');
+        btnTickets.innerHTML = `🎫 <span id="p-tickets">${activeCase.price}</span>`;
+    } else {
+        btnStars.classList.remove('hidden');
+        btnTon.classList.remove('hidden');
+        btnTickets.classList.add('hidden');
+        document.getElementById('p-stars').innerText = activeCase.price;
+        document.getElementById('p-ton').innerText = (activeCase.price / 100).toFixed(2);
+    }
 
     document.getElementById('loot-display').innerHTML = activeCase.loot.map(attr => {
         const itm = ITEMS[attr[0]];
@@ -316,25 +371,37 @@ function openCase(i) {
 function setMul(n) {
     mul = n;
     document.querySelectorAll('.cnt-btn').forEach(b => b.classList.toggle('active', parseInt(b.innerText) === n));
-    document.getElementById('p-stars').innerText = activeCase.stars * n;
-    document.getElementById('p-ton').innerText = (activeCase.ton * n).toFixed(2);
+    
+    if (activeCase.type === 'tickets') {
+        if(document.getElementById('p-tickets')) document.getElementById('p-tickets').innerText = activeCase.price * n;
+    } else {
+        document.getElementById('p-stars').innerText = activeCase.price * n;
+        document.getElementById('p-ton').innerText = ((activeCase.price / 100) * n).toFixed(2);
+    }
 }
 
 async function startRoll(type) {
     if (isBusy) return;
-    const cost = type === 'stars' ? activeCase.stars * mul : activeCase.ton * mul;
-    if (balance[type] < cost) return alert("Недостаточно средств");
+    
+    let cost;
+    if (activeCase.type === 'tickets') {
+        cost = activeCase.price * mul;
+        type = 'tickets';
+    } else {
+        cost = type === 'stars' ? activeCase.price * mul : (activeCase.price / 100) * mul;
+    }
+
+    if (balance[type] < cost) return alert("Недостаточно средств!");
     
     isBusy = true;
     balance[type] -= cost;
     saveAndRefresh();
 
     try {
-        const updateField = type === 'stars' ? { stars: balance.stars } : { balance: balance.ton };
         const response = await fetch(`${SB_URL}/rest/v1/users?user_id=eq.${userId}`, {
             method: 'PATCH',
             headers: headers,
-            body: JSON.stringify(updateField)
+            body: JSON.stringify({ [type === 'stars' ? 'stars' : (type === 'tickets' ? 'tickets' : 'balance')]: balance[type] })
         });
 
         if (!response.ok) throw new Error("Database error");
@@ -390,7 +457,8 @@ function createRow(idx, win) {
         rail.style.transition = 'transform 6.5s cubic-bezier(0.1, 0, 0.05, 1)';
         rail.style.transform = `translateX(-${shift}px)`;
         setTimeout(() => {
-            document.getElementById(`item-${idx}-${winIndex}`).classList.add('win-glow');
+            const winEl = document.getElementById(`item-${idx}-${winIndex}`);
+            if(winEl) winEl.classList.add('win-glow');
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
         }, 6500);
     }, 100);
@@ -474,6 +542,7 @@ async function saveToInventoryAndClose() {
 
 function updateLiveDrop() {
     const rail = document.getElementById('live-drop-rail');
+    if(!rail) return;
     const keys = Object.keys(ITEMS);
     const item = ITEMS[keys[Math.floor(Math.random() * keys.length)]];
     
