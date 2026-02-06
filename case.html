@@ -182,111 +182,214 @@ const userId = tg.initDataUnsafe?.user?.id || 12345;
 
 const SB_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
 const SB_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
-const BACKEND_URL = 'https://stars-drop.vercel.app/api';
-
 const headers = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' };
 
+// Данные ITEMS и CASES остаются прежними (как в твоем коде)
+// ... (тут твой объект ITEMS и CASES) ...
 const ITEMS = {
-    1: { name: "1 May", img: "1may.jpg", price: 100 },
-    2: { name: "2025", img: "2025.jpg", price: 500 },
-    3: { name: "Bear", img: "bear.png", price: 3500 },
-    4: { name: "Book", img: "book.jpg", price: 1000 },
-    7: { name: "Jack Box", img: "box.png", price: 600 },
-    9: { name: "Rocket", img: "raketa.png", price: 50 },
-    18: { name: "Suitcase", img: "chemodan.jpg", price: 5000 },
-    21: { name: "Costume", img: "costum.jpg", price: 10000 },
-    28: { name: "B-Day Cake", img: "happybirthday.jpg", price: 200 },
-    30: { name: "Spartan", img: "helmet.png", price: 25000 },
-    40: { name: "Red Cap", img: "kepka.png", price: 100000 },
-    51: { name: "SD Token", img: "narkotiki.png", price: 600 },
-    56: { name: "Dove Post", img: "otkritka.jpg", price: 150 },
-    57: { name: "Easter Cake", img: "paska.jpg", price: 75 },
-    59: { name: "Rose", img: "rozza.png", price: 2000 },
-    63: { name: "Helmet Biker", img: "shlem.png", price: 3500 },
-    66: { name: "Statue", img: "statyya.jpg", price: 41000 },
-    70: { name: "Spotted Egg", img: "yayko.png", price: 600 },
-    73: { name: "Ring", img: "kolechko.png", price: 100 }
+    "1may.jpg": { name: "1 May Exclusive", price: 100, img: "1may.jpg" },
+    "2025.jpg": { name: "Happy 2025", price: 500, img: "2025.jpg" },
+    "bear.png": { name: "Honey Bear", price: 3500, img: "bear.png" },
+    "book.jpg": { name: "Ancient Book", price: 1000, img: "book.jpg" },
+    "boooox.png": { name: "Berry Box", price: 700, img: "boooox.png" },
+    "botinok.png": { name: "Old Boot", price: 400, img: "botinok.png" },
+    "box.png": { name: "Jack in Box", price: 600, img: "box.png" },
+    "car.png": { name: "Sports Car", price: 5000, img: "car.png" },
+    "raketa.png": { name: "Space Rocket", price: 50, img: "raketa.png" },
+    "ccolso2.png": { name: "Star Ring", price: 3000, img: "ccolso2.png" },
+    "cerrrdce.jpg": { name: "Gingerbread", price: 500, img: "cerrrdce.jpg" },
+    "chemodan.jpg": { name: "Traveler Case", price: 5000, img: "chemodan.jpg" },
+    "ciga.png": { name: "Luxury Cigar", price: 3000, img: "ciga.png" },
+    "colso.png": { name: "Blue Diamond", price: 2500, img: "colso.png" },
+    "costum.jpg": { name: "Royal Costume", price: 10000, img: "costum.jpg" },
+    "cvetok.png": { name: "Wild Flower", price: 1000, img: "cvetok.png" },
+    "dog.png": { name: "Rich Dog", price: 500, img: "dog.png" },
+    "dyxi.png": { name: "Gold Perfume", price: 10000, img: "dyxi.png" },
+    "fonarik.jpg": { name: "Night Lantern", price: 100, img: "fonarik.jpg" },
+    "grob.jpg": { name: "Ancient Coffin", price: 5000, img: "grob.jpg" },
+    "gyba.png": { name: "Lava Lips", price: 5000, img: "gyba.png" },
+    "happybirthday.jpg": { name: "Birthday Cake", price: 200, img: "happybirthday.jpg" },
+    "heart.png": { name: "Heart Lock", price: 2000, img: "heart.png" },
+    "helmet.png": { name: "Spartan Helmet", price: 25000, img: "helmet.png" },
+    "kalendar.png": { name: "Event Calendar", price: 400, img: "kalendar.png" },
+    "kepka.png": { name: "Legendary Cap", price: 100000, img: "kepka.png" },
+    "kirpitch.jpg": { name: "Golden Brick", price: 10000, img: "kirpitch.jpg" },
+    "koks.jpg": { name: "Party Cocktail", price: 150, img: "koks.jpg" },
+    "koktel.png": { name: "Toxic Mix", price: 500, img: "koktel.png" },
+    "kot.png": { name: "Atomic Cat", price: 10000, img: "kot.png" },
+    "kotel.png": { name: "Witch Cauldron", price: 500, img: "kotel.png" },
+    "krovatka.jpg": { name: "Baby Bow", price: 600, img: "krovatka.jpg" },
+    "lolipop.png": { name: "Sweet Lollipop", price: 500, img: "lolipop.png" },
+    "lucky.jpg": { name: "Clover Lucky", price: 500, img: "lucky.jpg" },
+    "mafin.jpg": { name: "Sugar Muffin", price: 700, img: "mafin.jpg" },
+    "metch.png": { name: "Star Saber", price: 700, img: "metch.png" },
+    "narkotiki.png": { name: "Star Token", price: 600, img: "narkotiki.png" },
+    "obyv.jpg": { name: "Sneakers Pro", price: 10000, img: "obyv.jpg" },
+    "otchki.jpg": { name: "Cyber Glasses", price: 30000, img: "otchki.jpg" },
+    "orel.jpg": { name: "Golden Eagle", price: 5000, img: "orel.jpg" },
+    "otkritka.jpg": { name: "Peace Dove", price: 150, img: "otkritka.jpg" },
+    "paska.jpg": { name: "Easter Cake", price: 75, img: "paska.jpg" },
+    "rozza.png": { name: "Velvet Rose", price: 2000, img: "rozza.png" },
+    "rykzak.jpg": { name: "Adventurer Bag", price: 500, img: "rykzak.jpg" },
+    "shapka.png": { name: "Santa Hat", price: 500, img: "shapka.png" },
+    "shar.jpg": { name: "Magic Ball", price: 1000, img: "shar.jpg" },
+    "shlem.png": { name: "Biker Helmet", price: 3500, img: "shlem.png" },
+    "soska.jpg": { name: "Diamond Pacifier", price: 3000, img: "soska.jpg" },
+    "star.png": { name: "Pure Star", price: 15, img: "star.png" },
+    "statyya.jpg": { name: "Hero Statue", price: 41000, img: "statyya.jpg" },
+    "venok.jpg": { name: "Wreath Flower", price: 500, img: "venok.png" },
+    "yayko.png": { name: "Dragon Egg", price: 600, img: "yayko.png" },
+    "zhele.png": { name: "Slime Jelly", price: 700, img: "zhele.png" },
+    "zmei.png": { name: "Snake Friend", price: 500, img: "zmei.png" },
+    "meczcc.png": { name: "Faith Amulet", price: 600, img: "meczcc.png" },
+    "kryg.PNG": { name: "Snow Globe", price: 600, img: "kryg.PNG" },
+    "gribb.PNG": { name: "Spy Agaric", price: 600, img: "gribb.PNG" },
+    "zirka.PNG": { name: "Hanging Star", price: 800, img: "zirka.PNG" },
+    "cvetk.PNG": { name: "Sakura Flower", price: 900, img: "cvetk.PNG" },
+    "sshapka.PNG": { name: "Khabib's Papakha", price: 2300, img: "sshapka.PNG" },
+    "tyfli.PNG": { name: "Sky Stilettos", price: 1800, img: "tyfli.PNG" }
 };
-
 const CASES = [
-    { name: "Кейс Новичка", type: 'tickets', price: 10, img: "case2.png", loot: [[9, 90], [70, 5], [1, 5]] },
-    { name: "Шкатулка Удачи", type: 'stars', price: 100, img: "case2.png", loot: [[9, 99], [70, 0.6], [1, 0.1]] },
-    { name: "Мистический", type: 'stars', price: 300, img: "case3.png", loot: [[73, 98], [9, 2]] },
-    { name: "Лесной Оазис", type: 'stars', price: 1000, img: "case4.png", loot: [[17, 99], [51, 1]] },
-    { name: "Пиратский Клад", type: 'stars', price: 3500, img: "case5.png", loot: [[63, 30], [59, 70]] },
-    { name: "Детективный", type: 'stars', price: 5000, img: "case7.png", loot: [[18, 5], [16, 95]] },
-    { name: "Технологический", type: 'stars', price: 7500, img: "case8.png", loot: [[63, 10], [59, 90]] },
-    { name: "Лимонный", type: 'stars', price: 25000, img: "case9.png", loot: [[21, 50], [18, 50]] }
+    { 
+        name: "Кейс Новичка", 
+        type: 'tickets', 
+        price: 10, 
+        img: "case1.png", 
+        loot: [
+            ["star.png", 85], ["raketa.png", 5], ["paska.jpg", 3], ["1may.jpg", 2], ["fonarik.jpg", 1.5],
+            ["otkritka.jpg", 1], ["happybirthday.jpg", 0.5], ["koks.jpg", 0.4], ["dog.png", 0.3], ["botinok.png", 0.2],
+            ["kalendar.png", 0.1], ["cerrrdce.jpg", 0.1], ["venok.png", 0.1], ["lucky.jpg", 0.1], ["box.png", 0.1]
+        ] 
+    },
+    { 
+        name: "Шкатулка Удачи", 
+        type: 'multi', 
+        priceStars: 50, 
+        priceTon: 0.5, 
+        img: "case2.png", 
+        loot: [
+            ["star.png", 80], ["raketa.png", 10], ["paska.jpg", 5], ["1may.jpg", 1.5], ["fonarik.jpg", 1],
+            ["otkritka.jpg", 0.5], ["happybirthday.jpg", 0.4], ["koks.jpg", 0.3], ["dog.png", 0.2], ["botinok.png", 0.2],
+            ["kalendar.png", 0.1], ["cerrrdce.jpg", 0.1], ["venok.png", 0.1], ["lucky.jpg", 0.1], ["bear.png", 0.1] // Джекпот 3500 при цене 50
+        ] 
+    },
+    { 
+        name: "Мистический Шторм", 
+        type: 'multi', 
+        priceStars: 100, 
+        priceTon: 1.0, 
+        img: "case3.png", 
+        loot: [
+            ["paska.jpg", 70], ["1may.jpg", 15], ["fonarik.jpg", 7], ["otkritka.jpg", 3], ["happybirthday.jpg", 2],
+            ["koks.jpg", 1], ["dog.png", 0.5], ["botinok.png", 0.4], ["kalendar.png", 0.3], ["cerrrdce.jpg", 0.2],
+            ["venok.png", 0.2], ["lucky.jpg", 0.1], ["box.png", 0.1], ["book.jpg", 0.1], ["car.png", 0.05]
+        ] 
+    },
+    { 
+        name: "Лесной Оазис", 
+        type: 'multi', 
+        priceStars: 250, 
+        priceTon: 3.0, 
+        img: "case5.png", 
+        loot: [
+            ["otkritka.jpg", 65], ["happybirthday.jpg", 15], ["koks.jpg", 10], ["dog.png", 5], ["botinok.png", 2],
+            ["kalendar.png", 1], ["cerrrdce.jpg", 0.5], ["venok.png", 0.4], ["lucky.jpg", 0.3], ["box.png", 0.3],
+            ["zlei.png", 0.2], ["yayko.png", 0.2], ["meczcc.png", 0.1], ["cvetok.png", 0.1], ["helmet.png", 0.1]
+        ] 
+    },
+    { 
+        name: "Пиратский Клад", 
+        type: 'multi', 
+        priceStars: 419, 
+        priceTon: 5.5, 
+        img: "case7.png", 
+        loot: [
+            ["dog.png", 60], ["botinok.png", 20], ["kalendar.png", 10], ["cerrrdce.jpg", 5], ["venok.png", 2],
+            ["lucky.jpg", 1], ["box.png", 0.5], ["zlei.png", 0.4], ["yayko.png", 0.3], ["meczcc.png", 0.2],
+            ["boooox.png", 0.2], ["zhele.png", 0.1], ["mafin.jpg", 0.1], ["book.jpg", 0.1], ["ciga.png", 0.1]
+        ] 
+    },
+    { 
+        name: "Детективный поиск", 
+        type: 'multi', 
+        priceStars: 549, 
+        priceTon: 7.0, 
+        img: "case4.png", 
+        loot: [
+            ["botinok.png", 55], ["kalendar.png", 20], ["cerrrdce.jpg", 10], ["venok.png", 7], ["lucky.jpg", 3],
+            ["box.png", 2], ["zlei.png", 1], ["yayko.png", 0.5], ["meczcc.png", 0.4], ["boooox.png", 0.3],
+            ["zhele.png", 0.2], ["mafin.jpg", 0.2], ["zirka.PNG", 0.1], ["cvetk.PNG", 0.1], ["dyxi.png", 0.1]
+        ] 
+    },
+    { 
+        name: "Зимняя история", 
+        type: 'multi', 
+        priceStars: 799, 
+        priceTon: 9.0, 
+        img: "case8.png", 
+        loot: [
+            ["box.png", 50], ["zlei.png", 20], ["yayko.png", 15], ["meczcc.png", 7], ["boooox.png", 4],
+            ["zhele.png", 2], ["mafin.jpg", 1], ["zirka.PNG", 0.5], ["kryg.PNG", 0.2], ["gribb.PNG", 0.1],
+            ["cvetk.PNG", 0.1], ["shapka.png", 0.1], ["sshapka.PNG", 0.1], ["tyfli.PNG", 0.1], ["costum.jpg", 0.05]
+        ] 
+    },
+    { 
+        name: "Лунная Легенда", 
+        type: 'multi', 
+        priceStars: 0, 
+        priceTon: 19.0, 
+        img: "case9.png", 
+        loot: [
+            ["booox.png", 45], ["zhele.png", 25], ["mafin.jpg", 15], ["zirka.PNG", 7], ["kryg.PNG", 3],
+            ["gribb.PNG", 2], ["cvetk.PNG", 1], ["sshapka.PNG", 0.5], ["tyfli.PNG", 0.4], ["rozza.png", 0.3],
+            ["heart.png", 0.2], ["colso.png", 0.2], ["ccolso2.png", 0.1], ["orel.jpg", 0.1], ["kepka.png", 0.01] // Супер джекпот за 100к
+        ] 
+    }
 ];
 
 let balance = { stars: 0, ton: 0, tickets: 0 };
 let mul = 1, activeCase = null, isBusy = false, currentWinners = [];
 
+// СИНХРОНИЗАЦИЯ С БАЗОЙ
 async function syncData() {
     try {
-        const res = await fetch(`${BACKEND_URL}/get_balance/${userId}?t=${Date.now()}`);
+        const res = await fetch(`${SB_URL}/rest/v1/users?user_id=eq.${userId}`, { headers });
         const data = await res.json();
-        balance.stars = parseInt(data.stars || 0);
-        balance.ton = parseFloat(data.balance || 0);
-        balance.tickets = parseInt(data.tickets || 0);
-        saveAndRefresh();
-    } catch (e) { console.error("Sync error"); }
+        if (data && data[0]) {
+            balance.stars = parseInt(data[0].stars || 0);
+            balance.ton = parseFloat(data[0].balance || 0); // В базе поле называется balance
+            balance.tickets = parseInt(data[0].tickets || 0);
+            saveAndRefresh();
+        }
+    } catch (e) { console.error("Sync error:", e); }
 }
 
 function saveAndRefresh() {
-    document.getElementById('header-stars').innerText = balance.stars.toLocaleString('ru-RU').replace(/\s/g, '.');
+    document.getElementById('header-stars').innerText = balance.stars.toLocaleString('ru-RU');
     document.getElementById('header-ton').innerText = balance.ton.toFixed(2);
     document.getElementById('header-tickets').innerText = balance.tickets;
 }
 
-function render() {
-    const tGrid = document.getElementById('tickets-container');
-    const mGrid = document.getElementById('main-grid');
-    
-    // Очищаем контейнеры перед отрисовкой
-    tGrid.innerHTML = ''; 
-    mGrid.innerHTML = '';
-    
-    CASES.forEach((c, idx) => {
-        if (c.type === 'tickets') {
-            // Отрисовка кейса за тикеты (горизонтальный)
-            tGrid.innerHTML = `
-                <div class="case-card p-6 flex items-center justify-between border-2 border-green-500/30" onclick="openCase(${idx})">
-                    <div class="flex items-center gap-6">
-                        <img src="img/${c.img}" class="w-24 h-24 object-contain text-white">
-                        <div>
-                            <div class="orbitron text-lg text-green-500 font-black uppercase">${c.name}</div>
-                            <div class="text-[10px] opacity-50 uppercase tracking-widest">Эксклюзив за тикеты</div>
-                        </div>
-                    </div>
-                    <div class="bg-green-500 text-black px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2">
-                         ${c.price} <img src="img/ticket.png" class="w-4 h-4">
-                    </div>
-                </div>`;
-        } else {
-            // Отрисовка обычных кейсов (сетка 2х2)
-            mGrid.innerHTML += `
-                <div class="case-card p-8 flex flex-col items-center justify-center min-h-[220px]" onclick="openCase(${idx})">
-                    <img src="img/${c.img}" class="w-32 h-32 mb-4 object-contain drop-shadow-[0_0_15px_rgba(34,197,94,0.3)]">
-                    <div class="orbitron text-xs text-green-500 font-black mb-2 uppercase text-center">${c.name}</div>
-                    <div class="bg-white/5 px-4 py-1 rounded-full text-[12px] font-bold opacity-70 uppercase tracking-tighter">
-                        ⭐ ${c.price}
-                    </div>
-                </div>`;
-        }
-    });
-}
-
+// ОТКРЫТИЕ КЕЙСА
 function openCase(i) {
+    if (isBusy) return;
     activeCase = CASES[i];
     setMul(1);
+    
     document.getElementById('case-modal').style.display = 'flex';
     document.getElementById('view-preview').style.display = 'block';
     document.getElementById('view-roulette').style.display = 'none';
     document.getElementById('view-win').style.display = 'none';
+    document.getElementById('back-btn').style.display = 'block';
+    
     document.getElementById('m-img').src = `img/${activeCase.img}`;
     document.getElementById('m-title').innerText = activeCase.name;
 
+    updatePriceButtons();
+    renderLootPreview();
+}
+
+function updatePriceButtons() {
     const btnStars = document.getElementById('btn-stars');
     const btnTon = document.getElementById('btn-ton');
     let btnTickets = document.getElementById('btn-tickets-roll');
@@ -294,7 +397,6 @@ function openCase(i) {
     if (!btnTickets) {
         btnTickets = document.createElement('button');
         btnTickets.id = 'btn-tickets-roll';
-        btnTickets.onclick = () => startRoll('tickets');
         btnTickets.className = "col-span-2 bg-green-500 text-black py-4 rounded-3xl font-black flex justify-center items-center gap-2 active:scale-95 transition-transform hidden";
         document.getElementById('roll-buttons-container').appendChild(btnTickets);
     }
@@ -302,118 +404,229 @@ function openCase(i) {
     if (activeCase.type === 'tickets') {
         btnStars.classList.add('hidden'); btnTon.classList.add('hidden');
         btnTickets.classList.remove('hidden');
-        btnTickets.innerHTML = `<img src="img/ticket.png" class="w-5 h-5"> <span id="p-tickets">${activeCase.price}</span>`;
+        btnTickets.onclick = () => startRoll('tickets');
+        btnTickets.innerHTML = `<img src="img/ticket.png" class="w-5 h-5"> <span>${activeCase.price * mul}</span>`;
     } else {
         btnStars.classList.remove('hidden'); btnTon.classList.remove('hidden');
         btnTickets.classList.add('hidden');
-        document.getElementById('p-stars').innerText = activeCase.price;
-        document.getElementById('p-ton').innerText = (activeCase.price / 100).toFixed(2);
+        document.getElementById('p-stars').innerText = activeCase.priceStars * mul;
+        document.getElementById('p-ton').innerText = (activeCase.priceTon * mul).toFixed(2);
     }
-
-    document.getElementById('loot-display').innerHTML = activeCase.loot.map(attr => {
-        const itm = ITEMS[attr[0]];
-        return `<div class="bg-white/5 rounded-2xl p-2 flex flex-col items-center border border-white/5">
-            <img src="img/${itm.img}" class="w-10 h-10 mb-1 object-contain">
-            <div class="text-[8px] text-green-500">⭐${itm.price}</div>
-        </div>`;
-    }).join('');
 }
 
 function setMul(n) {
     mul = n;
     document.querySelectorAll('.cnt-btn').forEach(b => b.classList.toggle('active', parseInt(b.innerText) === n));
-    if (activeCase.type === 'tickets') {
-        if(document.getElementById('p-tickets')) document.getElementById('p-tickets').innerText = activeCase.price * n;
-    } else {
-        document.getElementById('p-stars').innerText = activeCase.price * n;
-        document.getElementById('p-ton').innerText = ((activeCase.price / 100) * n).toFixed(2);
-    }
+    updatePriceButtons();
 }
 
+// ГЛАВНАЯ ФУНКЦИЯ РОЛЛА
 async function startRoll(type) {
     if (isBusy) return;
-    const cost = (type === 'tickets') ? activeCase.price * mul : (type === 'stars' ? activeCase.price * mul : (activeCase.price / 100) * mul);
-    if (balance[type] < cost) return alert("Недостаточно средств!");
     
+    const priceAttr = type === 'stars' ? 'priceStars' : (type === 'ton' ? 'priceTon' : 'price');
+    const cost = activeCase[priceAttr] * mul;
+    const balanceKey = type === 'ton' ? 'ton' : type;
+
+    if (balance[balanceKey] < cost) return alert("Недостаточно средств!");
+
     isBusy = true;
-    balance[type] -= cost;
+    balance[balanceKey] -= cost;
     saveAndRefresh();
 
-    try {
-        const field = type === 'stars' ? 'stars' : (type === 'tickets' ? 'tickets' : 'balance');
-        await fetch(`${SB_URL}/rest/v1/users?user_id=eq.${userId}`, {
-            method: 'PATCH', headers, body: JSON.stringify({ [field]: balance[type] })
-        });
+    // Списание в базе
+    const dbField = type === 'ton' ? 'balance' : type;
+    await fetch(`${SB_URL}/rest/v1/users?user_id=eq.${userId}`, {
+        method: 'PATCH', headers, body: JSON.stringify({ [dbField]: balance[balanceKey] })
+    });
 
-        document.getElementById('back-btn').style.display = 'none';
-        document.getElementById('view-preview').style.display = 'none';
-        document.getElementById('view-roulette').style.display = 'flex';
-        document.getElementById('roulette-rows').innerHTML = '';
+    document.getElementById('back-btn').style.display = 'none';
+    document.getElementById('view-preview').style.display = 'none';
+    document.getElementById('view-roulette').style.display = 'flex';
+    document.getElementById('roulette-rows').innerHTML = '';
 
-        const winners = [];
-        for (let i = 0; i < mul; i++) {
-            const win = getWin(); winners.push(win); createRow(i, win);
-        }
-        setTimeout(() => showWin(winners), 7200);
-    } catch (e) { alert("Ошибка транзакции"); isBusy = false; }
-}
-
-function getWin() {
-    const pool = activeCase.loot.map(attr => ({ id: attr[0], weight: attr[1], ...ITEMS[attr[0]] }));
-    const total = pool.reduce((s, i) => s + i.weight, 0);
-    let rnd = Math.random() * total;
-    for (let i of pool) { if (rnd < i.weight) return i; rnd -= i.weight; }
-    return pool[0];
-}
-
-function createRow(idx, win) {
-    const row = document.createElement('div');
-    row.className = 'roulette-container mb-4';
-    row.innerHTML = `<div class="center-line"></div><div class="roulette-rail" id="rail-${idx}"></div>`;
-    document.getElementById('roulette-rows').appendChild(row);
-
-    const rail = document.getElementById(`rail-${idx}`);
-    const winIndex = 35;
-    let html = '';
-    for (let i = 0; i < 45; i++) {
-        const rId = activeCase.loot[Math.floor(Math.random() * activeCase.loot.length)][0];
-        const finalId = (i === winIndex) ? win.id : rId;
-        html += `<div class="roulette-item" id="item-${idx}-${i}"><img src="img/${ITEMS[finalId].img}"></div>`;
+    currentWinners = [];
+    for (let i = 0; i < mul; i++) {
+        const win = getWin();
+        currentWinners.push(win);
+        createRow(i, win);
     }
-    rail.innerHTML = html;
 
-    setTimeout(() => {
-        const shift = (winIndex * 140) - (window.innerWidth / 2) + 70;
-        rail.style.transition = 'transform 6.5s cubic-bezier(0.1, 0, 0.05, 1)';
-        rail.style.transform = `translateX(-${shift}px)`;
-        setTimeout(() => {
-            const winEl = document.getElementById(`item-${idx}-${winIndex}`);
-            if(winEl) winEl.classList.add('win-glow');
-        }, 6500);
-    }, 100);
+    setTimeout(() => showWin(currentWinners), 7000);
 }
 
+// 1. Логика выбора приза на основе шансов (%)
+function getWin() {
+    const loot = activeCase.loot;
+    const rand = Math.random() * 100;
+    let cumulative = 0;
+
+    for (const [img, chance] of loot) {
+        cumulative += chance;
+        if (rand <= cumulative) {
+            return ITEMS[img];
+        }
+    }
+    // Если что-то пошло не так, возвращаем самый дешевый предмет
+    return ITEMS[loot[0][0]];
+}
+
+// 2. Генерация и запуск анимации рулетки
+function createRow(index, winItem) {
+    const container = document.getElementById('roulette-rows');
+    const row = document.createElement('div');
+    row.className = 'roulette-container animate-fade-in mb-4';
+    row.innerHTML = `
+        <div class="center-line"></div>
+        <div class="roulette-rail" id="rail-${index}"></div>
+    `;
+    container.appendChild(row);
+
+    const rail = document.getElementById(`rail-${index}`);
+    const itemWidth = 140; // ширина item (120) + margin (20)
+    const winIndex = 30;   // на каком по счету элементе остановимся
+    
+    // Заполняем ленту
+    for (let i = 0; i < 40; i++) {
+        const keys = Object.keys(ITEMS);
+        const randomItem = ITEMS[keys[Math.floor(Math.random() * keys.length)]];
+        const displayItem = (i === winIndex) ? winItem : randomItem;
+        
+        rail.innerHTML += `
+            <div class="roulette-item">
+                <img src="img/${displayItem.img}">
+            </div>
+        `;
+    }
+
+    // Запуск движения через небольшой таймаут
+    setTimeout(() => {
+        const offset = (winIndex * itemWidth) - (window.innerWidth / 2) + (itemWidth / 2);
+        rail.style.transition = 'transform 6s cubic-bezier(0.15, 0, 0.05, 1)';
+        rail.style.transform = `translateX(-${offset}px)`;
+    }, 50);
+}
+
+// 3. Показ финального экрана
 function showWin(winners) {
-    currentWinners = winners;
     document.getElementById('view-roulette').style.display = 'none';
     document.getElementById('view-win').style.display = 'flex';
-    let total = 0, grid = '';
-    winners.forEach(w => {
-        total += w.price;
-        grid += `<div class="bg-white/5 p-4 rounded-[30px] border border-white/10 flex flex-col items-center min-w-[100px]">
-            <img src="img/${w.img}" class="w-14 h-14 object-contain">
-            <div class="orbitron text-[8px] text-green-500 mt-2 uppercase font-black">${w.name}</div>
-        </div>`;
+    
+    const winGrid = document.getElementById('win-grid');
+    winGrid.innerHTML = '';
+    let total = 0;
+
+    winners.forEach(item => {
+        total += item.price;
+        winGrid.innerHTML += `
+            <div class="flex flex-col items-center p-4 bg-white/5 rounded-3xl border border-green-500/30 animate-fade-in">
+                <img src="img/${item.img}" class="w-20 h-20 object-contain mb-2">
+                <div class="text-green-500 font-black orbitron text-xs">⭐${item.price}</div>
+            </div>
+        `;
     });
-    document.getElementById('win-grid').innerHTML = grid;
-    document.getElementById('win-total-price').innerText = total;
-    document.getElementById('sell-all-btn').innerText = `Продать: ${total} ⭐`;
-    document.getElementById('back-btn').style.display = 'block';
-    isBusy = false;
+    
+    document.getElementById('win-total-price').innerText = total.toLocaleString();
+    isBusy = false; // Разблокируем кнопки
 }
 
-function closeModal() { document.getElementById('case-modal').style.display = 'none'; isBusy = false; }
+// ПРОДАЖА ПРЕДМЕТОВ (С БАЗОЙ)
+async function sellAllAndClose() {
+    if (isBusy) return;
+    isBusy = true;
+    
+    const totalProfit = currentWinners.reduce((sum, item) => sum + item.price, 0);
+    balance.stars += totalProfit;
+    
+    try {
+        await fetch(`${SB_URL}/rest/v1/users?user_id=eq.${userId}`, {
+            method: 'PATCH', headers, body: JSON.stringify({ stars: balance.stars })
+        });
+        saveAndRefresh();
+        closeModal();
+    } catch (e) {
+        alert("Ошибка при продаже");
+    } finally {
+        isBusy = false;
+    }
+}
 
+// СОХРАНЕНИЕ В ИНВЕНТАРЬ (С БАЗОЙ)
+async function saveToInventoryAndClose() {
+    if (isBusy) return;
+    isBusy = true;
+
+    try {
+        const promises = currentWinners.map(item => {
+            return fetch(`${SB_URL}/rest/v1/inventory`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    user_id: userId,
+                    item_id: item.img,
+                    name: item.name,
+                    price: item.price,
+                    img: item.img
+                })
+            });
+        });
+
+        await Promise.all(promises);
+        closeModal();
+    } catch (e) {
+        alert("Ошибка сохранения");
+    } finally {
+        isBusy = false;
+    }
+}
+
+function closeModal() {
+    document.getElementById('case-modal').style.display = 'none';
+    isBusy = false;
+    currentWinners = [];
+}
+
+// Вспомогательные функции отрисовки
+function renderLootPreview() {
+    document.getElementById('loot-display').innerHTML = activeCase.loot.map(attr => {
+        const itm = ITEMS[attr[0]];
+        return itm ? `<div class="bg-white/5 rounded-2xl p-2 flex flex-col items-center border border-white/5">
+            <img src="img/${itm.img}" class="w-10 h-10 mb-1 object-contain">
+            <div class="text-[8px] text-green-500">⭐${itm.price}</div>
+        </div>` : '';
+    }).join('');
+}
+
+function render() {
+    const tGrid = document.getElementById('tickets-container');
+    const mGrid = document.getElementById('main-grid');
+    tGrid.innerHTML = ''; mGrid.innerHTML = '';
+    
+    CASES.forEach((c, idx) => {
+        if (c.type === 'tickets') {
+            tGrid.innerHTML = `<div class="case-card p-6 flex items-center justify-between border-2 border-green-500/30" onclick="openCase(${idx})">
+                <div class="flex items-center gap-6">
+                    <img src="img/${c.img}" class="w-24 h-24 object-contain">
+                    <div><div class="orbitron text-lg text-green-500 font-black uppercase">${c.name}</div></div>
+                </div>
+                <div class="bg-green-500 text-black px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2">${c.price} <img src="img/ticket.png" class="w-4 h-4"></div>
+            </div>`;
+        } else {
+            mGrid.innerHTML += `<div class="case-card p-4 flex flex-col items-center justify-between min-h-[280px]">
+                <div onclick="openCase(${idx})" class="flex flex-col items-center">
+                    <img src="img/${c.img}" class="w-28 h-28 mb-2 object-contain">
+                    <div class="orbitron text-[10px] text-green-500 font-black mb-4 uppercase text-center">${c.name}</div>
+                </div>
+                <div class="w-full flex flex-col gap-2">
+                    <button onclick="openCase(${idx})" class="w-full bg-white/5 py-2 rounded-xl text-[12px] font-bold">⭐ ${c.priceStars}</button>
+                    <button onclick="openCase(${idx})" class="w-full bg-blue-500/10 py-2 rounded-xl text-[12px] font-bold text-blue-400">${c.priceTon} TON</button>
+                </div>
+            </div>`;
+        }
+    });
+}
+
+// Запуск
 render();
 syncData();
 </script>
