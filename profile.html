@@ -181,84 +181,90 @@
     let user = null;
     let selectedIdx = -1;
 
+// Функция загрузки пользователя (loadUser)
 async function loadUser() {
     try {
-        // 1. Получаем ID из Телеграма
         const tg = window.Telegram.WebApp;
-        let rawId = tg.initDataUnsafe?.user?.id || 8015661230; // Твой ID как запасной
+        // Забираем ID и ГАРАНТИРУЕМ, что это строка (для универсальности в Supabase)
+        const userId = String(tg.initDataUnsafe?.user?.id || 8015661230);
 
-        // 2. ВАЖНО: Превращаем ID в число, чтобы Supabase его узнал
-        const userIdNum = Number(rawId);
-
-        // 3. Запрос к базе
         let { data, error } = await _supabase
             .from('users')
             .select('*')
-            .eq('user_id', userIdNum)
+            .eq('user_id', userId) 
             .single();
 
         if (data) {
-            user = data;
-            // Обновляем текст на экране
-            document.getElementById('u-name').innerText = (tg.initDataUnsafe?.user?.first_name || "USER").toUpperCase();
-            document.getElementById('u-id-label').innerText = `ID: ${user.user_id}`;
-            document.getElementById('u-stars').innerText = (user.stars || 0).toLocaleString();
+            user = data; // записываем в глобальную переменную
+            // Обновляем UI
+            document.getElementById('u-stars').innerText = (user.stars || 0);
             document.getElementById('u-ton').innerText = (user.balance || 0).toFixed(2);
             document.getElementById('u-tickets').innerText = (user.tickets || 0);
-            
-            // Аватарка
-            const avatarImg = document.getElementById('u-avatar');
-            if (avatarImg) {
-                avatarImg.src = tg.initDataUnsafe?.user?.photo_url || `https://ui-avatars.com/api/?name=U&background=166534&color=fff`;
-            }
-            
+            document.getElementById('u-id-label').innerText = `ID: ${user.user_id}`;
             renderGrid();
-        } else {
-            console.error("Пользователь не найден в базе данных");
         }
-    } catch (e) { 
-        console.error("Ошибка загрузки:", e); 
-    }
+    } catch (e) { console.error("Ошибка загрузки:", e); }
 }
 
-    function renderGrid() {
-        const grid = document.getElementById('grid');
-        const inv = user.inventory || [];
-        document.getElementById('inv-count').innerText = `${inv.length} ПРЕДМЕТОВ`;
-        let html = inv.map((it, i) => {
-            const path = it.img.startsWith('img/') ? it.img : 'img/' + it.img;
-            return `<div class="inventory-slot active-item" onclick="openItem(${i})"><img src="${path}"></div>`;
-        }).join('');
-        for(let i=0; i < Math.max(0, 9 - inv.length); i++) html += `<div class="inventory-slot opacity-10"></div>`;
-        grid.innerHTML = html;
+// Функция активации (handlePromo) - РАБОТАЕТ С ТВОЕЙ БАЗОЙ
+async function handlePromo() {
+    const input = document.getElementById('promo-input');
+    const codeText = input.value.trim().toUpperCase();
+    if (!codeText || !user) return;
+
+    // 1. Проверяем, не вводил ли уже
+    const usedCodes = user.used_promos ? user.used_promos.split(',') : [];
+    if (usedCodes.includes(codeText)) {
+        tg.showAlert("❌ ВЫ УЖЕ ИСПОЛЬЗОВАЛИ ЭТОТ КОД");
+        return;
     }
 
-    async function handlePromo() {
-        const input = document.getElementById('promo-input');
-        const codeText = input.value.trim().toUpperCase();
-        if (!codeText || !user) return;
-        const usedCodes = user.used_promos ? user.used_promos.split(',') : [];
-        if (usedCodes.includes(codeText)) { tg.showAlert("❌ УЖЕ ИСПОЛЬЗОВАНО"); return; }
+    // 2. Ищем код в ТВОЕЙ таблице promo_codes
+    const { data: promo, error } = await _supabase
+        .from('promo_codes')
+        .select('*')
+        .eq('code', codeText)
+        .single();
 
-        try {
-            const { data: promo, error } = await _supabase.from('promo_codes').select('*').eq('code', codeText).single();
-            if (error || !promo) { tg.showAlert("🛑 КОД НЕ НАЙДЕН"); return; }
-            if (!promo.active || promo.uses_left <= 0) { tg.showAlert("⏳ ЛИМИТ ИСЧЕРПАН"); return; }
-
-            const upd = {
-                stars: (user.stars || 0) + (promo.reward_stars || 0),
-                balance: (user.balance || 0) + (promo.reward_ton || 0),
-                tickets: (user.tickets || 0) + (promo.reward_tickets || 0),
-                used_promos: user.used_promos ? `${user.used_promos},${codeText}` : codeText
-            };
-
-            await _supabase.from('users').update(upd).eq('user_id', userId);
-            await _supabase.from('promo_codes').update({ uses_left: promo.uses_left - 1 }).eq('code', codeText);
-
-            tg.showAlert(`✅ УСПЕХ!\n+${promo.reward_stars} ⭐, +${promo.reward_ton} TON, +${promo.reward_tickets} 🎟️`);
-            input.value = ''; loadUser();
-        } catch (e) { tg.showAlert("Ошибка!"); }
+    if (error || !promo) {
+        tg.showAlert("🛑 КОД НЕ НАЙДЕН");
+        return;
     }
+
+    // 3. Проверка активности (как на твоем скрине)
+    if (!promo.active || promo.uses_left <= 0) {
+        tg.showAlert("⏳ КОД БОЛЬШЕ НЕ РАБОТАЕТ");
+        return;
+    }
+
+    // 4. Считаем новые балансы
+    const upd = {
+        stars: Number(user.stars || 0) + Number(promo.reward_stars || 0),
+        balance: Number(user.balance || 0) + Number(promo.reward_ton || 0),
+        tickets: Number(user.tickets || 0) + Number(promo.reward_tickets || 0),
+        used_promos: user.used_promos ? `${user.used_promos},${codeText}` : codeText
+    };
+
+    // 5. Сохраняем в таблицу users
+    const { error: updErr } = await _supabase
+        .from('users')
+        .update(upd)
+        .eq('user_id', String(user.user_id));
+
+    if (!updErr) {
+        // 6. Уменьшаем uses_left в таблице promo_codes
+        await _supabase
+            .from('promo_codes')
+            .update({ uses_left: promo.uses_left - 1 })
+            .eq('code', codeText);
+
+        tg.showAlert("✅ БОНУС АКТИВИРОВАН!");
+        input.value = '';
+        await loadUser(); // ПЕРЕЗАГРУЖАЕМ ДАННЫЕ, чтобы цифры изменились
+    } else {
+        tg.showAlert("Ошибка сохранения данных");
+    }
+}
 
     function openItem(i) {
         selectedIdx = i;
