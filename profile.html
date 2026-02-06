@@ -182,30 +182,94 @@
     let selectedIdx = -1;
 
 // Функция загрузки пользователя (loadUser)
+// Исправленная функция загрузки
+// ... (твои переменные ITEMS, Supabase и т.д. остаются)
+
 async function loadUser() {
     try {
-        const tg = window.Telegram.WebApp;
-        // Забираем ID и ГАРАНТИРУЕМ, что это строка (для универсальности в Supabase)
-        const userId = String(tg.initDataUnsafe?.user?.id || 8015661230);
+        tg.ready(); // Сообщаем Телеграму, что приложение готово
+        
+        // 1. Данные из Телеграм
+        const firstName = tg.initDataUnsafe?.user?.first_name || "PLAYER";
+        const photoUrl = tg.initDataUnsafe?.user?.photo_url;
+
+        document.getElementById('u-name').innerText = firstName.toUpperCase();
+        
+        const avatarImg = document.getElementById('u-avatar');
+        if (photoUrl) {
+            avatarImg.src = photoUrl;
+        } else {
+            avatarImg.src = `https://ui-avatars.com/api/?name=${firstName}&background=166534&color=fff`;
+        }
+
+        // 2. База данных
+        // Важно: используем String, так как в Supabase ID часто хранится как текст
+        const currentId = String(tg.initDataUnsafe?.user?.id || userId); 
 
         let { data, error } = await _supabase
             .from('users')
             .select('*')
-            .eq('user_id', userId) 
+            .eq('user_id', currentId)
             .single();
 
         if (data) {
-            user = data; // записываем в глобальную переменную
-            // Обновляем UI
+            user = data;
             document.getElementById('u-stars').innerText = (user.stars || 0);
             document.getElementById('u-ton').innerText = (user.balance || 0).toFixed(2);
             document.getElementById('u-tickets').innerText = (user.tickets || 0);
             document.getElementById('u-id-label').innerText = `ID: ${user.user_id}`;
-            renderGrid();
+            
+            renderGrid(); // Теперь сетка отрисуется
+        } else {
+            console.log("Пользователь не найден в БД, проверьте таблицу 'users'");
         }
-    } catch (e) { console.error("Ошибка загрузки:", e); }
+    } catch (e) { 
+        console.error("Ошибка загрузки:", e); 
+    }
 }
 
+function renderGrid() {
+    const grid = document.getElementById('grid');
+    if (!grid || !user) return;
+
+    const inv = user.inventory || [];
+    document.getElementById('inv-count').innerText = `${inv.length} ПРЕДМЕТОВ`;
+
+    // Очищаем и рисуем заново
+    grid.innerHTML = '';
+    
+    inv.forEach((it, i) => {
+        const slot = document.createElement('div');
+        slot.className = 'inventory-slot active-item';
+        slot.onclick = () => openItem(i);
+        
+        // Проверка пути картинки
+        const imgSrc = it.img.startsWith('img/') ? it.img : 'img/' + it.img;
+        slot.innerHTML = `<img src="${imgSrc}" onerror="this.src='img/star.png'">`;
+        grid.appendChild(slot);
+    });
+
+    // Пустые слоты до 9 штук
+    for (let i = inv.length; i < 9; i++) {
+        const emptySlot = document.createElement('div');
+        emptySlot.className = 'inventory-slot';
+        grid.appendChild(emptySlot);
+    }
+}
+
+// В самом низу файла исправь window.onload:
+window.onload = () => { 
+    initStars(); 
+    draw(); 
+    loadUser(); // Это запустит всю цепочку
+    tg.expand(); 
+    
+    // Ссылка для инвайта
+    const displayRef = document.getElementById('ref-link-display');
+    if(displayRef) {
+        displayRef.innerText = `https://t.me/StarsDropOfficial_Bot/app?startapp=${tg.initDataUnsafe?.user?.id || userId}`;
+    }
+};
 // Функция активации (handlePromo) - РАБОТАЕТ С ТВОЕЙ БАЗОЙ
 async function handlePromo() {
     const input = document.getElementById('promo-input');
