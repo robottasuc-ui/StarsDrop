@@ -208,31 +208,35 @@
         } catch (e) { console.error("Load error:", e); }
     }
 
-    function renderGrid() {
-        const grid = document.getElementById('grid');
-        if (!grid || !user) return;
+function renderGrid() {
+    const grid = document.getElementById('grid');
+    if (!grid || !user) return;
 
-        const inv = Array.isArray(user.inventory) ? user.inventory : [];
-        document.getElementById('inv-count').innerText = `${inv.length} ПРЕДМЕТОВ`;
+    const inv = Array.isArray(user.inventory) ? user.inventory : [];
+    document.getElementById('inv-count').innerText = `${inv.length} ПРЕДМЕТОВ`;
 
-        grid.innerHTML = '';
-        inv.forEach((it, i) => {
-            if (!it) return;
-            const slot = document.createElement('div');
-            slot.className = 'inventory-slot active-item';
-            slot.onclick = () => openItem(i);
-            
-            const imgFile = it.img.includes('/') ? it.img.split('/').pop() : it.img;
-            slot.innerHTML = `<img src="img/${imgFile}" onerror="this.src='img/star.png'">`;
-            grid.appendChild(slot);
-        });
+    grid.innerHTML = '';
+    inv.forEach((it, i) => {
+        if (!it) return;
+        const slot = document.createElement('div');
+        slot.className = 'inventory-slot active-item';
+        slot.onclick = () => openItem(i);
+        
+        // Исправляем логику поиска картинки
+        let imgName = it.img;
+        if (imgName.includes('/')) imgName = imgName.split('/').pop();
+        
+        slot.innerHTML = `<img src="img/${imgName}" onerror="this.src='img/star.png'">`;
+        grid.appendChild(slot);
+    });
 
-        for (let i = inv.length; i < 9; i++) {
-            const empty = document.createElement('div');
-            empty.className = 'inventory-slot';
-            grid.appendChild(empty);
-        }
+    // Дорисовываем пустые слоты до 9, чтобы сетка не прыгала
+    for (let i = inv.length; i < 9; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'inventory-slot';
+        grid.appendChild(empty);
     }
+}
 
     async function handlePromo() {
         const input = document.getElementById('promo-input');
@@ -291,24 +295,33 @@
 
     function closeModal() { document.getElementById('item-modal').style.display = 'none'; }
 
-    async function sellItem() {
-        if (selectedIdx === -1) return;
-        const it = user.inventory[selectedIdx];
-        const fileName = it.img.split('/').pop();
-        const price = ITEMS[fileName]?.price || 0;
-        let newInv = [...user.inventory];
-        newInv.splice(selectedIdx, 1);
-        
-        const { error } = await _supabase.from('users').update({ 
-            inventory: newInv, 
-            stars: (user.stars || 0) + price 
-        }).eq('user_id', userId);
-        
-        if (!error) {
-            closeModal(); 
-            loadUser();
-        }
+let isSelling = false; // Флаг блокировки
+
+async function sellItem() {
+    if (selectedIdx === -1 || isSelling) return;
+    isSelling = true;
+
+    const it = user.inventory[selectedIdx];
+    const fileName = it.img.split('/').pop();
+    const price = ITEMS[fileName]?.price || 0;
+    
+    let newInv = [...user.inventory];
+    newInv.splice(selectedIdx, 1);
+    
+    const { error } = await _supabase.from('users').update({ 
+        inventory: newInv, 
+        stars: (user.stars || 0) + price 
+    }).eq('user_id', userId);
+    
+    if (!error) {
+        tg.HapticFeedback.notificationOccurred('success');
+        closeModal(); 
+        await loadUser();
+    } else {
+        tg.showAlert("Ошибка при продаже");
     }
+    isSelling = false;
+}
 
     async function withdrawToBot() {
         const priceVerification = 150;
