@@ -23,7 +23,7 @@
             margin: 0; 
             height: 100vh;
             width: 100vw;
-            overflow: hidden; /* Запрещаем общий скролл для body */
+            overflow: hidden;
             user-select: none; 
             -webkit-tap-highlight-color: transparent; 
             touch-action: manipulation;
@@ -33,12 +33,10 @@
 
         body.loaded { opacity: 1; }
 
-        /* Блокировщик удален из логики, но стили оставлены для целостности */
         #pc-only-blocker { display: none; position: fixed; inset: 0; background: #000; z-index: 999999; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
         .qr-frame { background: white; padding: 15px; border-radius: 25px; box-shadow: 0 0 40px var(--accent-green); margin-bottom: 25px; }
         #stars-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
         
-        /* Исправленная обертка */
         .main-wrapper { 
             background: radial-gradient(circle at 50% 30%, #163008 0%, #0a1205 75%); 
             height: 100vh; 
@@ -48,11 +46,10 @@
             z-index: 1; 
         }
 
-        /* Область контента со скроллом */
         .scrollable-content {
             flex: 1;
             overflow-y: auto;
-            padding: 24px 24px 100px 24px; /* Отступ снизу под док-бар */
+            padding: 24px 24px 100px 24px;
             scrollbar-width: none;
         }
         .scrollable-content::-webkit-scrollbar { display: none; }
@@ -121,11 +118,15 @@
                 <div class="balance-container-v2">
                     <div class="balance-item-v2 text-blue-400" onclick="openVault('ton')">
                         <span id="bal-ton" class="font-black">0.00</span>
-                        <img src="ton.png" alt="TON" onerror="this.onerror=null; this.src='https://cryptologos.cc/logos/toncoin-ton-logo.png?v=025'">
+                        <img src="https://cryptologos.cc/logos/toncoin-ton-logo.png?v=025" alt="TON">
                     </div>
                     <div class="balance-item-v2 text-yellow-400" onclick="openVault('stars')">
                         <span id="bal-stars" class="font-black">0</span>
-                        <img src="star.png" alt="STAR" onerror="this.onerror=null; this.src='https://img.icons8.com/fluency/48/star.png'">
+                        <img src="https://img.icons8.com/fluency/48/star.png" alt="STAR">
+                    </div>
+                    <div class="balance-item-v2 text-green-400" onclick="tg.showAlert('Тикеты используются для мини-игр и колеса удачи!')">
+                        <span id="bal-tickets" class="font-black">0</span>
+                        <img src="https://img.icons8.com/fluency/48/ticket.png" alt="TICKET">
                     </div>
                 </div>
             </div>
@@ -199,21 +200,27 @@
     const user = tg.initDataUnsafe?.user;
     let isProcessing = false;
 
-    // Функция проверки платформы УДАЛЕНА
-
     async function syncData() {
         if (!user) return;
         try {
+            // Запрашиваем данные из БД без использования localStorage
             const res = await fetch(`${BACKEND_URL}/get_balance/${user.id}?t=${Date.now()}`);
             if (!res.ok) throw new Error();
             const data = await res.json();
+            
+            // Распределяем значения из ответа БД
             const tonVal = data.balance !== undefined ? data.balance : (data.ton_balance || 0);
             const starsVal = data.stars || 0;
+            const ticketsVal = data.tickets || 0;
+
+            // Обновляем DOM
             document.getElementById('bal-ton').innerText = parseFloat(tonVal).toFixed(2);
             document.getElementById('bal-stars').innerText = Math.floor(starsVal);
-            localStorage.setItem('user_stars', starsVal);
-            localStorage.setItem('user_ton', tonVal);
-        } catch (e) { console.warn("Balance sync failed"); }
+            document.getElementById('bal-tickets').innerText = Math.floor(ticketsVal);
+            
+        } catch (e) { 
+            console.warn("Синхронизация с базой не удалась"); 
+        }
     }
 
     async function processPayment(amount) {
@@ -286,7 +293,6 @@
     function navigateTo(url) { tg.HapticFeedback.impactOccurred('medium'); window.location.href = url; }
 
     window.onload = () => {
-        // Вызов checkPlatform() УДАЛЕН
         tg.expand();
         tg.ready();
         if (user) {
