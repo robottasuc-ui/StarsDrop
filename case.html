@@ -178,18 +178,23 @@
 
 <script>
 const tg = window.Telegram.WebApp;
-const userId = tg.initDataUnsafe?.user?.id || 12345;
+const userId = String(tg.initDataUnsafe?.user?.id || '8015661230');
 
 const SB_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
 const SB_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
-const headers = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' };
+const headers = { 
+    'apikey': SB_KEY, 
+    'Authorization': `Bearer ${SB_KEY}`, 
+    'Content-Type': 'application/json',
+    'Prefer': 'return=minimal'
+};
 
 const ITEMS = {
     "1may.jpg": { name: "1 May Exclusive", price: 100, img: "1may.jpg" },
     "2025.jpg": { name: "Happy 2025", price: 500, img: "2025.jpg" },
     "bear.png": { name: "Honey Bear", price: 3500, img: "bear.png" },
     "book.jpg": { name: "Ancient Book", price: 1000, img: "book.jpg" },
-    "booox.png": { name: "Berry Box", price: 700, img: "boooox.png" },
+    "booox.png": { name: "Berry Box", price: 700, img: "booox.png" },
     "botinok.png": { name: "Old Boot", price: 400, img: "botinok.png" },
     "box.png": { name: "Jack in Box", price: 600, img: "box.png" },
     "car.png": { name: "Sports Car", price: 5000, img: "car.png" },
@@ -235,7 +240,7 @@ const ITEMS = {
     "soska.jpg": { name: "Diamond Pacifier", price: 3000, img: "soska.jpg" },
     "star.png": { name: "Pure Star", price: 15, img: "star.png" },
     "statyya.jpg": { name: "Hero Statue", price: 41000, img: "statyya.jpg" },
-    "venok.jpg": { name: "Wreath Flower", price: 500, img: "venok.png" },
+    "venok.jpg": { name: "Wreath Flower", price: 500, img: "venok.jpg" },
     "yayko.png": { name: "Dragon Egg", price: 600, img: "yayko.png" },
     "zhele.png": { name: "Slime Jelly", price: 700, img: "zhele.png" },
     "zmei.png": { name: "Snake Friend", price: 500, img: "zmei.png" },
@@ -248,101 +253,14 @@ const ITEMS = {
     "tyfli.PNG": { name: "Sky Stilettos", price: 1800, img: "tyfli.PNG" }
 };
 const CASES = [
-    { 
-        name: "Кейс Новичка", 
-        type: 'tickets', 
-        price: 10, 
-        img: "case1.png", 
-        loot: [
-            ["star.png", 85], ["raketa.png", 5], ["paska.jpg", 3], ["1may.jpg", 2], ["fonarik.jpg", 1.5],
-            ["otkritka.jpg", 1], ["happybirthday.jpg", 0.5], ["koks.jpg", 0.4], ["dog.png", 0.3], ["botinok.png", 0.2],
-            ["kalendar.png", 0.1], ["cerrrdce.jpg", 0.1], ["venok.png", 0.1], ["lucky.jpg", 0.1], ["box.png", 0.1]
-        ] 
-    },
-    { 
-        name: "Шкатулка Удачи", 
-        type: 'multi', 
-        priceStars: 50, 
-        priceTon: 0.5, 
-        img: "case2.png", 
-        loot: [
-            ["star.png", 80], ["raketa.png", 10], ["paska.jpg", 5], ["1may.jpg", 1.5], ["fonarik.jpg", 1],
-            ["otkritka.jpg", 0.5], ["happybirthday.jpg", 0.4], ["koks.jpg", 0.3], ["dog.png", 0.2], ["botinok.png", 0.2],
-            ["kalendar.png", 0.1], ["cerrrdce.jpg", 0.1], ["venok.png", 0.1], ["lucky.jpg", 0.1], ["bear.png", 0.1]
-        ] 
-    },
-    { 
-        name: "Мистический Шторм", 
-        type: 'multi', 
-        priceStars: 100, 
-        priceTon: 1.0, 
-        img: "case3.png", 
-        loot: [
-            ["paska.jpg", 70], ["1may.jpg", 15], ["fonarik.jpg", 7], ["otkritka.jpg", 3], ["happybirthday.jpg", 2],
-            ["koks.jpg", 1], ["dog.png", 0.5], ["botinok.png", 0.4], ["kalendar.png", 0.3], ["cerrrdce.jpg", 0.2],
-            ["venok.png", 0.2], ["lucky.jpg", 0.1], ["box.png", 0.1], ["book.jpg", 0.1], ["car.png", 0.05]
-        ] 
-    },
-    { 
-        name: "Лесной Оазис", 
-        type: 'multi', 
-        priceStars: 250, 
-        priceTon: 3.0, 
-        img: "case5.png", 
-        loot: [
-            ["otkritka.jpg", 65], ["happybirthday.jpg", 15], ["koks.jpg", 10], ["dog.png", 5], ["botinok.png", 2],
-            ["kalendar.png", 1], ["cerrrdce.jpg", 0.5], ["venok.png", 0.4], ["lucky.jpg", 0.3], ["box.png", 0.3],
-            ["zlei.png", 0.2], ["yayko.png", 0.2], ["meczcc.png", 0.1], ["cvetok.png", 0.1], ["helmet.png", 0.1]
-        ] 
-    },
-    { 
-        name: "Пиратский Клад", 
-        type: 'multi', 
-        priceStars: 419, 
-        priceTon: 5.5, 
-        img: "case7.png", 
-        loot: [
-            ["dog.png", 60], ["botinok.png", 20], ["kalendar.png", 10], ["cerrrdce.jpg", 5], ["venok.png", 2],
-            ["lucky.jpg", 1], ["box.png", 0.5], ["zlei.png", 0.4], ["yayko.png", 0.3], ["meczcc.png", 0.2],
-            ["boooox.png", 0.2], ["zhele.png", 0.1], ["mafin.jpg", 0.1], ["book.jpg", 0.1], ["ciga.png", 0.1]
-        ] 
-    },
-    { 
-        name: "Детективный поиск", 
-        type: 'multi', 
-        priceStars: 549, 
-        priceTon: 7.0, 
-        img: "case4.png", 
-        loot: [
-            ["botinok.png", 55], ["kalendar.png", 20], ["cerrrdce.jpg", 10], ["venok.png", 7], ["lucky.jpg", 3],
-            ["box.png", 2], ["zlei.png", 1], ["yayko.png", 0.5], ["meczcc.png", 0.4], ["boooox.png", 0.3],
-            ["zhele.png", 0.2], ["mafin.jpg", 0.2], ["zirka.PNG", 0.1], ["cvetk.PNG", 0.1], ["dyxi.png", 0.1]
-        ] 
-    },
-    { 
-        name: "Зимняя история", 
-        type: 'multi', 
-        priceStars: 799, 
-        priceTon: 9.0, 
-        img: "case8.png", 
-        loot: [
-            ["box.png", 50], ["zlei.png", 20], ["yayko.png", 15], ["meczcc.png", 7], ["boooox.png", 4],
-            ["zhele.png", 2], ["mafin.jpg", 1], ["zirka.PNG", 0.5], ["kryg.PNG", 0.2], ["gribb.PNG", 0.1],
-            ["cvetk.PNG", 0.1], ["shapka.png", 0.1], ["sshapka.PNG", 0.1], ["tyfli.PNG", 0.1], ["costum.jpg", 0.05]
-        ] 
-    },
-    { 
-        name: "Лунная Легенда", 
-        type: 'multi', 
-        priceStars: 0, 
-        priceTon: 19.0, 
-        img: "case9.png", 
-        loot: [
-            ["boooox.png", 45], ["zhele.png", 25], ["mafin.jpg", 15], ["zirka.PNG", 7], ["kryg.PNG", 3],
-            ["gribb.PNG", 2], ["cvetk.PNG", 1], ["sshapka.PNG", 0.5], ["tyfli.PNG", 0.4], ["rozza.png", 0.3],
-            ["heart.png", 0.2], ["colso.png", 0.2], ["ccolso2.png", 0.1], ["orel.jpg", 0.1], ["kepka.png", 0.01]
-        ] 
-    }
+    { name: "Кейс Новичка", type: 'tickets', price: 10, img: "case1.png", loot: [["star.png", 85], ["raketa.png", 5], ["paska.jpg", 3]] },
+    { name: "Шкатулка Удачи", type: 'multi', priceStars: 50, priceTon: 0.5, img: "case2.png", loot: [["star.png", 80], ["raketa.png", 10], ["bear.png", 0.1]] },
+    { name: "Мистический Шторм", type: 'multi', priceStars: 100, priceTon: 1.0, img: "case3.png", loot: [["paska.jpg", 70], ["car.png", 0.05]] },
+    { name: "Лесной Оазис", type: 'multi', priceStars: 250, priceTon: 3.0, img: "case5.png", loot: [["otkritka.jpg", 65], ["helmet.png", 0.1]] },
+    { name: "Пиратский Клад", type: 'multi', priceStars: 419, priceTon: 5.5, img: "case7.png", loot: [["dog.png", 60], ["ciga.png", 0.1]] },
+    { name: "Детективный поиск", type: 'multi', priceStars: 549, priceTon: 7.0, img: "case4.png", loot: [["botinok.png", 55], ["dyxi.png", 0.1]] },
+    { name: "Зимняя история", type: 'multi', priceStars: 799, priceTon: 9.0, img: "case8.png", loot: [["box.png", 50], ["costum.jpg", 0.05]] },
+    { name: "Лунная Легенда", type: 'multi', priceStars: 0, priceTon: 19.0, img: "case9.png", loot: [["booox.png", 45], ["kepka.png", 0.01]] }
 ];
 
 let balance = { stars: 0, ton: 0, tickets: 0 };
@@ -371,16 +289,13 @@ function openCase(i) {
     if (isBusy) return;
     activeCase = CASES[i];
     setMul(1);
-    
     document.getElementById('case-modal').style.display = 'flex';
     document.getElementById('view-preview').style.display = 'block';
     document.getElementById('view-roulette').style.display = 'none';
     document.getElementById('view-win').style.display = 'none';
     document.getElementById('back-btn').style.display = 'block';
-    
     document.getElementById('m-img').src = `img/${activeCase.img}`;
     document.getElementById('m-title').innerText = activeCase.name;
-
     updatePriceButtons();
     renderLootPreview();
 }
@@ -389,14 +304,12 @@ function updatePriceButtons() {
     const btnStars = document.getElementById('btn-stars');
     const btnTon = document.getElementById('btn-ton');
     let btnTickets = document.getElementById('btn-tickets-roll');
-
     if (!btnTickets) {
         btnTickets = document.createElement('button');
         btnTickets.id = 'btn-tickets-roll';
         btnTickets.className = "col-span-2 bg-green-500 text-black py-4 rounded-3xl font-black flex justify-center items-center gap-2 active:scale-95 transition-transform hidden";
         document.getElementById('roll-buttons-container').appendChild(btnTickets);
     }
-
     if (activeCase.type === 'tickets') {
         btnStars.classList.add('hidden'); btnTon.classList.add('hidden');
         btnTickets.classList.remove('hidden');
@@ -418,7 +331,6 @@ function setMul(n) {
 
 async function startRoll(type) {
     if (isBusy) return;
-    
     const priceAttr = type === 'stars' ? 'priceStars' : (type === 'ton' ? 'priceTon' : 'price');
     const cost = activeCase[priceAttr] * mul;
     const balanceKey = type === 'ton' ? 'ton' : type;
@@ -445,7 +357,6 @@ async function startRoll(type) {
         currentWinners.push(win);
         createRow(i, win);
     }
-
     setTimeout(() => showWin(currentWinners), 7000);
 }
 
@@ -453,12 +364,9 @@ function getWin() {
     const loot = activeCase.loot;
     const rand = Math.random() * 100;
     let cumulative = 0;
-
     for (const [img, chance] of loot) {
         cumulative += chance;
-        if (rand <= cumulative) {
-            return ITEMS[img];
-        }
+        if (rand <= cumulative) return ITEMS[img] || ITEMS[loot[0][0]];
     }
     return ITEMS[loot[0][0]];
 }
@@ -467,29 +375,18 @@ function createRow(index, winItem) {
     const container = document.getElementById('roulette-rows');
     const row = document.createElement('div');
     row.className = 'roulette-container animate-fade-in mb-4';
-    row.innerHTML = `
-        <div class="center-line"></div>
-        <div class="roulette-rail" id="rail-${index}"></div>
-    `;
+    row.innerHTML = `<div class="center-line"></div><div class="roulette-rail" id="rail-${index}"></div>`;
     container.appendChild(row);
-
     const rail = document.getElementById(`rail-${index}`);
-    const itemWidth = 140; 
-    const winIndex = 30;   
-    
-    for (let i = 0; i < 40; i++) {
+    const winIndex = 30; 
+    for (let i = 0; i < 45; i++) {
         const keys = Object.keys(ITEMS);
         const randomItem = ITEMS[keys[Math.floor(Math.random() * keys.length)]];
         const displayItem = (i === winIndex) ? winItem : randomItem;
-        
-        rail.innerHTML += `
-            <div class="roulette-item">
-                <img src="img/${displayItem.img}">
-            </div>
-        `;
+        rail.innerHTML += `<div class="roulette-item"><img src="img/${displayItem.img}"></div>`;
     }
-
     setTimeout(() => {
+        const itemWidth = 140;
         const offset = (winIndex * itemWidth) - (window.innerWidth / 2) + (itemWidth / 2);
         rail.style.transition = 'transform 6s cubic-bezier(0.15, 0, 0.05, 1)';
         rail.style.transform = `translateX(-${offset}px)`;
@@ -499,81 +396,47 @@ function createRow(index, winItem) {
 function showWin(winners) {
     document.getElementById('view-roulette').style.display = 'none';
     document.getElementById('view-win').style.display = 'flex';
-    
     const winGrid = document.getElementById('win-grid');
     winGrid.innerHTML = '';
     let total = 0;
-
     winners.forEach(item => {
         total += item.price;
-        winGrid.innerHTML += `
-            <div class="flex flex-col items-center p-4 bg-white/5 rounded-3xl border border-green-500/30 animate-fade-in">
-                <img src="img/${item.img}" class="w-20 h-20 object-contain mb-2">
-                <div class="text-green-500 font-black orbitron text-xs">⭐${item.price}</div>
-            </div>
-        `;
+        winGrid.innerHTML += `<div class="flex flex-col items-center p-4 bg-white/5 rounded-3xl border border-green-500/30 animate-fade-in"><img src="img/${item.img}" class="w-20 h-20 object-contain mb-2"><div class="text-green-500 font-black orbitron text-xs">⭐${item.price}</div></div>`;
     });
-    
     document.getElementById('win-total-price').innerText = total.toLocaleString();
-    isBusy = false; 
+    isBusy = false;
 }
 
-// ПЕРЕРАБОТАННЫЕ ФУНКЦИИ БАЗЫ ДАННЫХ
 async function sellAllAndClose() {
     if (isBusy) return;
     isBusy = true;
-    
     const totalProfit = currentWinners.reduce((sum, item) => sum + item.price, 0);
     balance.stars += totalProfit;
-    
     try {
         await fetch(`${SB_URL}/rest/v1/users?user_id=eq.${userId}`, {
-            method: 'PATCH', 
-            headers, 
-            body: JSON.stringify({ stars: balance.stars })
+            method: 'PATCH', headers, body: JSON.stringify({ stars: balance.stars })
         });
         saveAndRefresh();
         closeModal();
-    } catch (e) {
-        alert("Ошибка сети при продаже");
-    } finally {
-        isBusy = false;
-    }
+    } catch (e) { alert("Ошибка при продаже"); }
+    finally { isBusy = false; }
 }
 
 async function saveToInventoryAndClose() {
     if (isBusy) return;
     isBusy = true;
-
     try {
-        // Создаем массив промисов для одновременной записи всех выпавших предметов
-        const requests = currentWinners.map(item => {
-            return fetch(`${SB_URL}/rest/v1/inventory`, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({
-                    user_id: userId,
-                    item_id: item.img,
-                    name: item.name,
-                    price: item.price,
-                    img: item.img
-                })
-            });
+        const res = await fetch(`${SB_URL}/rest/v1/users?user_id=eq.${userId}&select=inventory`, { headers });
+        const data = await res.json();
+        let inv = data[0]?.inventory || [];
+        if (!Array.isArray(inv)) inv = [];
+        const newItems = currentWinners.map(it => ({ id: Date.now()+Math.random(), name: it.name, img: it.img, price: it.price }));
+        const { ok } = await fetch(`${SB_URL}/rest/v1/users?user_id=eq.${userId}`, {
+            method: 'PATCH', headers, body: JSON.stringify({ inventory: [...inv, ...newItems] })
         });
-
-        const results = await Promise.allSettled(requests);
-        const failed = results.filter(r => r.status === 'rejected' || (r.value && !r.value.ok));
-        
-        if (failed.length > 0) {
-            alert("Некоторые предметы не сохранились. Проверьте сеть.");
-        }
-        
-        closeModal();
-    } catch (e) {
-        alert("Критическая ошибка сохранения");
-    } finally {
-        isBusy = false;
-    }
+        if (ok) closeModal(); else alert("Ошибка сохранения");
+    } catch (e) { alert("Ошибка сети"); }
+    finally { isBusy = false; }
 }
 
 function closeModal() {
@@ -585,10 +448,7 @@ function closeModal() {
 function renderLootPreview() {
     document.getElementById('loot-display').innerHTML = activeCase.loot.map(attr => {
         const itm = ITEMS[attr[0]];
-        return itm ? `<div class="bg-white/5 rounded-2xl p-2 flex flex-col items-center border border-white/5">
-            <img src="img/${itm.img}" class="w-10 h-10 mb-1 object-contain">
-            <div class="text-[8px] text-green-500">⭐${itm.price}</div>
-        </div>` : '';
+        return itm ? `<div class="bg-white/5 rounded-2xl p-2 flex flex-col items-center border border-white/5"><img src="img/${itm.img}" class="w-10 h-10 mb-1 object-contain"><div class="text-[8px] text-green-500">⭐${itm.price}</div></div>` : '';
     }).join('');
 }
 
@@ -596,69 +456,29 @@ function render() {
     const tGrid = document.getElementById('tickets-container');
     const mGrid = document.getElementById('main-grid');
     tGrid.innerHTML = ''; mGrid.innerHTML = '';
-    
     CASES.forEach((c, idx) => {
         if (c.type === 'tickets') {
-            tGrid.innerHTML = `<div class="case-card p-6 flex items-center justify-between border-2 border-green-500/30" onclick="openCase(${idx})">
-                <div class="flex items-center gap-6">
-                    <img src="img/${c.img}" class="w-24 h-24 object-contain">
-                    <div><div class="orbitron text-lg text-green-500 font-black uppercase">${c.name}</div></div>
-                </div>
-                <div class="bg-green-500 text-black px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2">${c.price} <img src="img/ticket.png" class="w-4 h-4"></div>
-            </div>`;
+            tGrid.innerHTML = `<div class="case-card p-6 flex items-center justify-between border-2 border-green-500/30" onclick="openCase(${idx})"><div class="flex items-center gap-6"><img src="img/${c.img}" class="w-24 h-24 object-contain"><div><div class="orbitron text-lg text-green-500 font-black uppercase">${c.name}</div></div></div><div class="bg-green-500 text-black px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2">${c.price} <img src="img/ticket.png" class="w-4 h-4"></div></div>`;
         } else {
-            mGrid.innerHTML += `<div class="case-card p-4 flex flex-col items-center justify-between min-h-[280px]">
-                <div onclick="openCase(${idx})" class="flex flex-col items-center">
-                    <img src="img/${c.img}" class="w-28 h-28 mb-2 object-contain">
-                    <div class="orbitron text-[10px] text-green-500 font-black mb-4 uppercase text-center">${c.name}</div>
-                </div>
-                <div class="w-full flex flex-col gap-2">
-                    <button onclick="openCase(${idx})" class="w-full bg-white/5 py-2 rounded-xl text-[12px] font-bold">⭐ ${c.priceStars}</button>
-                    <button onclick="openCase(${idx})" class="w-full bg-blue-500/10 py-2 rounded-xl text-[12px] font-bold text-blue-400">${c.priceTon} TON</button>
-                </div>
-            </div>`;
+            mGrid.innerHTML += `<div class="case-card p-4 flex flex-col items-center justify-between min-h-[280px]"><div onclick="openCase(${idx})" class="flex flex-col items-center"><img src="img/${c.img}" class="w-28 h-28 mb-2 object-contain"><div class="orbitron text-[10px] text-green-500 font-black mb-4 uppercase text-center">${c.name}</div></div><div class="w-full flex flex-col gap-2"><button onclick="openCase(${idx})" class="w-full bg-white/5 py-2 rounded-xl text-[12px] font-bold">⭐ ${c.priceStars}</button><button onclick="openCase(${idx})" class="w-full bg-blue-500/10 py-2 rounded-xl text-[12px] font-bold text-blue-400">${c.priceTon} TON</button></div></div>`;
         }
     });
 }
-// --- ЛОГИКА LIVE DROP ---
-const liveRail = document.getElementById('live-drop-rail');
 
-function addLiveDropItem() {
-    const keys = Object.keys(ITEMS);
-    const randomItem = ITEMS[keys[Math.floor(Math.random() * keys.length)]];
-    
-    // Создаем элемент дропа
-    const itemEl = document.createElement('div');
-    itemEl.className = 'flex-shrink-0 flex items-center gap-2 bg-white/5 px-3 py-1 rounded-full border border-white/5 animate-fade-in';
-    itemEl.innerHTML = `
-        <img src="img/${randomItem.img}" class="w-6 h-6 object-contain">
-        <span class="text-[10px] font-bold text-gray-300">${randomItem.name.split(' ')[0]}</span>
-    `;
-
-    // Добавляем в начало ленты
-    liveRail.prepend(itemEl);
-
-    // Удаляем старые элементы, чтобы не перегружать память
-    if (liveRail.children.length > 20) {
-        liveRail.removeChild(liveRail.lastChild);
-    }
-}
-
-// Запускаем бесконечную генерацию
 function startLiveDrop() {
-    // Добавляем первые 10 предметов сразу
-    for(let i=0; i<10; i++) addLiveDropItem();
-    
-    // Каждые 2-5 секунд добавляем новый предмет
+    const rail = document.getElementById('live-drop-rail');
     setInterval(() => {
-        addLiveDropItem();
-    }, Math.random() * 3000 + 2000);
+        const keys = Object.keys(ITEMS);
+        const it = ITEMS[keys[Math.floor(Math.random()*keys.length)]];
+        const el = document.createElement('div');
+        el.className = 'flex-shrink-0 flex items-center gap-2 bg-white/5 px-3 py-1 rounded-full border border-white/5 animate-fade-in';
+        el.innerHTML = `<img src="img/${it.img}" class="w-6 h-6 object-contain"><span class="text-[10px] font-bold text-gray-300">${it.name.split(' ')[0]}</span>`;
+        rail.prepend(el);
+        if (rail.children.length > 15) rail.removeChild(rail.lastChild);
+    }, 3000);
 }
 
-// Инициализация при загрузке
-startLiveDrop();
-render();
-syncData();
+window.onload = () => { startLiveDrop(); render(); syncData(); tg.expand(); };
 </script>
 </body>
 </html>
