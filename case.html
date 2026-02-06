@@ -242,14 +242,18 @@ function saveAndRefresh() {
 function render() {
     const tGrid = document.getElementById('tickets-container');
     const mGrid = document.getElementById('main-grid');
-    tGrid.innerHTML = ''; mGrid.innerHTML = '';
+    
+    // Очищаем контейнеры перед отрисовкой
+    tGrid.innerHTML = ''; 
+    mGrid.innerHTML = '';
     
     CASES.forEach((c, idx) => {
         if (c.type === 'tickets') {
+            // Отрисовка кейса за тикеты (горизонтальный)
             tGrid.innerHTML = `
                 <div class="case-card p-6 flex items-center justify-between border-2 border-green-500/30" onclick="openCase(${idx})">
                     <div class="flex items-center gap-6">
-                        <img src="img/${c.img}" class="w-24 h-24 object-contain">
+                        <img src="img/${c.img}" class="w-24 h-24 object-contain text-white">
                         <div>
                             <div class="orbitron text-lg text-green-500 font-black uppercase">${c.name}</div>
                             <div class="text-[10px] opacity-50 uppercase tracking-widest">Эксклюзив за тикеты</div>
@@ -260,11 +264,14 @@ function render() {
                     </div>
                 </div>`;
         } else {
+            // Отрисовка обычных кейсов (сетка 2х2)
             mGrid.innerHTML += `
-                <div class="case-card p-6 flex flex-col items-center" onclick="openCase(${idx})">
-                    <img src="img/${c.img}" class="w-24 h-24 mb-4 object-contain">
-                    <div class="orbitron text-[10px] text-green-500 font-black mb-1 uppercase">${c.name}</div>
-                    <div class="text-[11px] font-bold opacity-40 uppercase">⭐ ${c.price}</div>
+                <div class="case-card p-8 flex flex-col items-center justify-center min-h-[220px]" onclick="openCase(${idx})">
+                    <img src="img/${c.img}" class="w-32 h-32 mb-4 object-contain drop-shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+                    <div class="orbitron text-xs text-green-500 font-black mb-2 uppercase text-center">${c.name}</div>
+                    <div class="bg-white/5 px-4 py-1 rounded-full text-[12px] font-bold opacity-70 uppercase tracking-tighter">
+                        ⭐ ${c.price}
+                    </div>
                 </div>`;
         }
     });
