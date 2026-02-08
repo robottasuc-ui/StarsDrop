@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StarsDrop - Elite Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        
+        /* ОБНОВЛЕННЫЕ ЦВЕТА: Фиолетовый стиль */
+        :root { 
+            --bg: #0a0510; 
+            --accent: #a855f7; /* Purple 500 */
+            --accent-glow: rgba(168, 85, 247, 0.4);
+            --panel-bg: #120a1f;
+        }
+        
+        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
+
+        .game-container { 
+            position: relative; height: calc(100vh - 160px); width: 100%; overflow: hidden;
+            background-image: 
+                linear-gradient(rgba(168, 85, 247, 0.15) 1.5px, transparent 1.5px),
+                linear-gradient(90deg, rgba(168, 85, 247, 0.15) 1.5px, transparent 1.5px);
+            background-size: 60px 60px;
+            z-index: 5;
+        }
+
+        /* АНИМАЦИЯ СЕТКИ */
+        .grid-moving { animation: scrollGrid 3s linear infinite; }
+        @keyframes scrollGrid { 
+            from { background-position: 0 0; } 
+            to { background-position: -120px 120px; } 
+        }
+
+        /* РАКЕТА */
+        #rocket-wrap {
+            position: absolute; left: -400px; bottom: -400px;
+            z-index: 10; opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        #rocket-img { width: 220px; transform: rotate(-5deg); }
+        .engine-active { animation: vibration 0.1s infinite alternate; }
+        @keyframes vibration { from { transform: translate(0,0); } to { transform: translate(2px, 2px); } }
+
+        .flying {
+            opacity: 1 !important;
+            animation: approach 12s cubic-bezier(0.1, 0.4, 0.2, 1) forwards;
+        }
+
+        /* ОСТАНОВКА В ТОЧКЕ ВЗРЫВА */
+        .paused { animation-play-state: paused !important; }
+
+        @keyframes approach {
+            from { left: -400px; bottom: -400px; }
+            to { left: 50%; bottom: 50%; transform: translate(-50%, 50%); }
+        }
+
+        #multiplier {
+            position: absolute; left: 50%; 
+            bottom: 15%; 
+            transform: translateX(-50%);
+            font-size: 5rem; font-weight: 900; z-index: 20; 
+            text-shadow: 0 0 40px var(--accent-glow);
+            color: #fff;
+        }
+
+        .ui-panel {
+            position: fixed; bottom: 0; width: 100%; background: var(--panel-bg);
+            border-top: 2px solid rgba(168, 85, 247, 0.3); padding: 20px;
+            display: grid; grid-template-columns: 160px 1fr 200px; gap: 15px; 
+            align-items: center; z-index: 100;
+        }
+
+        .live-drop { position: absolute; left: 15px; top: 15px; width: 95px; z-index: 60; }
+        .drop-item { 
+            background: rgba(15, 5, 25, 0.9); border: 1px solid #3b225a; 
+            padding: 8px; border-radius: 10px; text-align: center; 
+            font-weight: 900; font-size: 13px; border-left: 4px solid var(--accent); margin-bottom: 5px;
+        }
+
+        .currency-btn { background: #1a1025; padding: 12px; border: 1px solid #3b225a; border-radius: 12px; cursor: pointer; text-align: center; font-size: 11px; font-weight: 900; color: #a19bb0; }
+        .currency-btn.active { border-color: var(--accent); background: #2d164d; color: #fff; box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); }
+        
+        .btn-main { background: var(--accent); color: #fff; font-weight: 900; height: 100%; border-radius: 12px; font-size: 1.2rem; text-transform: uppercase; transition: all 0.2s; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4); }
+        .btn-main:active { transform: scale(0.96); }
+        .btn-main:disabled { filter: grayscale(1); opacity: 0.3; box-shadow: none; }
+
+        input#input-bet { color: var(--accent); }
+        .text-accent { color: var(--accent); }
+    </style>
+</head>
+<body>
+
+    <header class="flex justify-between items-center p-5 bg-[#08040d] border-b border-[#221536] relative z-[110]">
+        <div class="font-black text-accent text-2xl italic tracking-tighter cursor-pointer" onclick="location.href='index.html'">STARSDROP</div>
+        <div class="flex gap-8 font-bold text-purple-100">
+            <div class="flex items-center gap-2"><img src="img/star.png" class="w-5 h-5"> <span id="val-stars">0</span></div>
+            <div class="flex items-center gap-2"><img src="img/ton.png" class="w-5 h-5"> <span id="val-ton">0.00</span></div>
+        </div>
+    </header>
+
+    <div id="main-scene" class="game-container">
+        <div id="live-drop" class="live-drop"></div>
+        <div id="multiplier">1.00x</div>
+        <div id="rocket-wrap"><img id="rocket-img" src="crusher.png"></div>
+    </div>
+
+    <div class="ui-panel">
+        <div class="flex flex-col gap-2">
+            <div id="mode-stars" onclick="switchMode('stars')" class="currency-btn active">STARS</div>
+            <div id="mode-ton" onclick="switchMode('ton')" class="currency-btn">TON</div>
+        </div>
+        <div class="bg-[#08040d] border border-[#3b225a] rounded-xl p-4">
+            <input type="number" id="input-bet" class="bg-transparent w-full text-center text-3xl font-black outline-none" value="10">
+        </div>
+        <button id="btn-main" onclick="onAction()" class="btn-main">Ставка</button>
+    </div>
+
+<script>
+    const SB_URL = "https://mwsbkpfarhdankpyifbm.supabase.co"; 
+    const SB_KEY = "sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA"; 
+    const SB = supabase.createClient(SB_URL, SB_KEY);
+
+    let currentUser = null, cur = 'stars', state = 'wait', mult = 1.00;
+    let betQueued = false, betVal = 0, isCashedOut = false;
+    let crashPoint = 2.00;
+
+    async function checkAuth() {
+        const saved = localStorage.getItem('stars_user');
+        if (!saved) { location.href = 'index.html'; return; }
+        currentUser = JSON.parse(saved);
+        fetchHistory(); syncBalances();
+    }
+
+    async function syncBalances() {
+        const { data } = await SB.from('users').select('*').eq('user_id', currentUser.user_id).single();
+        if (data) {
+            document.getElementById('val-stars').innerText = Math.floor(Number(data.stars || 0));
+            document.getElementById('val-ton').innerText = Number(data.balance || 0).toFixed(2);
+        }
+    }
+
+    function generateCrashPoint(seed) {
+        const s = Math.sin(seed) * 10000;
+        const r = s - Math.floor(s); 
+        return r > 0.9 ? (1.5 + r * 18.5).toFixed(2) : (1.01 + r * 4).toFixed(2);
+    }
+
+    function tick() {
+        const now = Date.now();
+        const cycleTime = 30000; 
+        const elapsed = now % cycleTime;
+        const roundBase = now - elapsed;
+
+        const mDisp = document.getElementById('multiplier');
+        const rWrap = document.getElementById('rocket-wrap');
+        const rImg = document.getElementById('rocket-img');
+        const scene = document.getElementById('main-scene');
+        const btn = document.getElementById('btn-main');
+
+        if (elapsed < 10000) { 
+            if (state !== 'wait') {
+                state = 'wait'; isCashedOut = false;
+                crashPoint = generateCrashPoint(roundBase);
+                rWrap.classList.remove('flying', 'paused');
+                rWrap.style.opacity = "0";
+                rImg.src = "crusher.png";
+                rImg.classList.remove('engine-active');
+                scene.classList.remove('grid-moving');
+                mDisp.style.color = "white";
+                fetchHistory();
+            }
+            mDisp.innerText = `ВЗЛЕТ ЧЕРЕЗ ${Math.ceil((10000 - elapsed) / 1000)}`;
+            if (!betQueued) { btn.innerText = "СТАВКА"; btn.disabled = false; }
+        } 
+        else {
+            let flightTime = (elapsed - 10000) / 1000;
+            if (state !== 'fly' && state !== 'crash') {
+                state = 'fly';
+                rWrap.classList.add('flying');
+                rWrap.style.animationDelay = `-${flightTime}s`;
+                rImg.classList.add('engine-active');
+                scene.classList.add('grid-moving');
+            }
+
+            mult = Math.pow(1.12, flightTime); 
+
+            if (mult >= crashPoint) { 
+                if (state !== 'crash') doCrash(roundBase, crashPoint);
+            } else if (state === 'fly') {
+                mDisp.innerText = mult.toFixed(2) + "x";
+                if (betQueued && !isCashedOut) {
+                    btn.innerText = `ЗАБРАТЬ ${(betVal * mult).toFixed(1)}`;
+                    btn.disabled = false;
+                }
+            }
+        }
+    }
+
+    async function doCrash(rid, val) {
+        state = 'crash';
+        const rWrap = document.getElementById('rocket-wrap');
+        const rImg = document.getElementById('rocket-img');
+        
+        rWrap.classList.add('paused'); 
+        rImg.src = "bomb.png";
+        rImg.classList.remove('engine-active');
+        document.getElementById('main-scene').classList.remove('grid-moving');
+        
+        document.getElementById('multiplier').innerText = val + "x";
+        document.getElementById('multiplier').style.color = "#ff4d4d";
+        
+        const btn = document.getElementById('btn-main');
+        btn.innerText = "КРАШ!"; btn.disabled = true;
+
+        if (localStorage.getItem('l_r') != rid) {
+            localStorage.setItem('l_r', rid);
+            await SB.from('crash_history').insert([{ multiplier: val }]);
+        }
+        betQueued = false;
+    }
+
+    async function onAction() {
+        const col = cur === 'stars' ? 'stars' : 'balance';
+        
+        if (state === 'wait' && !betQueued) {
+            const amount = Number(document.getElementById('input-bet').value);
+            const { data: user } = await SB.from('users').select('*').eq('user_id', currentUser.user_id).single();
+            
+            if (amount > Number(user[col])) return alert("Мало средств");
+
+            const { error } = await SB.from('users').update({ [col]: Number(user[col]) - amount }).eq('user_id', currentUser.user_id);
+            if (!error) { betQueued = true; betVal = amount; syncBalances(); }
+        } 
+        else if (state === 'fly' && betQueued && !isCashedOut) {
+            isCashedOut = true;
+            const win = betVal * mult;
+            
+            const { data: user } = await SB.from('users').select(col).eq('user_id', currentUser.user_id).single();
+            const newBal = Number(user[col]) + win;
+
+            const { error } = await SB.from('users').update({ [col]: newBal }).eq('user_id', currentUser.user_id);
+            if (!error) { 
+                betQueued = false; 
+                syncBalances(); 
+                document.getElementById('btn-main').innerText = "ВЗЯТО!";
+                document.getElementById('btn-main').disabled = true;
+            } else { isCashedOut = false; }
+        }
+    }
+
+    async function fetchHistory() {
+        const { data } = await SB.from('crash_history').select('multiplier').order('created_at', { ascending: false }).limit(8);
+        if (data) {
+            const container = document.getElementById('live-drop');
+            container.innerHTML = '';
+            data.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'drop-item';
+                el.style.color = item.multiplier > 2 ? 'var(--accent)' : '#ff4d4d';
+                el.innerText = parseFloat(item.multiplier).toFixed(2) + 'x';
+                container.appendChild(el);
+            });
+        }
+    }
+
+    function switchMode(m) { if (state === 'wait' && !betQueued) { cur = m; document.querySelectorAll('.currency-btn').forEach(b => b.classList.remove('active')); document.getElementById('mode-' + m).classList.add('active'); } }
+
+    checkAuth();
+    setInterval(tick, 100);
+</script>
+</body>
+</html>
