@@ -8,28 +8,95 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
-        body { background: #050a04; color: white; font-family: 'Montserrat', sans-serif; height: 100vh; overflow: hidden; }
-        .wheel-container { width: 200px; height: 200px; border-radius: 50%; background: #000; border: 4px solid #1a2e0a; margin: 10px auto; position: relative; display: flex; align-items: center; justify-content: center; }
-        #wheel-progress { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(#a3e635 0deg, #000 0deg); opacity: 0.7; }
-        #pointer-wrapper { position: absolute; inset: -15px; z-index: 30; transition: transform 3.5s cubic-bezier(0.15, 0, 0.15, 1); }
-        #pointer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 4px; height: 30px; background: #fff; border-radius: 10px; box-shadow: 0 0 15px #fff; }
-        .scroll-area { height: 210px; overflow-y: auto; background: rgba(255,255,255,0.02); border-radius: 12px; padding: 8px; border: 1px solid rgba(163,230,53,0.1); }
-        .item-card { display: flex; align-items: center; gap: 8px; padding: 8px; margin-bottom: 6px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 2px solid transparent; cursor: pointer; }
-        .item-card.active { border-color: #a3e635; background: rgba(163, 230, 53, 0.1); }
-        .slot { width: 100%; height: 70px; background: rgba(255,255,255,0.03); border: 1px solid rgba(163,230,53,0.2); border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .btn-main { background: #a3e635; color: #000; font-weight: 900; text-transform: uppercase; width: 100%; padding: 16px; border-radius: 20px; box-shadow: 0 0 20px rgba(163, 230, 53, 0.3); transition: 0.3s; }
-        .btn-main:disabled { background: #1a2e0a; color: #3e5c1e; opacity: 0.6; }
-        #res-msg { position: absolute; font-size: 24px; font-weight: 900; z-index: 40; display: none; text-shadow: 0 0 20px #000; text-align: center; width: 100%; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        
+        :root {
+            --accent: #a855f7;
+            --bg: #0f0f0f;
+            --card-bg: rgba(255, 255, 255, 0.03);
+        }
+
+        body { 
+            background: var(--bg); 
+            color: white; 
+            font-family: 'Inter', sans-serif; 
+            height: 100vh; 
+            overflow: hidden; 
+            margin: 0;
+            user-select: none;
+        }
+
+        /* Круговая рулетка */
+        .wheel-container { 
+            width: 190px; height: 190px; 
+            border-radius: 50%; 
+            background: #050505; 
+            border: 2px solid rgba(168, 85, 247, 0.2); 
+            margin: 10px auto; 
+            position: relative; 
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.1);
+        }
+        
+        #wheel-progress { 
+            position: absolute; inset: 0; 
+            border-radius: 50%; 
+            background: conic-gradient(var(--accent) 0deg, transparent 0deg); 
+            opacity: 0.4;
+            transition: background 0.5s ease;
+        }
+
+        #pointer-wrapper { position: absolute; inset: -10px; z-index: 30; transition: transform 3.5s cubic-bezier(0.15, 0, 0.15, 1); }
+        #pointer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 3px; height: 25px; background: #fff; border-radius: 10px; box-shadow: 0 0 15px var(--accent); }
+
+        /* Списки предметов */
+        .scroll-area { 
+            height: 220px; overflow-y: auto; 
+            background: var(--card-bg); 
+            border-radius: 16px; padding: 10px; 
+            border: 1px solid rgba(255,255,255,0.05); 
+        }
+        
+        .item-card { 
+            display: flex; align-items: center; gap: 10px; 
+            padding: 10px; margin-bottom: 8px; 
+            border-radius: 12px; background: rgba(255,255,255,0.02); 
+            border: 1px solid transparent; transition: 0.2s;
+        }
+        .item-card.active { border-color: var(--accent); background: rgba(168, 85, 247, 0.1); }
+
+        /* Слоты */
+        .slot { 
+            width: 100%; height: 75px; 
+            background: var(--card-bg); 
+            border: 1px solid rgba(255,255,255,0.05); 
+            border-radius: 18px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: 0.3s;
+        }
+        .slot.filled { border-color: rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.05); }
+
+        .btn-main { 
+            background: var(--accent); color: white; 
+            font-weight: 900; width: 100%; 
+            padding: 18px; border-radius: 16px; 
+            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.2); 
+            transition: 0.3s; 
+        }
+        .btn-main:disabled { background: #222; color: #555; box-shadow: none; opacity: 0.5; }
+        .btn-main:active { transform: scale(0.98); }
+
+        #res-msg { position: absolute; font-size: 26px; font-weight: 900; z-index: 40; display: none; text-align: center; width: 100%; letter-spacing: 2px; }
+        
         ::-webkit-scrollbar { width: 3px; }
-        ::-webkit-scrollbar-thumb { background: #a3e635; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
     </style>
 </head>
-<body class="p-4">
+<body class="p-5">
 
-    <div class="flex justify-between items-center mb-2">
-        <button onclick="window.history.back()" class="text-[10px] font-black opacity-40 uppercase">← Назад</button>
-        <div class="text-[10px] font-black text-[#a3e635]">UPGRADE SYSTEM</div>
+    <div class="flex justify-between items-center mb-4">
+        <button onclick="window.history.back()" class="text-[11px] font-bold opacity-50 uppercase tracking-widest">← Назад</button>
+        <div class="text-[11px] font-black text-purple-500 tracking-widest uppercase">Smart Upgrade</div>
     </div>
 
     <div class="wheel-container">
@@ -37,36 +104,38 @@
         <div id="pointer-wrapper"><div id="pointer"></div></div>
         <div id="res-msg"></div>
         <div id="center-ui" class="relative z-10 text-center">
-            <img id="view-target" src="" class="w-20 h-20 object-contain hidden mx-auto">
+            <img id="view-target" src="" class="w-20 h-20 object-contain hidden mx-auto drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]">
             <div id="view-empty" class="text-5xl font-black opacity-10">?</div>
         </div>
     </div>
 
-    <div id="info-chance" class="text-center text-[#a3e635] font-black text-[10px] mb-3 uppercase italic">Загрузка...</div>
+    <div id="info-chance" class="text-center text-purple-400 font-bold text-[11px] mb-4 uppercase tracking-widest">Выберите подарок</div>
 
-    <div class="grid grid-cols-2 gap-3 mb-4">
+    <div class="grid grid-cols-2 gap-4 mb-5">
         <div class="slot" id="slot-1">
-            <img id="img-1" src="" class="w-8 h-8 object-contain hidden">
-            <div class="text-[7px] font-black opacity-30 mt-1 uppercase">Инвентарь</div>
+            <img id="img-1" src="" class="w-10 h-10 object-contain hidden">
+            <div class="text-[8px] font-bold opacity-30 mt-1 uppercase tracking-tighter">Ваш предмет</div>
         </div>
         <div class="slot" id="slot-2">
-            <img id="img-2" src="" class="w-8 h-8 object-contain hidden">
-            <div class="text-[7px] font-black opacity-30 mt-1 uppercase">Цель</div>
+            <img id="img-2" src="" class="w-10 h-10 object-contain hidden">
+            <div class="text-[8px] font-bold opacity-30 mt-1 uppercase tracking-tighter">Цель апгрейда</div>
         </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-3">
+    <div class="grid grid-cols-2 gap-4">
         <div>
-            <h3 class="text-[9px] font-black uppercase mb-2 opacity-40 text-center">Твой шмот</h3>
+            <h3 class="text-[10px] font-black uppercase mb-3 opacity-30 text-center tracking-widest">Инвентарь</h3>
             <div id="mine-list" class="scroll-area"></div>
         </div>
         <div>
-            <h3 class="text-[9px] font-black uppercase mb-2 text-[#a3e635] text-center">Апгрейд</h3>
+            <h3 class="text-[10px] font-black uppercase mb-3 text-purple-500 text-center tracking-widest">Доступно</h3>
             <div id="target-list" class="scroll-area"></div>
         </div>
     </div>
 
-    <button id="upg-btn" onclick="startUpgrade()" class="btn-main mt-4" disabled>Сделать апгрейд</button>
+    <div class="fixed bottom-6 left-5 right-5">
+        <button id="upg-btn" onclick="startUpgrade()" class="btn-main uppercase" disabled>Начать апгрейд</button>
+    </div>
 
 <script>
     const tg = window.Telegram.WebApp;
@@ -75,6 +144,7 @@
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const userId = tg.initDataUnsafe?.user?.id || 8015661230;
 
+    // Данные предметов (без изменений)
     const ITEMS_DATA = {
         "1may.jpg": { name: "1 May", price: 100 }, "2025.jpg": { name: "2025", price: 500 },
         "bear.png": { name: "Bear", price: 3500 }, "book.jpg": { name: "Book", price: 1000 },
@@ -83,7 +153,7 @@
         "raketa.png": { name: "Rocket", price: 50 }, "ccolso2.png": { name: "Star Ring", price: 3000 },
         "cerrrdce.jpg": { name: "Gingerbread", price: 500 }, "chemodan.jpg": { name: "Suitcase", price: 5000 },
         "ciga.png": { name: "Cigar", price: 3000 }, "colso.png": { name: "Blue Ring", price: 2500 },
-        "costum.jpg": { name: "Costume", price: 10000 }, "cvetok.png": { name: "Flower", price: 1000 },
+        "costum.jpg": { name: "Royal Costume", price: 10000 }, "cvetok.png": { name: "Flower", price: 1000 },
         "dog.png": { name: "Rich Dog", price: 500 }, "dyxi.png": { name: "Perfume", price: 10000 },
         "fonarik.jpg": { name: "Lantern", price: 100 }, "grob.jpg": { name: "Coffin", price: 5000 },
         "gyba.png": { name: "Lava Lips", price: 5000 }, "happybirthday.jpg": { name: "B-Day Cake", price: 200 },
@@ -95,15 +165,14 @@
         "lolipop.png": { name: "Lollipop", price: 500 }, "lucky.jpg": { name: "Clover", price: 500 },
         "mafin.jpg": { name: "Muffin", price: 700 }, "metch.png": { name: "Lightsaber", price: 700 },
         "narkotiki.png": { name: "SD Token", price: 600 }, "obyv.jpg": { name: "Sneakers", price: 10000 },
-        "ochki.jpg": { name: "Glasses", price: 30000 }, "orel.jpg": { name: "Eagle", price: 5000 },
-        "otkritka.jpg": { name: "Dove Post", price: 150 }, "paska.jpg": { name: "Easter Cake", price: 75 },
-        "rozza.png": { name: "Rose", price: 2000 }, "rykzak.jpg": { name: "Backpack", price: 500 },
-        "shapka.png": { name: "Santa Hat", price: 500 }, "shar.jpg": { name: "Crystal Ball", price: 1000 },
-        "shlem.png": { name: "Helmet Biker", price: 3500 }, "soska.jpg": { name: "Pacifier", price: 3000 },
-        "star.png": { name: "Golden Star", price: 15 }, "statyya.jpg": { name: "Statue", price: 41000 },
-        "venok.png": { name: "Wreath", price: 500 }, "yayko.png": { name: "Spotted Egg", price: 600 },
-        "zhele.png": { name: "Green Slime", price: 700 }, "zmei.png": { name: "Snake", price: 500 },
-        "kolechko.png": { name: "Ring", price: 100 }
+        "orel.jpg": { name: "Eagle", price: 5000 }, "otkritka.jpg": { name: "Dove Post", price: 150 },
+        "paska.jpg": { name: "Easter Cake", price: 75 }, "rozza.png": { name: "Rose", price: 2000 },
+        "rykzak.jpg": { name: "Backpack", price: 500 }, "shapka.png": { name: "Santa Hat", price: 500 },
+        "shar.jpg": { name: "Crystal Ball", price: 1000 }, "shlem.png": { name: "Helmet Biker", price: 3500 },
+        "soska.jpg": { name: "Pacifier", price: 3000 }, "star.png": { name: "Golden Star", price: 15 },
+        "statyya.jpg": { name: "Statue", price: 41000 }, "venok.png": { name: "Wreath", price: 500 },
+        "yayko.png": { name: "Spotted Egg", price: 600 }, "zhele.png": { name: "Green Slime", price: 700 },
+        "zmei.png": { name: "Snake", price: 500 }, "kolechko.png": { name: "Ring", price: 100 }
     };
 
     let userInventory = [];
@@ -114,7 +183,7 @@
         if (!error && data?.inventory) {
             userInventory = Array.isArray(data.inventory) ? data.inventory : [];
         }
-        document.getElementById('info-chance').innerText = userInventory.length > 0 ? "Выберите подарок" : "Инвентарь пуст";
+        document.getElementById('info-chance').innerText = userInventory.length > 0 ? "Выбери свой предмет" : "Инвентарь пуст";
         render();
     }
 
@@ -122,59 +191,58 @@
         const mList = document.getElementById('mine-list');
         const tList = document.getElementById('target-list');
 
-        // Мой инвентарь
         mList.innerHTML = userInventory.map((it, i) => {
             const imgPath = typeof it === 'string' ? it : it.img;
             const file = imgPath.split('/').pop();
-            const info = ITEMS_DATA[file] || { name: "Подарок", price: 0 };
+            const info = ITEMS_DATA[file] || { name: "Item", price: 0 };
             const src = imgPath.startsWith('img/') ? imgPath : 'img/' + imgPath;
             return `
                 <div class="item-card ${s1?.idx === i ? 'active' : ''}" onclick="sel1(${i},'${src}','${info.name}', ${info.price})">
                     <img src="${src}" class="w-8 h-8 object-contain">
-                    <div>
-                        <div class="text-[8px] font-black truncate">${info.name}</div>
-                        <div class="text-[6px] opacity-50">${info.price} ⭐</div>
+                    <div class="overflow-hidden">
+                        <div class="text-[9px] font-black truncate uppercase">${info.name}</div>
+                        <div class="text-[7px] opacity-40">${info.price} ⭐</div>
                     </div>
                 </div>`;
         }).join('');
 
-        // Список целей (ФИЛЬТР: только те, что дороже s1)
         tList.innerHTML = Object.entries(ITEMS_DATA)
-            .filter(([file, info]) => !s1 || info.price > s1.price) // Вот тут фикс даунгрейда
+            .filter(([file, info]) => !s1 || info.price > s1.price)
             .sort((a,b) => a[1].price - b[1].price)
             .map(([file, info]) => `
                 <div class="item-card ${s2?.name === info.name ? 'active' : ''}" onclick="sel2('img/${file}','${info.name}', ${info.price})">
                     <img src="img/${file}" class="w-8 h-8 object-contain">
-                    <div>
-                        <div class="text-[8px] font-black truncate">${info.name}</div>
-                        <div class="text-[6px] text-[#a3e635]">${info.price} ⭐</div>
+                    <div class="overflow-hidden">
+                        <div class="text-[9px] font-black truncate uppercase">${info.name}</div>
+                        <div class="text-[7px] text-purple-400 font-bold">${info.price} ⭐</div>
                     </div>
                 </div>`).join('');
     }
 
     function sel1(idx, img, name, price) {
         s1 = {idx, img, name, price};
-        document.getElementById('img-1').src = img;
-        document.getElementById('img-1').classList.remove('hidden');
-        s2 = null; // Сброс цели при смене своего предмета
+        const el = document.getElementById('img-1');
+        el.src = img; el.classList.remove('hidden');
+        document.getElementById('slot-1').classList.add('filled');
+        s2 = null; 
+        document.getElementById('img-2').classList.add('hidden');
+        document.getElementById('view-target').classList.add('hidden');
+        document.getElementById('view-empty').classList.remove('hidden');
         updateUI(); render();
+        tg.HapticFeedback.impactOccurred('light');
     }
 
     function sel2(img, name, price) {
         s2 = {img, name, price};
-        document.getElementById('img-2').src = img;
-        document.getElementById('img-2').classList.remove('hidden');
-        document.getElementById('view-target').src = img;
-        document.getElementById('view-target').classList.remove('hidden');
+        const el2 = document.getElementById('img-2');
+        el2.src = img; el2.classList.remove('hidden');
+        document.getElementById('slot-2').classList.add('filled');
+        
+        const vt = document.getElementById('view-target');
+        vt.src = img; vt.classList.remove('hidden');
         document.getElementById('view-empty').classList.add('hidden');
         updateUI(); render();
-    }
-
-    function calculateChance() {
-        if (!s1 || !s2) return 0;
-        // Математика: (цена_мин / цена_макс) * 100 * коэф_казино(0.8)
-        let chance = (s1.price / s2.price) * 100 * 0.8;
-        return Math.min(chance, 85); // Максимальный шанс успеха 85%
+        tg.HapticFeedback.impactOccurred('light');
     }
 
     function updateUI() {
@@ -183,14 +251,15 @@
         const wheel = document.getElementById('wheel-progress');
         
         if(s1 && s2) {
-            const chance = calculateChance();
-            info.innerText = `Шанс успеха: ${chance.toFixed(2)}%`;
-            wheel.style.background = `conic-gradient(#a3e635 ${chance * 3.6}deg, #000 0deg)`;
+            let chance = (s1.price / s2.price) * 100 * 0.8;
+            chance = Math.min(chance, 85);
+            info.innerText = `Шанс на успех: ${chance.toFixed(1)}%`;
+            wheel.style.background = `conic-gradient(#a855f7 ${chance * 3.6}deg, transparent 0deg)`;
             btn.disabled = false;
         } else {
             btn.disabled = true;
-            wheel.style.background = `conic-gradient(#a3e635 0deg, #000 0deg)`;
-            info.innerText = s1 ? "Выберите цель для апгрейда" : "Выберите подарок из списка";
+            wheel.style.background = `conic-gradient(#a855f7 0deg, transparent 0deg)`;
+            info.innerText = s1 ? "Выбери цель апгрейда" : "Выбери свой предмет";
         }
     }
 
@@ -200,7 +269,8 @@
         const resMsg = document.getElementById('res-msg');
         btn.disabled = true;
 
-        const chance = calculateChance();
+        let chance = (s1.price / s2.price) * 100 * 0.8;
+        chance = Math.min(chance, 85);
         const isWin = (Math.random() * 100) < chance; 
         
         const winDeg = chance * 3.6; 
@@ -216,17 +286,17 @@
 
             let newInv = [...userInventory];
             if (isWin) {
-                resMsg.innerText = "УДАЧА"; resMsg.style.color = "#a3e635";
+                resMsg.innerText = "УСПЕХ"; resMsg.style.color = "#a855f7";
                 newInv[s1.idx] = { img: s2.img, name: s2.name };
                 tg.HapticFeedback.notificationOccurred('success');
             } else {
-                resMsg.innerText = "ПРОВАЛ"; resMsg.style.color = "#ff4d4d";
+                resMsg.innerText = "ПРОВАЛ"; resMsg.style.color = "#ef4444";
                 newInv.splice(s1.idx, 1);
                 tg.HapticFeedback.notificationOccurred('error');
             }
 
             await _supabase.from('users').update({ inventory: newInv }).eq('user_id', userId);
-            setTimeout(() => location.reload(), 2000);
+            setTimeout(() => location.reload(), 2500);
         }, 3600);
     }
 
