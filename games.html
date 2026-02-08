@@ -26,7 +26,7 @@
             flex-direction: column;
         }
 
-        /* ХЕДЕР */
+        /* ФИКСИРОВАННЫЙ ХЕДЕР */
         header {
             background: #08040d;
             border-bottom: 2px solid rgba(168, 85, 247, 0.3);
@@ -35,6 +35,7 @@
             justify-content: space-between;
             align-items: center;
             z-index: 100;
+            flex-shrink: 0;
         }
 
         .logo {
@@ -54,9 +55,12 @@
             transition: 0.2s;
         }
 
-        .home-btn:active { transform: scale(0.9); background: var(--accent); }
+        .home-btn:active { 
+            transform: scale(0.9); 
+            background: var(--accent); 
+        }
 
-        /* СПИСОК ИГР */
+        /* СКРОЛЛ-СПИСОК */
         .games-list {
             flex: 1;
             overflow-y: scroll;
@@ -65,7 +69,7 @@
         }
 
         .game-card {
-            height: calc(100vh - 65px);
+            height: calc(100vh - 65px); /* Высота за вычетом хедера */
             scroll-snap-align: start;
             display: flex;
             flex-direction: column;
@@ -96,6 +100,7 @@
             text-transform: uppercase;
             letter-spacing: -2px;
             margin-bottom: 1.5rem;
+            text-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
         }
 
         .btn-play {
@@ -108,9 +113,13 @@
             font-size: 1.2rem;
             box-shadow: 0 5px 20px rgba(168, 85, 247, 0.4);
             border: none;
+            cursor: pointer;
+            transition: 0.2s;
         }
 
-        .btn-play:active { transform: scale(0.95); }
+        .btn-play:active { 
+            transform: scale(0.95); 
+        }
 
         .games-list::-webkit-scrollbar { width: 0px; }
     </style>
@@ -121,7 +130,7 @@
         <div class="logo">
             <span class="text-purple-500">STARS</span><span class="text-white">DROP</span>
         </div>
-        <button onclick="location.href='index.html'" class="home-btn">
+        <button onclick="goHome()" class="home-btn">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
@@ -162,9 +171,29 @@
         tg.expand();
         tg.ready();
 
+        // Функция возврата домой
+        function goHome() {
+            tg.HapticFeedback.impactOccurred('medium');
+            window.location.href = "index.html";
+        }
+
+        // Функция запуска игр с проверкой авторизации
         function launch(file) {
             tg.HapticFeedback.impactOccurred('heavy');
-            // Используем относительный путь для GitHub
+            
+            // Проверка: если данных нет, отправляем логиниться, чтобы не было вылета
+            const user = localStorage.getItem('stars_user');
+            if (!user) {
+                tg.showPopup({
+                    title: 'Ошибка',
+                    message: 'Сессия истекла. Пожалуйста, авторизуйтесь заново.',
+                    buttons: [{type: 'ok'}]
+                });
+                window.location.href = "index.html";
+                return;
+            }
+
+            // Если всё ок — газуем в игру
             window.location.href = "./" + file;
         }
 
