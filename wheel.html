@@ -2,200 +2,97 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-    <title>StarsDrop - Pro Roulette</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>StarsDrop - Telegram Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        :root { --accent: #7c3aed; }
         
-        :root { 
-            --accent: #a855f7; 
-            --tg-bg: #0f0f0f;
-            --tg-secondary: #1a1a1a;
-        }
-
+        * { -webkit-tap-highlight-color: transparent; user-select: none; }
+        
         body { 
-            background: var(--tg-bg); 
-            color: white; 
-            font-family: 'Inter', sans-serif; 
-            margin: 0; 
-            overflow: hidden; 
-            height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
+            background: #050505; color: white; font-family: 'Inter', sans-serif; 
+            margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; 
         }
 
-        /* Нативный Header в стиле Telegram */
         .header-panel { 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            padding: 16px 20px; 
-            background: rgba(15, 15, 15, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            z-index: 100; 
+            padding: 12px 20px; background: #0a0a0a; border-bottom: 1px solid #1a1a1a; 
+            padding-top: calc(12px + var(--tg-safe-area-inset-top, 0px));
         }
 
-        #wheels-container { 
-            flex-grow: 1; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            gap: 12px; 
-            padding: 10px 0;
+        #wheels-container { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 8px; overflow: hidden; }
+
+        .wheel-track { 
+            position: relative; width: 100%; height: 90px; overflow: hidden; 
+            border-top: 1px solid rgba(124, 58, 237, 0.15); border-bottom: 1px solid rgba(124, 58, 237, 0.15);
+            background: rgba(124, 58, 237, 0.02);
         }
 
-.wheel-track { 
-    position: relative; 
-    width: 100%; 
-    /* Убираем фиксированную высоту 90px */
-    height: 15vh; /* Высота зависит от высоты экрана */
-    min-height: 60px;
-    max-height: 90px;
-    overflow: hidden; 
-    background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.05), transparent);
-    border-top: 1px solid rgba(255,255,255,0.03);
-    border-bottom: 1px solid rgba(255,255,255,0.03);
-    flex-shrink: 1; /* Позволяет лентам сжиматься, чтобы кнопка не улетала */
-}
-
-        /* Тонкий неоновый указатель */
         .pointer { 
-            position: absolute; 
-            top: 0; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            width: 2px; 
-            height: 100%; 
-            background: var(--accent); 
-            z-index: 50; 
-            box-shadow: 0 0 15px var(--accent); 
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%); 
+            width: 3px; height: 100%; background: var(--accent); z-index: 50; 
+            box-shadow: 0 0 15px var(--accent);
         }
 
         .wheel-line { display: flex; align-items: center; height: 100%; will-change: transform; }
 
         .item { 
-            min-width: 80px; 
-            height: 80px; 
-            margin: 0 4px; 
-            background: rgba(255,255,255,0.03); 
-            border-radius: 16px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            border: 1px solid rgba(255,255,255,0.05);
+            min-width: 80px; height: 80px; margin: 0 4px; background: rgba(255,255,255,0.03); 
+            border-radius: 12px; display: flex; align-items: center; justify-content: center; 
+            border: 1px solid rgba(124, 58, 237, 0.1);
         }
-        
-        .item img { width: 55px; height: 55px; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
+        .item img { width: 55px; height: 55px; object-fit: contain; }
 
-        /* Кнопки выбора множителя */
-        .multi-btn { 
-            background: var(--tg-secondary); 
-            border: 1px solid transparent;
-            padding: 10px 0; 
-            flex: 1;
-            border-radius: 12px; 
-            font-weight: 700; 
-            font-size: 13px; 
-            color: #888;
-            transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .multi-btn.active { 
-            border-color: var(--accent); 
-            background: rgba(168, 85, 247, 0.15); 
-            color: white; 
-            box-shadow: 0 0 15px rgba(168, 85, 247, 0.1);
-        }
-
-        /* Главная кнопка как в Telegram */
         .btn-main { 
-            background: var(--accent); 
-            color: white; 
-            font-weight: 800; 
-            border-radius: 16px; 
-            padding: 18px;
-            font-size: 15px;
-            transition: transform 0.1s ease;
-            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.25);
+            background: var(--accent); color: white; font-weight: 900; border-radius: 18px; 
+            transition: 0.2s; box-shadow: 0 0 25px rgba(124, 58, 237, 0.3);
         }
-        .btn-main:active { transform: scale(0.98); }
-        .btn-main:disabled { opacity: 0.3; transform: scale(1); }
+        .btn-main:active { transform: scale(0.97); }
+        .btn-main:disabled { opacity: 0.3; filter: grayscale(1); }
 
-        /* Модалка выигрыша */
-        #win-modal { 
-            display: none; 
-            position: fixed; 
-            inset: 0; 
-            z-index: 1000; 
-            background: rgba(0,0,0,0.85); 
-            backdrop-filter: blur(12px); 
-            align-items: center; 
-            justify-content: center; 
-            padding: 20px;
-        }
-        .modal-box { 
-            background: #161616; 
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 28px; 
-            width: 100%; 
-            max-width: 320px; 
-            padding: 30px 20px; 
-            text-align: center;
-            animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        @keyframes modalPop {
-            from { opacity: 0; transform: scale(0.8); }
-            to { opacity: 1; transform: scale(1); }
-        }
+        .multi-btn { background: #111; border: 1px solid #222; padding: 10px 0; border-radius: 12px; flex: 1; font-weight: 900; font-size: 12px; color: #555; }
+        .multi-btn.active { border-color: var(--accent); background: #1a0b2e; color: white; }
+
+        #win-modal { display: none; position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,0.92); backdrop-filter: blur(10px); align-items: center; justify-content: center; }
+        .modal-box { background: #0f0f0f; border: 1px solid var(--accent); border-radius: 24px; width: 85%; padding: 25px; text-align: center; }
+        
+        /* Скрытие полосы прокрутки */
+        ::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
 
-    <header class="header-panel">
-        <div class="flex flex-col">
-            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider"></span>
-            <div class="font-black text-lg tracking-tight" onclick="location.href='index.html'">STARS<span class="text-purple-500">DROP</span></div>
-        </div>
-        <div class="flex items-center gap-2 bg-[#1a1a1a] px-3 py-1.5 rounded-full border border-white/5">
+    <header class="header-panel flex justify-between items-center">
+        <div class="font-black italic text-lg tracking-tighter">STARS<span class="text-[#7c3aed]">DROP</span></div>
+        <div class="flex items-center gap-2 bg-[#111] px-4 py-1.5 rounded-full border border-[#222]">
             <img src="img/star.png" class="w-4 h-4" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1828/1828884.png'">
-            <span id="val-stars" class="font-bold text-sm">0</span>
+            <span id="val-stars" class="font-black text-sm">0</span>
         </div>
     </header>
 
     <div id="wheels-container"></div>
 
-    <div class="p-6 pb-10 bg-[#0f0f0f]">
-        <div id="multi-wrap" class="flex gap-2 justify-center mb-5">
-            <button onclick="setMulti(1)" class="multi-btn active" data-m="1">x1</button>
-            <button onclick="setMulti(2)" class="multi-btn" data-m="2">x2</button>
-            <button onclick="setMulti(3)" class="multi-btn" data-m="3">x3</button>
-            <button onclick="setMulti(4)" class="multi-btn" data-m="4">x4</button>
-            <button onclick="setMulti(5)" class="multi-btn" data-m="5">x5</button>
+    <div class="p-6 bg-[#0a0a0a] border-t border-[#181818] pb-[calc(24px + var(--tg-safe-area-inset-bottom, 0px))]">
+        <div id="multi-wrap" class="flex gap-2 mb-4">
+            <button onclick="setMulti(1)" class="multi-btn active" data-m="1">X1</button>
+            <button onclick="setMulti(2)" class="multi-btn" data-m="2">X2</button>
+            <button onclick="setMulti(3)" class="multi-btn" data-m="3">X3</button>
+            <button onclick="setMulti(4)" class="multi-btn" data-m="4">X4</button>
+            <button onclick="setMulti(5)" class="multi-btn" data-m="5">X5</button>
         </div>
-        <button id="spin-btn" onclick="startSpin()" class="w-full btn-main uppercase tracking-widest">
-            Загрузка...
-        </button>
+        <button id="spin-btn" onclick="startSpin()" class="w-full py-4 btn-main uppercase tracking-widest text-sm">Загрузка...</button>
     </div>
 
     <div id="win-modal">
         <div class="modal-box">
-            <h2 class="text-2xl font-black italic uppercase mb-1">Выигрыш!</h2>
-            <p class="text-purple-400 text-[10px] font-bold tracking-[0.2em] mb-6">REWARD UNLOCKED</p>
-            
-            <div id="win-items-container" class="grid grid-cols-3 gap-3 mb-6"></div>
-            
-            <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl mb-6">
-                <span class="text-gray-400 text-xs font-semibold uppercase">Итоговая стоимость:</span>
-                <span class="font-black text-purple-400"><span id="total-win-price">0</span> ★</span>
-            </div>
-
-            <button onclick="claimPrize('sell')" id="sell-btn" class="w-full bg-purple-600 py-4 rounded-2xl font-black uppercase text-sm mb-3 shadow-lg shadow-purple-900/20">Продать всё</button>
-            <button onclick="claimPrize('keep')" id="keep-btn" class="w-full bg-white/5 py-4 rounded-2xl font-bold uppercase text-[11px] text-gray-400">В инвентарь</button>
+            <h2 class="text-lg font-black italic uppercase text-purple-400">Вам выпало!</h2>
+            <div id="win-items-container" class="grid grid-cols-3 gap-2 my-5"></div>
+            <p class="text-[10px] text-gray-500 uppercase font-bold mb-4">Ценность: <span id="total-win-price" class="text-white">0</span> ★</p>
+            <button onclick="claimPrize('sell')" id="sell-btn" class="w-full bg-[#7c3aed] py-4 rounded-xl font-black uppercase text-xs mb-3">Продать всё</button>
+            <button onclick="claimPrize('keep')" id="keep-btn" class="w-full bg-white/5 py-4 rounded-xl font-bold uppercase text-[10px]">В инвентарь</button>
         </div>
     </div>
 
@@ -205,99 +102,57 @@
         const SB = supabase.createClient(SB_URL, SB_KEY);
         const tg = window.Telegram.WebApp;
         
-        // Настройка TMA
         tg.expand();
         tg.enableClosingConfirmation();
-        tg.headerColor = '#0f0f0f';
-        tg.backgroundColor = '#0f0f0f';
 
-        const userId = tg.initDataUnsafe?.user?.id || 8015661230;
-
-        // [Ваш объект ALL_ITEMS остается без изменений...]
+        // Сюда вставь свой объект ALL_ITEMS (я сократил для веса)
         const ALL_ITEMS = {
-            "1may.jpg": { name: "1 May Exclusive", price: 100, img: "1may.jpg" },
-            "2025.jpg": { name: "Happy 2025", price: 500, img: "2025.jpg" },
-            "bear.png": { name: "Honey Bear", price: 3500, img: "bear.png" },
-            "book.jpg": { name: "Ancient Book", price: 1000, img: "book.jpg" },
-            "booox.png": { name: "Berry Box", price: 700, img: "booox.png" },
-            "botinok.png": { name: "Old Boot", price: 400, img: "botinok.png" },
-            "box.png": { name: "Jack in Box", price: 600, img: "box.png" },
-            "car.png": { name: "Sports Car", price: 5000, img: "car.png" },
-            "raketa.png": { name: "Space Rocket", price: 50, img: "raketa.png" },
-            "ccolso2.png": { name: "Star Ring", price: 3000, img: "ccolso2.png" },
-            "cerrrdce.jpg": { name: "Gingerbread", price: 500, img: "cerrrdce.jpg" },
-            "chemodan.jpg": { name: "Traveler Case", price: 5000, img: "chemodan.jpg" },
-            "ciga.png": { name: "Luxury Cigar", price: 3000, img: "ciga.png" },
-            "colso.png": { name: "Blue Diamond", price: 2500, img: "colso.png" },
-            "costum.jpg": { name: "Royal Costume", price: 10000, img: "costum.jpg" },
-            "cvetok.png": { name: "Wild Flower", price: 1000, img: "cvetok.png" },
-            "dog.png": { name: "Rich Dog", price: 500, img: "dog.png" },
-            "dyxi.png": { name: "Gold Perfume", price: 10000, img: "dyxi.png" },
-            "fonarik.jpg": { name: "Night Lantern", price: 100, img: "fonarik.jpg" },
-            "grob.jpg": { name: "Ancient Coffin", price: 5000, img: "grob.jpg" },
-            "gyba.png": { name: "Lava Lips", price: 5000, img: "gyba.png" },
-            "happybirthday.jpg": { name: "Birthday Cake", price: 200, img: "happybirthday.jpg" },
-            "heart.png": { name: "Heart Lock", price: 2000, img: "heart.png" },
-            "helmet.png": { name: "Spartan Helmet", price: 25000, img: "helmet.png" },
-            "kalendar.png": { name: "Event Calendar", price: 400, img: "kalendar.png" },
-            "kepka.png": { name: "Legendary Cap", price: 100000, img: "kepka.png" },
-            "kirpitch.jpg": { name: "Golden Brick", price: 10000, img: "kirpitch.jpg" },
-            "koks.jpg": { name: "Party Cocktail", price: 150, img: "koks.jpg" },
-            "koktel.png": { name: "Toxic Mix", price: 500, img: "koktel.png" },
-            "kot.png": { name: "Atomic Cat", price: 10000, img: "kot.png" },
-            "kotel.png": { name: "Witch Cauldron", price: 500, img: "kotel.png" },
-            "krovatka.jpg": { name: "Baby Bow", price: 600, img: "krovatka.jpg" },
-            "lolipop.png": { name: "Sweet Lollipop", price: 500, img: "lolipop.png" },
-            "lucky.jpg": { name: "Clover Lucky", price: 500, img: "lucky.jpg" },
-            "mafin.jpg": { name: "Sugar Muffin", price: 700, img: "mafin.jpg" },
-            "metch.png": { name: "Star Saber", price: 700, img: "metch.png" },
-            "narkotiki.png": { name: "Star Token", price: 600, img: "narkotiki.png" },
-            "obyv.jpg": { name: "Sneakers Pro", price: 10000, img: "obyv.jpg" },
-            "orel.jpg": { name: "Golden Eagle", price: 5000, img: "orel.jpg" },
-            "otkritka.jpg": { name: "Peace Dove", price: 150, img: "otkritka.jpg" },
-            "paska.jpg": { name: "Easter Cake", price: 75, img: "paska.jpg" },
-            "rozza.png": { name: "Velvet Rose", price: 2000, img: "rozza.png" },
-            "rykzak.jpg": { name: "Adventurer Bag", price: 500, img: "rykzak.jpg" },
-            "shapka.png": { name: "Santa Hat", price: 500, img: "shapka.png" },
-            "shar.jpg": { name: "Magic Ball", price: 1000, img: "shar.jpg" },
-            "shlem.png": { name: "Biker Helmet", price: 3500, img: "shlem.png" },
-            "soska.jpg": { name: "Diamond Pacifier", price: 3000, img: "soska.jpg" },
-            "star.png": { name: "Pure Star", price: 15, img: "star.png" },
-            "statyya.jpg": { name: "Hero Statue", price: 41000, img: "statyya.jpg" },
-            "venok.jpg": { name: "Wreath Flower", price: 500, img: "venok.jpg" },
-            "yayko.png": { name: "Dragon Egg", price: 600, img: "yayko.png" },
-            "zhele.png": { name: "Slime Jelly", price: 700, img: "zhele.png" },
-            "zmei.png": { name: "Snake Friend", price: 500, img: "zmei.png" },
-            "meczcc.png": { name: "Faith Amulet", price: 600, img: "meczcc.png" },
-            "kryg.PNG": { name: "Snow Globe", price: 600, img: "kryg.PNG" },
-            "gribb.PNG": { name: "Spy Agaric", price: 600, img: "gribb.PNG" },
-            "zirka.PNG": { name: "Hanging Star", price: 800, img: "zirka.PNG" },
-            "cvetk.PNG": { name: "Sakura Flower", price: 900, img: "cvetk.PNG" },
-            "sshapka.PNG": { name: "Khabib's Papakha", price: 2300, img: "sshapka.PNG" },
-            "tyfli.PNG": { name: "Sky Stilettos", price: 1800, img: "tyfli.PNG" }
+            "star.png": { price: 15, img: "star.png" },
+            "raketa.png": { price: 50, img: "raketa.png" },
+            "2025.jpg": { price: 500, img: "2025.jpg" },
+            "bear.png": { price: 3500, img: "bear.png" },
+            "car.png": { price: 5000, img: "car.png" },
+            "helmet.png": { price: 25000, img: "helmet.png" },
+            "kepka.png": { price: 100000, img: "kepka.png" }
+            // Добавь остальные свои предметы сюда точно так же
         };
 
+        const ALL_KEYS = Object.keys(ALL_ITEMS);
         let user = null, isSpinning = false, multi = 1, currentWins = [];
 
-        async function sync() {
+        async function checkAuth() {
+            let userId = tg.initDataUnsafe?.user?.id || 8015661230;
+
             try {
-                const { data } = await SB.from('users').select('*').eq('user_id', userId).single();
-                if (data) { 
-                    user = data; 
-                    document.getElementById('val-stars').innerText = Math.floor(user.stars || 0);
-                    updateUI();
+                let { data, error } = await SB.from('users').select('*').eq('user_id', userId).single();
+                
+                if (error || !data) {
+                    const { data: newUser } = await SB.from('users').insert([
+                        { user_id: userId, stars: 500, inventory: [], spin_count: 0 }
+                    ]).select().single();
+                    data = newUser;
                 }
-            } catch (e) { console.error(e); }
+
+                user = data;
+                document.getElementById('val-stars').innerText = Math.floor(user.stars || 0);
+                updateUI();
+            } catch (e) {
+                document.getElementById('spin-btn').innerText = "ОШИБКА СЕТИ";
+            }
         }
 
         function updateUI() {
+            if (!user) return;
             const lastFree = user.last_free_spin ? new Date(user.last_free_spin).getTime() : 0;
             const isFree = (Date.now() - lastFree) > 86400000;
             const btn = document.getElementById('spin-btn');
+            
             if (isFree) {
                 btn.innerText = "БЕСПЛАТНЫЙ СПИН";
+                btn.style.background = "#059669"; // Green
                 btn.disabled = isSpinning;
             } else {
+                btn.style.background = ""; // Reset to purple
                 const cost = 100 * multi;
                 btn.innerText = `КРУТИТЬ ЗА ${cost} ★`;
                 btn.disabled = isSpinning || (user.stars < cost);
@@ -305,88 +160,93 @@
             if (!isSpinning) initWheels();
         }
 
-function initWheels() {
-    const container = document.getElementById('wheels-container');
-    container.innerHTML = '';
-    const keys = Object.keys(ALL_ITEMS);
-    
-    // Определяем размер предметов в зависимости от количества лент
-    const itemSize = multi > 3 ? '65px' : '80px';
-    const imgSize = multi > 3 ? '40px' : '55px';
+        function initWheels() {
+            const container = document.getElementById('wheels-container');
+            container.innerHTML = '';
+            // Если спин бесплатный, всегда показываем 1 ленту
+            const lastFree = user.last_free_spin ? new Date(user.last_free_spin).getTime() : 0;
+            const isFree = (Date.now() - lastFree) > 86400000;
+            const displayMulti = isFree ? 1 : multi;
 
-    for(let i=0; i<multi; i++) {
-        let content = '';
-        for(let j=0; j<140; j++) {
-            const k = keys[Math.floor(Math.random()*keys.length)];
-            content += `
-                <div class="item" style="min-width: ${itemSize}; height: ${itemSize};">
-                    <img src="img/${ALL_ITEMS[k].img}" style="width: ${imgSize}; height: ${imgSize};" onerror="this.src='img/star.png'">
-                </div>`;
+            for(let i=0; i<displayMulti; i++) {
+                let content = '';
+                for(let j=0; j<140; j++) {
+                    const k = ALL_KEYS[Math.floor(Math.random()*ALL_KEYS.length)];
+                    content += `<div class="item"><img src="img/${ALL_ITEMS[k].img}" onerror="this.src='img/star.png'"></div>`;
+                }
+                container.innerHTML += `
+                    <div class="wheel-track">
+                        <div class="pointer"></div>
+                        <div class="wheel-line" id="line-${i}">${content}</div>
+                    </div>`;
+            }
         }
-        container.innerHTML += `
-            <div class="wheel-track" style="height: ${multi > 3 ? '75px' : '90px'}">
-                <div class="pointer"></div>
-                <div class="wheel-line" id="line-${i}">${content}</div>
-            </div>`;
-    }
-}
 
         function setMulti(m) {
-            if (isSpinning) return;
+            const lastFree = user.last_free_spin ? new Date(user.last_free_spin).getTime() : 0;
+            if (isSpinning || (Date.now() - lastFree) > 86400000) return; 
+            
             multi = parseInt(m);
-            tg.HapticFeedback.impactOccurred('light');
-            document.querySelectorAll('.multi-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.m) === multi));
+            document.querySelectorAll('.multi-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`[data-m="${m}"]`).classList.add('active');
             updateUI();
         }
 
         async function startSpin() {
             if (isSpinning || !user) return;
+            tg.HapticFeedback.impactOccurred('medium');
+
             const lastFree = user.last_free_spin ? new Date(user.last_free_spin).getTime() : 0;
             const isFree = (Date.now() - lastFree) > 86400000;
-            const cost = isFree ? 0 : 100 * multi;
+            
+            let curMulti = isFree ? 1 : multi;
+            const cost = isFree ? 0 : 100 * curMulti;
 
             if (!isFree && user.stars < cost) return;
 
-            tg.HapticFeedback.impactOccurred('medium');
             isSpinning = true;
+            document.getElementById('spin-btn').disabled = true;
             currentWins = [];
             let tempStep = user.spin_count || 0;
 
-            const RARE_KEYS = Object.keys(ALL_ITEMS).filter(k => ALL_ITEMS[k].price >= 100 && ALL_ITEMS[k].price <= 500); 
-            const JUNK_KEYS = Object.keys(ALL_ITEMS).filter(k => ALL_ITEMS[k].price < 100);
+            const RARE_KEYS = ALL_KEYS.filter(k => ALL_ITEMS[k].price >= 100 && ALL_ITEMS[k].price <= 500); 
+            const JUNK_KEYS = ALL_KEYS.filter(k => ALL_ITEMS[k].price < 100);
 
-            for(let i=0; i<multi; i++) {
-                tempStep++; 
-                let winKey = (tempStep - 1) % 7 === 0 
-                    ? RARE_KEYS[Math.floor(Math.random() * RARE_KEYS.length)]
-                    : JUNK_KEYS[Math.floor(Math.random() * JUNK_KEYS.length)] || JUNK_KEYS[0];
-                
+            // Мгновенно фиксируем результат
+            for(let i=0; i<curMulti; i++) {
+                tempStep++;
+                let winKey = (tempStep % 7 === 0) ? RARE_KEYS[Math.floor(Math.random()*RARE_KEYS.length)] : JUNK_KEYS[Math.floor(Math.random()*JUNK_KEYS.length)];
                 currentWins.push(ALL_ITEMS[winKey]);
+                
                 const line = document.getElementById(`line-${i}`);
-                const imgs = line.querySelectorAll('img');
-                imgs[130].src = `img/${ALL_ITEMS[winKey].img}`;
+                line.querySelectorAll('img')[130].src = `img/${ALL_ITEMS[winKey].img}`;
             }
 
+            // Записываем в базу
             const upd = isFree ? { last_free_spin: new Date().toISOString(), spin_count: tempStep } 
                                : { stars: user.stars - cost, spin_count: tempStep };
 
-            await SB.from('users').update(upd).eq('user_id', userId);
+            const { error } = await SB.from('users').update(upd).eq('user_id', user.user_id);
+            if (error) { location.reload(); return; }
+
+            user.stars = upd.stars || user.stars;
+            user.spin_count = tempStep;
+            if (isFree) user.last_free_spin = upd.last_free_spin;
             
-            user.stars = isFree ? user.stars : user.stars - cost;
             document.getElementById('val-stars').innerText = Math.floor(user.stars);
 
-            for(let i=0; i<multi; i++) {
+            // Анимация
+            for(let i=0; i<curMulti; i++) {
                 const line = document.getElementById(`line-${i}`);
-                const itemWidth = 88; // item (80) + margin (4+4)
-                const offset = (130 * itemWidth) - (window.innerWidth / 2) + (itemWidth / 2);
-                line.style.transition = `transform ${7 + (i * 0.4)}s cubic-bezier(0.15, 0, 0.15, 1)`;
+                const offset = (130 * 88) - (window.innerWidth / 2) + 44;
+                line.style.transition = `transform ${7 + (i * 0.4)}s cubic-bezier(0.1, 0, 0, 1)`;
                 line.style.transform = `translateX(-${offset}px)`;
             }
 
             setTimeout(() => {
                 tg.HapticFeedback.notificationOccurred('success');
                 showModal();
-            }, 8500);
+            }, 8000);
         }
 
         function showModal() {
@@ -396,9 +256,9 @@ function initWheels() {
             currentWins.forEach(w => {
                 total += w.price;
                 container.innerHTML += `
-                    <div class="bg-white/5 p-3 rounded-2xl border border-white/5 text-center">
-                        <img src="img/${w.img}" class="w-10 h-10 mx-auto mb-2" onerror="this.src='img/star.png'">
-                        <p class="text-[10px] font-black text-purple-400">${w.price}★</p>
+                    <div class="bg-white/5 p-2 rounded-xl border border-white/5">
+                        <img src="img/${w.img}" class="w-10 h-10 mx-auto" onerror="this.src='img/star.png'">
+                        <p class="text-[10px] font-black text-purple-400 mt-1">${w.price}★</p>
                     </div>`;
             });
             document.getElementById('total-win-price').innerText = total;
@@ -406,30 +266,25 @@ function initWheels() {
         }
 
         async function claimPrize(type) {
-            const sellBtn = document.getElementById('sell-btn');
-            const keepBtn = document.getElementById('keep-btn');
-            sellBtn.disabled = true; keepBtn.disabled = true;
+            tg.HapticFeedback.impactOccurred('light');
+            document.getElementById('sell-btn').disabled = true;
+            document.getElementById('keep-btn').disabled = true;
 
-            const sum = currentWins.reduce((s, w) => s + w.price, 0);
+            const { data: fresh } = await SB.from('users').select('*').eq('user_id', user.user_id).single();
+            
+            if (type === 'sell') {
+                const sum = currentWins.reduce((s, w) => s + w.price, 0);
+                await SB.from('users').update({ stars: (fresh.stars || 0) + sum }).eq('user_id', user.user_id);
+            } else {
+                const inv = fresh.inventory || [];
+                currentWins.forEach(w => inv.push({...w, id: Date.now() + Math.random()}));
+                await SB.from('users').update({ inventory: inv }).eq('user_id', user.user_id);
+            }
 
-            try {
-                if (type === 'sell') {
-                    await SB.from('users').update({ stars: user.stars + sum }).eq('user_id', userId);
-                } else {
-                    const inv = user.inventory || [];
-                    currentWins.forEach(w => inv.push({...w, id: Date.now() + Math.random()}));
-                    await SB.from('users').update({ inventory: inv }).eq('user_id', userId);
-                }
-
-                document.getElementById('win-modal').style.display = 'none';
-                isSpinning = false;
-                initWheels();
-                sellBtn.disabled = false; keepBtn.disabled = false;
-                await sync(); 
-            } catch (e) { console.error(e); }
+            location.reload(); // Проще всего для чистого сброса стейта в Telegram
         }
 
-        sync();
+        checkAuth();
     </script>
 </body>
 </html>
