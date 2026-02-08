@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>StarDrop Plinko Final</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;900&display=swap');
+        :root { --accent: #a855f7; --bg: #0f0f0f; }
+        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+        
+        #plinko-container { 
+            width: 100%; 
+            height: 55vh; 
+            position: relative; 
+            margin-top: 10px;
+        }
+        .star-logo {
+    width: 20px;       /* Ширина картинки */
+    height: 20px;      /* Высота картинки */
+    object-fit: contain;
+    display: inline-block;
+    vertical-align: middle; /* Выравнивание по центру текста */
+}
+        canvas { display: block; margin: 0 auto; max-width: 100%; height: 100% !important; }
+
+        .multiplier-bar { 
+            display: flex; justify-content: space-between; 
+            padding: 0 5px; position: absolute; bottom: 0; width: 100%; z-index: 10;
+        }
+        .x-badge { 
+            flex: 1; margin: 0 2px; height: 26px; background: var(--accent); 
+            border-radius: 4px; font-size: 10px; font-weight: 900;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
+        }
+        .btn-bet { background: var(--accent); color: white; font-weight: 900; border-radius: 16px; padding: 18px; width: 100%; transition: 0.2s; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4); }
+        .btn-bet:active { transform: scale(0.96); }
+    </style>
+</head>
+<body class="p-4">
+
+    <div class="flex justify-between items-center h-[50px]">
+        <div class="font-black text-xl tracking-tighter uppercase">Stars<span class="text-purple-500">Plinko</span></div>
+        <div class="bg-white/5 px-4 py-2 rounded-full border border-white/10 flex items-center gap-2">
+            <span id="balance" class="font-bold text-purple-400 text-lg">0</span>
+            <img src="img/star.png" class="star-logo" alt="star">
+        </div>
+    </div>
+
+    <div id="plinko-container">
+        <div class="multiplier-bar">
+            <div class="x-badge">5X</div>
+            <div class="x-badge" style="background: #3b0764; opacity: 0.8;">0.2X</div>
+            <div class="x-badge">2X</div>
+            <div class="x-badge">1.2X</div>
+            <div class="x-badge">1X</div>
+            <div class="x-badge">0.5X</div>
+            <div class="x-badge">1.2X</div>
+            <div class="x-badge">2X</div>
+            <div class="x-badge">10X</div>
+        </div>
+    </div>
+
+    <div class="mt-auto bg-[#111] p-5 rounded-3xl border border-white/5 space-y-5">
+        <div class="grid grid-cols-3 gap-3">
+            <div class="text-center bg-white/5 p-2 rounded-xl border border-white/5">
+                <p class="text-[9px] opacity-40 uppercase mb-1">Ставка</p>
+                <input id="bet-input" type="number" value="10" class="bg-transparent w-full text-center font-black text-purple-400 outline-none">
+            </div>
+            <div class="text-center bg-white/5 p-2 rounded-xl border border-white/5">
+                <p class="text-[9px] opacity-40 uppercase mb-1">Риск</p>
+                <p class="font-black text-xs mt-1 text-white">MEDIUM</p>
+            </div>
+            <div class="text-center bg-white/5 p-2 rounded-xl border border-white/5">
+                <p class="text-[9px] opacity-40 uppercase mb-1">Ряды</p>
+                <p class="font-black text-xs mt-1 text-white">8</p>
+            </div>
+        </div>
+        <button id="drop-btn" onclick="dropBall()" class="btn-bet uppercase tracking-widest">Сбросить шарик</button>
+    </div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    const SB_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
+    const SB_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
+    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+    const userId = tg.initDataUnsafe?.user?.id || 8015661230;
+
+    let balance = 0;
+    let gamesPlayed = 0; // Считаем игры для ограничения 10x
+    const multiValues = [5, 0.2, 2, 1.2, 1, 0.5, 1.2, 2, 10];
+
+    const { Engine, Render, Runner, Bodies, Composite, Events, Body } = Matter;
+    const engine = Engine.create();
+    const container = document.getElementById('plinko-container');
+
+    const render = Render.create({
+        element: container,
+        engine: engine,
+        options: {
+            width: 400,
+            height: 500,
+            wireframes: false,
+            background: 'transparent',
+            pixelRatio: window.devicePixelRatio
+        }
+    });
+
+    // Стены (защита от вылета)
+    const wallOpts = { isStatic: true, render: { visible: false } };
+    Composite.add(engine.world, [
+        Bodies.rectangle(0, 250, 20, 500, wallOpts),
+        Bodies.rectangle(400, 250, 20, 500, wallOpts)
+    ]);
+
+    // Пины (гвоздики)
+    for (let i = 2; i <= 9; i++) {
+        for (let j = 0; j < i; j++) {
+            const x = 200 + (j - (i - 1) / 2) * 41;
+            const y = 60 + i * 42;
+            Composite.add(engine.world, Bodies.circle(x, y, 3.5, { 
+                isStatic: true, 
+                render: { fillStyle: '#444' } 
+            }));
+        }
+    }
+
+    // Зоны множителей (сенсоры)
+    for (let i = 0; i < 9; i++) {
+        const x = 32 + i * 42;
+        Composite.add(engine.world, Bodies.rectangle(x, 490, 38, 40, { 
+            isStatic: true, isSensor: true, label: `bucket-${i}`, render: { visible: false } 
+        }));
+    }
+
+    Render.run(render);
+    Runner.run(Runner.create(), engine);
+
+    async function syncBalance() {
+        const { data } = await supabaseClient.from('users').select('stars').eq('user_id', userId).single();
+        if (data) { 
+            balance = data.stars; 
+            document.getElementById('balance').innerText = Math.floor(balance); 
+        }
+    }
+
+    function dropBall() {
+        const bet = parseInt(document.getElementById('bet-input').value);
+        if (balance < bet) return tg.showAlert("Недостаточно звезд!");
+
+        balance -= bet;
+        document.getElementById('balance').innerText = Math.floor(balance);
+
+        gamesPlayed++;
+        
+        // УМНАЯ ЛОГИКА ШАНСОВ:
+        // Если это НЕ 7-я игра, спавним чуть левее центра, чтобы физически было почти 
+        // невозможно попасть в 10x (который справа).
+        let spawnX = 200;
+        if (gamesPlayed % 7 !== 0) {
+            spawnX = 185 + (Math.random() * 15); // Тяготеет к центру (1x)
+        } else {
+            spawnX = 215 + (Math.random() * 10); // Даем шанс улететь вправо к 10x
+        }
+
+        const ball = Bodies.circle(spawnX, 10, 8, {
+            restitution: 0.5,
+            friction: 0.02,
+            frictionAir: 0.04, // Плавность полета
+            render: { fillStyle: '#a855f7', strokeStyle: '#fff', lineWidth: 2 },
+            label: 'ball',
+            betAmount: bet
+        });
+
+        Composite.add(engine.world, ball);
+        tg.HapticFeedback.impactOccurred('medium');
+    }
+
+    Events.on(engine, 'collisionStart', (event) => {
+        event.pairs.forEach(async (pair) => {
+            const { bodyA, bodyB } = pair;
+            if (bodyB.label === 'ball' && bodyA.label.startsWith('bucket-')) {
+                const idx = parseInt(bodyA.label.split('-')[1]);
+                const multiplier = multiValues[idx];
+                
+                // Если выпало 10x раньше срока — сбрасываем счетчик
+                if (multiplier >= 5) gamesPlayed = 0;
+
+                const win = Math.floor(bodyB.betAmount * multiplier);
+                Composite.remove(engine.world, bodyB);
+                
+                balance += win;
+                document.getElementById('balance').innerText = Math.floor(balance);
+                
+                await supabaseClient.from('users').update({ stars: balance }).eq('user_id', userId);
+                tg.HapticFeedback.notificationOccurred(win >= bodyB.betAmount ? 'success' : 'warning');
+            }
+        });
+    });
+
+    window.onload = () => { syncBalance(); tg.expand(); };
+</script>
+</body>
+</html>
