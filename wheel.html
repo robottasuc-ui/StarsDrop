@@ -2,371 +2,434 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Lucky Wheel - StarDrop Green</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <title>StarsDrop - Pro Roulette</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
         
-        :root {
-            --green-primary: #a3e635;
-            --green-dark: #166534;
-            --bg-dark: #0a1205;
+        :root { 
+            --accent: #a855f7; 
+            --tg-bg: #0f0f0f;
+            --tg-secondary: #1a1a1a;
         }
 
         body { 
-            background: var(--bg-dark); 
+            background: var(--tg-bg); 
             color: white; 
             font-family: 'Inter', sans-serif; 
-            overflow: hidden; 
             margin: 0; 
-        }
-
-        .bg-glow { 
-            position: fixed; 
-            inset: 0; 
-            background: radial-gradient(circle at 50% 50%, rgba(163, 230, 53, 0.15) 0%, transparent 80%); 
-            z-index: 1; 
-            pointer-events: none; 
-        }
-
-        .back-button { 
-            position: absolute; 
-            top: 20px; 
-            left: 20px; 
-            z-index: 100; 
-            background: rgba(163, 230, 53, 0.1); 
-            border: 1px solid rgba(163, 230, 53, 0.3); 
-            width: 48px; 
-            height: 48px; 
-            border-radius: 16px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            cursor: pointer; 
-            backdrop-filter: blur(10px);
-            transition: all 0.2s; 
-        }
-        .back-button:active { transform: scale(0.9); background: var(--green-primary); color: black; }
-
-        .content { 
-            position: relative; 
-            z-index: 10; 
-            min-height: 100vh; 
+            overflow: hidden; 
+            height: 100vh; 
             display: flex; 
             flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .wheel-outer { 
-            position: relative; 
-            width: 100%; 
-            background: linear-gradient(90deg, var(--bg-dark) 0%, transparent 20%, transparent 80%, var(--bg-dark) 100%); 
-            padding: 30px 0; 
-        }
-
-        .wheel-container { 
-            position: relative; 
-            width: 100%; 
-            height: 150px; 
-            overflow: hidden; 
-            background: rgba(163, 230, 53, 0.03); 
-            border-top: 2px solid rgba(163, 230, 53, 0.2); 
-            border-bottom: 2px solid rgba(163, 230, 53, 0.2); 
+        /* Нативный Header в стиле Telegram */
+        .header-panel { 
             display: flex; 
             align-items: center; 
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
+            justify-content: space-between; 
+            padding: 16px 20px; 
+            background: rgba(15, 15, 15, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            z-index: 100; 
         }
 
+        #wheels-container { 
+            flex-grow: 1; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            gap: 12px; 
+            padding: 10px 0;
+        }
+
+.wheel-track { 
+    position: relative; 
+    width: 100%; 
+    /* Убираем фиксированную высоту 90px */
+    height: 15vh; /* Высота зависит от высоты экрана */
+    min-height: 60px;
+    max-height: 90px;
+    overflow: hidden; 
+    background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.05), transparent);
+    border-top: 1px solid rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    flex-shrink: 1; /* Позволяет лентам сжиматься, чтобы кнопка не улетала */
+}
+
+        /* Тонкий неоновый указатель */
         .pointer { 
             position: absolute; 
             top: 0; 
             left: 50%; 
             transform: translateX(-50%); 
-            width: 4px; 
+            width: 2px; 
             height: 100%; 
-            background: var(--green-primary); 
+            background: var(--accent); 
             z-index: 50; 
-            box-shadow: 0 0 20px var(--green-primary);
+            box-shadow: 0 0 15px var(--accent); 
         }
 
-        .wheel-line { 
-            display: flex; 
-            align-items: center; 
-            height: 100%; 
-            transition: transform 8s cubic-bezier(0.1, 0, 0, 1); 
-            will-change: transform; 
-        }
+        .wheel-line { display: flex; align-items: center; height: 100%; will-change: transform; }
 
         .item { 
-            min-width: 120px; 
-            height: 120px; 
-            margin: 0 8px; 
+            min-width: 80px; 
+            height: 80px; 
+            margin: 0 4px; 
             background: rgba(255,255,255,0.03); 
-            border-radius: 24px; 
+            border-radius: 16px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            border: 1px solid rgba(163, 230, 53, 0.1); 
-            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .item img { width: 55px; height: 55px; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
+
+        /* Кнопки выбора множителя */
+        .multi-btn { 
+            background: var(--tg-secondary); 
+            border: 1px solid transparent;
+            padding: 10px 0; 
+            flex: 1;
+            border-radius: 12px; 
+            font-weight: 700; 
+            font-size: 13px; 
+            color: #888;
+            transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .multi-btn.active { 
+            border-color: var(--accent); 
+            background: rgba(168, 85, 247, 0.15); 
+            color: white; 
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.1);
         }
 
-        .item img { width: 80px; height: 80px; object-fit: contain; }
-
-        .btn-main {
-            background: var(--green-primary);
-            color: black;
-            font-weight: 900;
-            box-shadow: 0 10px 25px rgba(163, 230, 53, 0.3);
+        /* Главная кнопка как в Telegram */
+        .btn-main { 
+            background: var(--accent); 
+            color: white; 
+            font-weight: 800; 
+            border-radius: 16px; 
+            padding: 18px;
+            font-size: 15px;
+            transition: transform 0.1s ease;
+            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.25);
         }
+        .btn-main:active { transform: scale(0.98); }
+        .btn-main:disabled { opacity: 0.3; transform: scale(1); }
 
+        /* Модалка выигрыша */
         #win-modal { 
             display: none; 
             position: fixed; 
             inset: 0; 
-            z-index: 9999; 
-            background: rgba(0, 0, 0, 0.9); 
-            backdrop-filter: blur(20px); 
+            z-index: 1000; 
+            background: rgba(0,0,0,0.85); 
+            backdrop-filter: blur(12px); 
             align-items: center; 
             justify-content: center; 
+            padding: 20px;
         }
-        
-        .modal-content { 
-            background: linear-gradient(180deg, #1a2e0b 0%, #0a1205 100%); 
-            border: 2px solid var(--green-primary); 
-            border-radius: 35px; 
-            width: 85%; 
-            max-width: 340px; 
-            padding: 40px 25px; 
-            text-align: center; 
+        .modal-box { 
+            background: #161616; 
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 28px; 
+            width: 100%; 
+            max-width: 320px; 
+            padding: 30px 20px; 
+            text-align: center;
+            animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-
-        .status-text { 
-            font-size: 11px; 
-            text-transform: uppercase; 
-            letter-spacing: 2px; 
-            color: var(--green-primary); 
-            margin-top: 15px; 
-            font-weight: 800; 
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>
 <body>
-    <div class="bg-glow"></div>
-    <div class="back-button" onclick="goToMain()">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-            <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-    </div>
 
-    <div class="content">
-        <h1 class="text-4xl font-black italic uppercase tracking-tighter mb-12">
-            LUCKY <span class="text-green-400">SPIN</span>
-        </h1>
-
-        <div class="wheel-outer">
-            <div class="wheel-container">
-                <div class="pointer"></div>
-                <div id="wheel" class="wheel-line"></div>
-            </div>
+    <header class="header-panel">
+        <div class="flex flex-col">
+            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider"></span>
+            <div class="font-black text-lg tracking-tight" onclick="location.href='index.html'">STARS<span class="text-purple-500">DROP</span></div>
         </div>
-
-        <div class="w-full px-8 mt-14 text-center">
-            <button id="spin-btn" onclick="handleSpin()" class="w-full btn-main py-6 rounded-3xl text-lg uppercase tracking-widest active:scale-95 disabled:opacity-50 transition-all">
-                ЗАГРУЗКА...
-            </button>
-            <div id="timer-display" class="status-text">ПОДКЛЮЧЕНИЕ...</div>
+        <div class="flex items-center gap-2 bg-[#1a1a1a] px-3 py-1.5 rounded-full border border-white/5">
+            <img src="img/star.png" class="w-4 h-4" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1828/1828884.png'">
+            <span id="val-stars" class="font-bold text-sm">0</span>
         </div>
+    </header>
+
+    <div id="wheels-container"></div>
+
+    <div class="p-6 pb-10 bg-[#0f0f0f]">
+        <div id="multi-wrap" class="flex gap-2 justify-center mb-5">
+            <button onclick="setMulti(1)" class="multi-btn active" data-m="1">x1</button>
+            <button onclick="setMulti(2)" class="multi-btn" data-m="2">x2</button>
+            <button onclick="setMulti(3)" class="multi-btn" data-m="3">x3</button>
+            <button onclick="setMulti(4)" class="multi-btn" data-m="4">x4</button>
+            <button onclick="setMulti(5)" class="multi-btn" data-m="5">x5</button>
+        </div>
+        <button id="spin-btn" onclick="startSpin()" class="w-full btn-main uppercase tracking-widest">
+            Загрузка...
+        </button>
     </div>
 
     <div id="win-modal">
-        <div class="modal-content">
-            <img id="won-item-img" src="" class="w-28 h-28 mx-auto object-contain mb-6">
-            <h2 class="text-3xl font-black mb-2 uppercase italic tracking-tighter">ВЫИГРЫШ!</h2>
-            <p id="won-item-name" class="text-green-400 font-black mb-10 uppercase text-xs tracking-widest"></p>
-            <div class="flex flex-col gap-4">
-                <button id="sell-btn" class="w-full bg-green-500 text-black py-5 rounded-2xl font-black uppercase text-sm active:scale-95">Продать</button>
-                <button id="keep-btn" class="w-full bg-white/5 border border-white/10 py-5 rounded-2xl font-bold uppercase text-xs text-white/70 active:scale-95">В инвентарь</button>
+        <div class="modal-box">
+            <h2 class="text-2xl font-black italic uppercase mb-1">Выигрыш!</h2>
+            <p class="text-purple-400 text-[10px] font-bold tracking-[0.2em] mb-6">REWARD UNLOCKED</p>
+            
+            <div id="win-items-container" class="grid grid-cols-3 gap-3 mb-6"></div>
+            
+            <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl mb-6">
+                <span class="text-gray-400 text-xs font-semibold uppercase">Итоговая стоимость:</span>
+                <span class="font-black text-purple-400"><span id="total-win-price">0</span> ★</span>
             </div>
+
+            <button onclick="claimPrize('sell')" id="sell-btn" class="w-full bg-purple-600 py-4 rounded-2xl font-black uppercase text-sm mb-3 shadow-lg shadow-purple-900/20">Продать всё</button>
+            <button onclick="claimPrize('keep')" id="keep-btn" class="w-full bg-white/5 py-4 rounded-2xl font-bold uppercase text-[11px] text-gray-400">В инвентарь</button>
         </div>
     </div>
 
-<script>
-    const tg = window.Telegram.WebApp;
-    const userId = tg.initDataUnsafe?.user?.id || 12345; 
+    <script>
+        const SB_URL = "https://mwsbkpfarhdankpyifbm.supabase.co";
+        const SB_KEY = "sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA";
+        const SB = supabase.createClient(SB_URL, SB_KEY);
+        const tg = window.Telegram.WebApp;
+        
+        // Настройка TMA
+        tg.expand();
+        tg.enableClosingConfirmation();
+        tg.headerColor = '#0f0f0f';
+        tg.backgroundColor = '#0f0f0f';
 
-    const SB_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
-    const SB_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
-    const TABLE = 'users';
+        const userId = tg.initDataUnsafe?.user?.id || 8015661230;
 
-    const SPIN_COST = 100;
-    const ITEMS_DB = {
-        "1": { name: "1 May", img: "1may.jpg", price: 100 },
-        "2": { name: "2025", img: "2025.jpg", price: 500 },
-        "3": { name: "Bear", img: "bear.png", price: 3500 },
-        "4": { name: "Book", img: "book.jpg", price: 1000 },
-        "7": { name: "Jack Box", img: "box.png", price: 600 },
-        "8": { name: "Car", img: "car.png", price: 5000 },
-        "23": { name: "Rich Dog", img: "dog.png", price: 500 },
-        "44": { name: "Atomic Cat", img: "kot.png", price: 10000 },
-        "65": { name: "Golden Star", img: "star.png", price: 15 },
-        "27": { name: "Lava Lips", img: "gyba.png", price: 5000 }
-    };
+        // [Ваш объект ALL_ITEMS остается без изменений...]
+        const ALL_ITEMS = {
+            "1may.jpg": { name: "1 May Exclusive", price: 100, img: "1may.jpg" },
+            "2025.jpg": { name: "Happy 2025", price: 500, img: "2025.jpg" },
+            "bear.png": { name: "Honey Bear", price: 3500, img: "bear.png" },
+            "book.jpg": { name: "Ancient Book", price: 1000, img: "book.jpg" },
+            "booox.png": { name: "Berry Box", price: 700, img: "booox.png" },
+            "botinok.png": { name: "Old Boot", price: 400, img: "botinok.png" },
+            "box.png": { name: "Jack in Box", price: 600, img: "box.png" },
+            "car.png": { name: "Sports Car", price: 5000, img: "car.png" },
+            "raketa.png": { name: "Space Rocket", price: 50, img: "raketa.png" },
+            "ccolso2.png": { name: "Star Ring", price: 3000, img: "ccolso2.png" },
+            "cerrrdce.jpg": { name: "Gingerbread", price: 500, img: "cerrrdce.jpg" },
+            "chemodan.jpg": { name: "Traveler Case", price: 5000, img: "chemodan.jpg" },
+            "ciga.png": { name: "Luxury Cigar", price: 3000, img: "ciga.png" },
+            "colso.png": { name: "Blue Diamond", price: 2500, img: "colso.png" },
+            "costum.jpg": { name: "Royal Costume", price: 10000, img: "costum.jpg" },
+            "cvetok.png": { name: "Wild Flower", price: 1000, img: "cvetok.png" },
+            "dog.png": { name: "Rich Dog", price: 500, img: "dog.png" },
+            "dyxi.png": { name: "Gold Perfume", price: 10000, img: "dyxi.png" },
+            "fonarik.jpg": { name: "Night Lantern", price: 100, img: "fonarik.jpg" },
+            "grob.jpg": { name: "Ancient Coffin", price: 5000, img: "grob.jpg" },
+            "gyba.png": { name: "Lava Lips", price: 5000, img: "gyba.png" },
+            "happybirthday.jpg": { name: "Birthday Cake", price: 200, img: "happybirthday.jpg" },
+            "heart.png": { name: "Heart Lock", price: 2000, img: "heart.png" },
+            "helmet.png": { name: "Spartan Helmet", price: 25000, img: "helmet.png" },
+            "kalendar.png": { name: "Event Calendar", price: 400, img: "kalendar.png" },
+            "kepka.png": { name: "Legendary Cap", price: 100000, img: "kepka.png" },
+            "kirpitch.jpg": { name: "Golden Brick", price: 10000, img: "kirpitch.jpg" },
+            "koks.jpg": { name: "Party Cocktail", price: 150, img: "koks.jpg" },
+            "koktel.png": { name: "Toxic Mix", price: 500, img: "koktel.png" },
+            "kot.png": { name: "Atomic Cat", price: 10000, img: "kot.png" },
+            "kotel.png": { name: "Witch Cauldron", price: 500, img: "kotel.png" },
+            "krovatka.jpg": { name: "Baby Bow", price: 600, img: "krovatka.jpg" },
+            "lolipop.png": { name: "Sweet Lollipop", price: 500, img: "lolipop.png" },
+            "lucky.jpg": { name: "Clover Lucky", price: 500, img: "lucky.jpg" },
+            "mafin.jpg": { name: "Sugar Muffin", price: 700, img: "mafin.jpg" },
+            "metch.png": { name: "Star Saber", price: 700, img: "metch.png" },
+            "narkotiki.png": { name: "Star Token", price: 600, img: "narkotiki.png" },
+            "obyv.jpg": { name: "Sneakers Pro", price: 10000, img: "obyv.jpg" },
+            "orel.jpg": { name: "Golden Eagle", price: 5000, img: "orel.jpg" },
+            "otkritka.jpg": { name: "Peace Dove", price: 150, img: "otkritka.jpg" },
+            "paska.jpg": { name: "Easter Cake", price: 75, img: "paska.jpg" },
+            "rozza.png": { name: "Velvet Rose", price: 2000, img: "rozza.png" },
+            "rykzak.jpg": { name: "Adventurer Bag", price: 500, img: "rykzak.jpg" },
+            "shapka.png": { name: "Santa Hat", price: 500, img: "shapka.png" },
+            "shar.jpg": { name: "Magic Ball", price: 1000, img: "shar.jpg" },
+            "shlem.png": { name: "Biker Helmet", price: 3500, img: "shlem.png" },
+            "soska.jpg": { name: "Diamond Pacifier", price: 3000, img: "soska.jpg" },
+            "star.png": { name: "Pure Star", price: 15, img: "star.png" },
+            "statyya.jpg": { name: "Hero Statue", price: 41000, img: "statyya.jpg" },
+            "venok.jpg": { name: "Wreath Flower", price: 500, img: "venok.jpg" },
+            "yayko.png": { name: "Dragon Egg", price: 600, img: "yayko.png" },
+            "zhele.png": { name: "Slime Jelly", price: 700, img: "zhele.png" },
+            "zmei.png": { name: "Snake Friend", price: 500, img: "zmei.png" },
+            "meczcc.png": { name: "Faith Amulet", price: 600, img: "meczcc.png" },
+            "kryg.PNG": { name: "Snow Globe", price: 600, img: "kryg.PNG" },
+            "gribb.PNG": { name: "Spy Agaric", price: 600, img: "gribb.PNG" },
+            "zirka.PNG": { name: "Hanging Star", price: 800, img: "zirka.PNG" },
+            "cvetk.PNG": { name: "Sakura Flower", price: 900, img: "cvetk.PNG" },
+            "sshapka.PNG": { name: "Khabib's Papakha", price: 2300, img: "sshapka.PNG" },
+            "tyfli.PNG": { name: "Sky Stilettos", price: 1800, img: "tyfli.PNG" }
+        };
 
-    let userRowData = null;
-    let isSpinning = false;
-    let winningItem = null;
-    let isFreeSpinAvailable = false;
+        let user = null, isSpinning = false, multi = 1, currentWins = [];
 
-    const headers = {
-        'apikey': SB_KEY,
-        'Authorization': `Bearer ${SB_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
-    };
+        async function sync() {
+            try {
+                const { data } = await SB.from('users').select('*').eq('user_id', userId).single();
+                if (data) { 
+                    user = data; 
+                    document.getElementById('val-stars').innerText = Math.floor(user.stars || 0);
+                    updateUI();
+                }
+            } catch (e) { console.error(e); }
+        }
 
-    function goToMain() { window.location.href = 'index.html'; }
-
-    async function loadUserData() {
-        try {
-            const res = await fetch(`${SB_URL}/rest/v1/${TABLE}?user_id=eq.${userId}`, { headers });
-            const data = await res.json();
-            if (data && data.length > 0) {
-                userRowData = data[0];
-                updateUI();
-                setInterval(updateUI, 1000); // Запуск таймера
+        function updateUI() {
+            const lastFree = user.last_free_spin ? new Date(user.last_free_spin).getTime() : 0;
+            const isFree = (Date.now() - lastFree) > 86400000;
+            const btn = document.getElementById('spin-btn');
+            if (isFree) {
+                btn.innerText = "БЕСПЛАТНЫЙ СПИН";
+                btn.disabled = isSpinning;
+            } else {
+                const cost = 100 * multi;
+                btn.innerText = `КРУТИТЬ ЗА ${cost} ★`;
+                btn.disabled = isSpinning || (user.stars < cost);
             }
-        } catch (e) { console.error(e); }
+            if (!isSpinning) initWheels();
+        }
+
+function initWheels() {
+    const container = document.getElementById('wheels-container');
+    container.innerHTML = '';
+    const keys = Object.keys(ALL_ITEMS);
+    
+    // Определяем размер предметов в зависимости от количества лент
+    const itemSize = multi > 3 ? '65px' : '80px';
+    const imgSize = multi > 3 ? '40px' : '55px';
+
+    for(let i=0; i<multi; i++) {
+        let content = '';
+        for(let j=0; j<140; j++) {
+            const k = keys[Math.floor(Math.random()*keys.length)];
+            content += `
+                <div class="item" style="min-width: ${itemSize}; height: ${itemSize};">
+                    <img src="img/${ALL_ITEMS[k].img}" style="width: ${imgSize}; height: ${imgSize};" onerror="this.src='img/star.png'">
+                </div>`;
+        }
+        container.innerHTML += `
+            <div class="wheel-track" style="height: ${multi > 3 ? '75px' : '90px'}">
+                <div class="pointer"></div>
+                <div class="wheel-line" id="line-${i}">${content}</div>
+            </div>`;
     }
+}
 
-    function updateUI() {
-        if (!userRowData) return;
-        
-        const balance = parseInt(userRowData.stars) || 0;
-        const now = new Date().getTime();
-        const lastFree = userRowData.last_free_spin ? new Date(userRowData.last_free_spin).getTime() : 0;
-        const diff = now - lastFree;
-        const cooldown = 24 * 60 * 60 * 1000;
+        function setMulti(m) {
+            if (isSpinning) return;
+            multi = parseInt(m);
+            tg.HapticFeedback.impactOccurred('light');
+            document.querySelectorAll('.multi-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.m) === multi));
+            updateUI();
+        }
 
-        const btn = document.getElementById('spin-btn');
-        const timerDisp = document.getElementById('timer-display');
+        async function startSpin() {
+            if (isSpinning || !user) return;
+            const lastFree = user.last_free_spin ? new Date(user.last_free_spin).getTime() : 0;
+            const isFree = (Date.now() - lastFree) > 86400000;
+            const cost = isFree ? 0 : 100 * multi;
 
-        if (diff >= cooldown) {
-            isFreeSpinAvailable = true;
-            btn.innerText = "БЕСПЛАТНЫЙ КРУТИТЬ";
-            btn.disabled = isSpinning;
-            timerDisp.innerText = `БАЛАНС: ${balance} ⭐ | БЕСПЛАТНО ДОСТУПНО`;
-        } else {
-            isFreeSpinAvailable = false;
-            const remaining = cooldown - diff;
-            const h = Math.floor(remaining / 3600000);
-            const m = Math.floor((remaining % 3600000) / 60000);
-            const s = Math.floor((remaining % 60000) / 1000);
+            if (!isFree && user.stars < cost) return;
+
+            tg.HapticFeedback.impactOccurred('medium');
+            isSpinning = true;
+            currentWins = [];
+            let tempStep = user.spin_count || 0;
+
+            const RARE_KEYS = Object.keys(ALL_ITEMS).filter(k => ALL_ITEMS[k].price >= 100 && ALL_ITEMS[k].price <= 500); 
+            const JUNK_KEYS = Object.keys(ALL_ITEMS).filter(k => ALL_ITEMS[k].price < 100);
+
+            for(let i=0; i<multi; i++) {
+                tempStep++; 
+                let winKey = (tempStep - 1) % 7 === 0 
+                    ? RARE_KEYS[Math.floor(Math.random() * RARE_KEYS.length)]
+                    : JUNK_KEYS[Math.floor(Math.random() * JUNK_KEYS.length)] || JUNK_KEYS[0];
+                
+                currentWins.push(ALL_ITEMS[winKey]);
+                const line = document.getElementById(`line-${i}`);
+                const imgs = line.querySelectorAll('img');
+                imgs[130].src = `img/${ALL_ITEMS[winKey].img}`;
+            }
+
+            const upd = isFree ? { last_free_spin: new Date().toISOString(), spin_count: tempStep } 
+                               : { stars: user.stars - cost, spin_count: tempStep };
+
+            await SB.from('users').update(upd).eq('user_id', userId);
             
-            btn.innerText = balance < SPIN_COST ? `НУЖНО ${SPIN_COST} ⭐` : `КРУТИТЬ ЗА ${SPIN_COST} ⭐`;
-            btn.disabled = balance < SPIN_COST || isSpinning;
-            timerDisp.innerText = `СЛЕДУЮЩИЙ БЕСПЛАТНЫЙ ЧЕРЕЗ: ${h}ч ${m}м ${s}с`;
-        }
-    }
+            user.stars = isFree ? user.stars : user.stars - cost;
+            document.getElementById('val-stars').innerText = Math.floor(user.stars);
 
-    async function handleSpin() {
-        if (isSpinning) return;
-        const balance = parseInt(userRowData.stars) || 0;
-        
-        let updatePayload = {};
+            for(let i=0; i<multi; i++) {
+                const line = document.getElementById(`line-${i}`);
+                const itemWidth = 88; // item (80) + margin (4+4)
+                const offset = (130 * itemWidth) - (window.innerWidth / 2) + (itemWidth / 2);
+                line.style.transition = `transform ${7 + (i * 0.4)}s cubic-bezier(0.15, 0, 0.15, 1)`;
+                line.style.transform = `translateX(-${offset}px)`;
+            }
 
-        if (isFreeSpinAvailable) {
-            // Бесплатный прокрут
-            updatePayload = { last_free_spin: new Date().toISOString() };
-        } else {
-            // Платный прокрут
-            if (balance < SPIN_COST) return;
-            const newBalance = balance - SPIN_COST;
-            updatePayload = { stars: newBalance };
-            userRowData.stars = newBalance;
+            setTimeout(() => {
+                tg.HapticFeedback.notificationOccurred('success');
+                showModal();
+            }, 8500);
         }
 
-        isSpinning = true;
-        updateUI();
-
-        // Обновляем базу
-        await fetch(`${SB_URL}/rest/v1/${TABLE}?user_id=eq.${userId}`, {
-            method: 'PATCH',
-            headers,
-            body: JSON.stringify(updatePayload)
-        });
-        
-        if (isFreeSpinAvailable) userRowData.last_free_spin = updatePayload.last_free_spin;
-
-        // Расчет выигрыша (99% на звезду ID 65)
-        const rand = Math.random() * 100;
-        let winId = (rand <= 99) ? "65" : Object.keys(ITEMS_DB)[Math.floor(Math.random() * Object.keys(ITEMS_DB).length)];
-        winningItem = { id: winId, ...ITEMS_DB[winId] };
-
-        startAnimation(winId);
-    }
-
-    function startAnimation(winId) {
-        const wheel = document.getElementById('wheel');
-        const itemIds = Object.keys(ITEMS_DB);
-        wheel.innerHTML = '';
-        wheel.style.transition = 'none';
-        wheel.style.transform = 'translateX(0)';
-        
-        const count = 50; 
-        for (let i = 0; i < count + 5; i++) {
-            const id = (i === count) ? winId : itemIds[Math.floor(Math.random() * itemIds.length)];
-            const div = document.createElement('div');
-            div.className = 'item';
-            div.innerHTML = `<img src="img/${ITEMS_DB[id].img}" onerror="this.src='img/star.png'">`;
-            wheel.appendChild(div);
-        }
-
-        setTimeout(() => {
-            const itemWidth = 136; 
-            const shift = (count * itemWidth) - (window.innerWidth / 2) + (itemWidth / 2);
-            wheel.style.transition = 'transform 8s cubic-bezier(0.1, 0, 0.05, 1)';
-            wheel.style.transform = `translateX(-${shift}px)`;
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-        }, 50);
-
-        setTimeout(() => {
-            document.getElementById('won-item-img').src = `img/${winningItem.img}`;
-            document.getElementById('won-item-name').innerText = winningItem.name;
-            document.getElementById('sell-btn').innerText = `ПРОДАТЬ ЗА ${winningItem.price} ⭐`;
+        function showModal() {
+            const container = document.getElementById('win-items-container');
+            container.innerHTML = '';
+            let total = 0;
+            currentWins.forEach(w => {
+                total += w.price;
+                container.innerHTML += `
+                    <div class="bg-white/5 p-3 rounded-2xl border border-white/5 text-center">
+                        <img src="img/${w.img}" class="w-10 h-10 mx-auto mb-2" onerror="this.src='img/star.png'">
+                        <p class="text-[10px] font-black text-purple-400">${w.price}★</p>
+                    </div>`;
+            });
+            document.getElementById('total-win-price').innerText = total;
             document.getElementById('win-modal').style.display = 'flex';
-            isSpinning = false;
-        }, 8500);
-    }
-
-    document.getElementById('sell-btn').onclick = async () => {
-        const finalBalance = (parseInt(userRowData.stars) || 0) + winningItem.price;
-        await fetch(`${SB_URL}/rest/v1/${TABLE}?user_id=eq.${userId}`, {
-            method: 'PATCH',
-            headers,
-            body: JSON.stringify({ stars: finalBalance })
-        });
-        window.location.reload(); 
-    };
-
-    document.getElementById('keep-btn').onclick = async () => {
-        let currentInv = userRowData.inventory;
-        if (typeof currentInv === 'string') {
-            try { currentInv = JSON.parse(currentInv); } catch(e) { currentInv = []; }
         }
-        if (!Array.isArray(currentInv)) currentInv = [];
-        const updatedInv = [...currentInv, { name: winningItem.name, img: winningItem.img }];
-        await fetch(`${SB_URL}/rest/v1/${TABLE}?user_id=eq.${userId}`, {
-            method: 'PATCH',
-            headers,
-            body: JSON.stringify({ inventory: updatedInv })
-        });
-        window.location.href = 'profile.html';
-    };
 
-    window.onload = loadUserData;
-</script>
+        async function claimPrize(type) {
+            const sellBtn = document.getElementById('sell-btn');
+            const keepBtn = document.getElementById('keep-btn');
+            sellBtn.disabled = true; keepBtn.disabled = true;
+
+            const sum = currentWins.reduce((s, w) => s + w.price, 0);
+
+            try {
+                if (type === 'sell') {
+                    await SB.from('users').update({ stars: user.stars + sum }).eq('user_id', userId);
+                } else {
+                    const inv = user.inventory || [];
+                    currentWins.forEach(w => inv.push({...w, id: Date.now() + Math.random()}));
+                    await SB.from('users').update({ inventory: inv }).eq('user_id', userId);
+                }
+
+                document.getElementById('win-modal').style.display = 'none';
+                isSpinning = false;
+                initWheels();
+                sellBtn.disabled = false; keepBtn.disabled = false;
+                await sync(); 
+            } catch (e) { console.error(e); }
+        }
+
+        sync();
+    </script>
 </body>
 </html>
