@@ -1,247 +1,158 @@
 <!DOCTYPE html>
-
 <html lang="ru">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-
-    <title>StarsDrop Games - In Development</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>StarsDrop Hub</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
     <script src="https://cdn.tailwindcss.com"></script>
-
     <style>
-
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-
         
+        :root {
+            --bg: #0a0510;
+            --accent: #a855f7;
+            --card-bg: #120a1f;
+        }
 
-        body { 
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
 
-            background-color: #0a1205; 
+        /* Контейнер для вертикального скролла с эффектом прилипания */
+        .games-list {
+            height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
 
-            color: white; 
-
-            font-family: 'Inter', sans-serif; 
-
-            margin: 0; 
-
+        .game-card {
+            height: 90vh; /* Почти на весь экран, чтобы было видно край следующей */
+            scroll-snap-align: start;
             display: flex;
-
+            flex-direction: column;
             align-items: center;
-
             justify-content: center;
-
-            min-height: 100vh;
-
-            overflow: hidden;
-
-        }
-
-
-
-        .bg-glow {
-
-            position: absolute;
-
-            width: 300px; height: 300px;
-
-            background: radial-gradient(circle, rgba(163, 230, 53, 0.15) 0%, transparent 70%);
-
-            filter: blur(40px);
-
-            z-index: 0;
-
-            animation: pulse 4s infinite ease-in-out;
-
-        }
-
-
-
-        @keyframes pulse {
-
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-
-            50% { transform: scale(1.2); opacity: 1; }
-
-        }
-
-
-
-        .content {
-
+            padding: 20px;
             position: relative;
-
-            z-index: 10;
-
-            text-align: center;
-
-            padding: 2rem;
-
         }
 
-
-
-        .loader-dots {
-
-            display: inline-flex;
-
-            gap: 4px;
-
+        .image-container {
+            width: 100%;
+            max-width: 300px;
+            aspect-ratio: 1/1;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem;
         }
 
-
-
-        .dot {
-
-            width: 8px; height: 8px;
-
-            background: #a3e635;
-
-            border-radius: 50%;
-
-            animation: bounce 1.4s infinite ease-in-out both;
-
+        .game-img {
+            width: 80%;
+            height: auto;
+            filter: drop-shadow(0 0 20px var(--accent));
+            transition: transform 0.3s ease;
         }
 
-
-
-        .dot:nth-child(1) { animation-delay: -0.32s; }
-
-        .dot:nth-child(2) { animation-delay: -0.16s; }
-
-
-
-        @keyframes bounce {
-
-            0%, 80%, 100% { transform: scale(0); }
-
-            40% { transform: scale(1.0); }
-
+        .game-card:hover .game-img {
+            transform: scale(1.05);
         }
 
-
-
-        .btn-back {
-
-            background: rgba(255, 255, 255, 0.05);
-
-            border: 1px solid rgba(255, 255, 255, 0.1);
-
-            padding: 16px 32px;
-
-            border-radius: 20px;
-
+        .game-title {
             font-weight: 900;
-
+            font-size: 2.5rem;
             text-transform: uppercase;
-
-            font-size: 12px;
-
-            letter-spacing: 1px;
-
-            margin-top: 2rem;
-
-            transition: 0.3s;
-
+            font-italic: italic;
+            margin-bottom: 0.5rem;
+            letter-spacing: -2px;
         }
 
+        .btn-play {
+            background: var(--accent);
+            color: white;
+            font-weight: 900;
+            padding: 16px 60px;
+            border-radius: 16px;
+            text-transform: uppercase;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.5);
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
 
-
-        .btn-back:active {
-
+        .btn-play:active {
             transform: scale(0.95);
-
-            background: rgba(163, 230, 53, 0.1);
-
+            background: #9333ea;
         }
 
+        /* Тонкая линия разделения */
+        .divider {
+            width: 40px;
+            height: 4px;
+            background: var(--accent);
+            border-radius: 2px;
+            margin-bottom: 2rem;
+            opacity: 0.5;
+        }
+
+        /* Кастомный скроллбар */
+        .games-list::-webkit-scrollbar { width: 0px; }
     </style>
-
 </head>
-
 <body>
 
-
-
-    <div class="bg-glow"></div>
-
-
-
-    <div class="content">
-
-        <div class="flex justify-center mb-6">
-
-            <div class="relative">
-
-                <img src="mini.png" alt="Games" class="w-24 h-24 opacity-20 grayscale">
-
-                <div class="absolute inset-0 flex items-center justify-center">
-
-                    <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
-
-                    </svg>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-
-        <h1 class="text-3xl font-black uppercase italic tracking-tighter mb-2">
-
-            Игры  в  <span class="text-green-500">разработке</span>
-
-        </h1>
-
+    <div class="games-list">
         
+        <section class="game-card">
+            <div class="image-container">
+                <img src="ccrush.png" alt="Crash" class="game-img">
+            </div>
+            <h2 class="game-title text-accent">CRASH</h2>
+            <div class="divider"></div>
+            <button onclick="launch('crash.html')" class="btn-play">Играть</button>
+        </section>
 
-        <p class="text-gray-500 text-sm font-medium mb-8">
+        <section class="game-card">
+            <div class="image-container">
+                <img src="mine.png" alt="Mines" class="game-img">
+            </div>
+            <h2 class="game-title text-white">MINES</h2>
+            <div class="divider"></div>
+            <button onclick="launch('mines.html')" class="btn-play">Играть</button>
+        </section>
 
-            Настраиваем алгоритмы удачи
-
-            <span class="loader-dots">
-
-                <span class="dot"></span>
-
-                <span class="dot"></span>
-
-                <span class="dot"></span>
-
-            </span>
-
-        </p>
-
-
-
-        <button onclick="window.location.href='index.html'" class="btn-back">
-
-            Вернуться назад
-
-        </button>
+        <section class="game-card">
+            <div class="image-container">
+                <img src="plinko.png" alt="Plinko" class="game-img">
+            </div>
+            <h2 class="game-title text-accent">PLINKO</h2>
+            <div class="divider"></div>
+            <button onclick="launch('plinko.html')" class="btn-play">Играть</button>
+        </section>
 
     </div>
 
-
-
     <script>
-
         const tg = window.Telegram.WebApp;
-
         tg.expand();
+        tg.ready();
 
-        tg.HapticFeedback.impactOccurred('medium');
+        function launch(file) {
+            tg.HapticFeedback.impactOccurred('heavy');
+            // Переход на файл игры
+            window.location.href = file;
+        }
 
+        // Настройка главной кнопки TG (по желанию)
+        tg.BackButton.hide();
     </script>
-
 </body>
-
 </html>
