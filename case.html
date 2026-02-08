@@ -498,25 +498,35 @@ function showWin(winners) {
 async function sellAllAndClose() {
     if (isBusy) return;
     isBusy = true;
+    
     const totalProfit = currentWinners.reduce((sum, item) => sum + item.price, 0);
     const newBalance = balance.stars + totalProfit;
 
     try {
         const res = await fetch(`${SB_URL}/rest/v1/users?user_id=eq.${userId}`, {
             method: 'PATCH',
-            headers: { ...headers, 'Prefer': 'return=minimal' },
+            headers: { 
+                ...headers, 
+                'Prefer': 'return=representation' // Изменено на representation, чтобы получить ответ
+            },
             body: JSON.stringify({ stars: newBalance })
         });
 
         if (res.ok) {
+            // Сначала обновляем локальный объект баланса
             balance.stars = newBalance;
+            // Обновляем текст в шапке
             saveAndRefresh();
+            // Закрываем модалку
             closeModal();
+            console.log("Успешно продано. Новый баланс:", balance.stars);
         } else {
-            alert("Ошибка при продаже");
+            const errorData = await res.json();
+            alert("Ошибка при продаже: " + (errorData.message || "Unknown error"));
         }
     } catch (e) {
-        alert("Критическая ошибка сети");
+        console.error(e);
+        alert("Критическая ошибка сети при продаже");
     } finally {
         isBusy = false;
     }
@@ -527,16 +537,21 @@ async function saveToInventoryAndClose() {
     isBusy = true;
 
     try {
+        // 1. Получаем текущий инвентарь
         const res = await fetch(`${SB_URL}/rest/v1/users?user_id=eq.${userId}&select=inventory`, { 
             headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` } 
         });
-        const userData = await res.json();
         
+        if (!res.ok) throw new Error("Не удалось загрузить инвентарь");
+        
+        const userData = await res.json();
         let currentInv = userData[0]?.inventory;
+        
         if (!Array.isArray(currentInv)) {
             currentInv = [];
         }
 
+        // 2. Формируем новые предметы
         const newItems = currentWinners.map(item => ({
             id: Date.now() + Math.random(), 
             name: item.name,
@@ -546,21 +561,27 @@ async function saveToInventoryAndClose() {
 
         const updatedInventory = [...currentInv, ...newItems];
 
+        // 3. Сохраняем обновленный массив
         const saveRes = await fetch(`${SB_URL}/rest/v1/users?user_id=eq.${userId}`, {
             method: 'PATCH',
-            headers: { ...headers, 'Prefer': 'return=minimal' },
+            headers: { 
+                ...headers, 
+                'Prefer': 'return=representation' 
+            },
             body: JSON.stringify({ inventory: updatedInventory })
         });
 
         if (saveRes.ok) {
+            console.log("Инвентарь обновлен");
             closeModal();
-            syncData();
+            // Вызываем синхронизацию, чтобы обновить все данные
+            await syncData(); 
         } else {
-            throw new Error("Ошибка сохранения");
+            throw new Error("Ошибка сохранения на сервере");
         }
     } catch (e) {
         console.error(e);
-        alert("Не удалось сохранить предметы.");
+        alert("Не удалось сохранить предметы в инвентарь.");
     } finally {
         isBusy = false;
     }
