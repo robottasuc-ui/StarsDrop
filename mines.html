@@ -2,295 +2,219 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Stars Mines — TMA Edition</title>
-    
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stars Plinko Official</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        :root { --bg: #0a0510; --accent: #a855f7; --panel-bg: #120a1f; --cell-bg: #1a1025; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;900&display=swap');
+        :root { --accent: #a855f7; --bg: #0b0b0b; }
         
         body { 
             background: var(--bg); 
             color: white; 
             font-family: 'Inter', sans-serif; 
             margin: 0; 
-            overflow: hidden; 
             height: 100vh; 
-            display: flex;
-            flex-direction: column;
-        }
-
-        header { 
-            background: #08040d; 
-            border-bottom: 1px solid #221536; 
-            padding: 10px 20px; 
             display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            z-index: 10; 
+            flex-direction: column; 
+            overflow: hidden;
         }
 
-        /* Адаптация под вертикаль ТГ */
-        .game-layout { 
+        /* Хедер на всю ширину */
+        header {
+            width: 100%;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Область игры - центрируем и поднимаем */
+        #game-view {
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 10px;
-            justify-content: center;
+            align-items: center;
+            justify-content: flex-start; /* Поднимаем к верху */
+            padding-top: 5vh;
         }
 
-        .mines-grid { 
-            display: grid; 
-            grid-template-columns: repeat(5, 1fr); 
-            gap: 8px; 
-            width: 100%; 
-            max-width: 380px; 
-            margin: 0 auto;
+        #plinko-container { 
+            width: 400px; 
+            height: 440px; 
+            position: relative;
         }
 
-        .cell { 
-            aspect-ratio: 1/1; 
-            background: var(--cell-bg); 
-            border-radius: 10px; 
-            border: 1px solid #3b225a; 
-            cursor: pointer; 
+        .multiplier-bar { 
             display: flex; 
-            align-items: center; 
             justify-content: center; 
-            transition: 0.1s; 
-            border-bottom: 3px solid #000; 
-        }
-        
-        .cell.open { background: #08040d; border-bottom: 0; cursor: default; }
-        .cell img { width: 70%; height: 70%; object-fit: contain; animation: pop 0.2s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
-        
-        @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
-
-        /* Нижняя панель управления как в Crash */
-        .ui-panel {
-            background: var(--panel-bg);
-            padding: 15px 20px;
-            border-radius: 20px 20px 0 0;
-            border-top: 1px solid rgba(168, 85, 247, 0.3);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            padding-bottom: env(safe-area-inset-bottom);
+            gap: 4px; 
+            position: absolute; 
+            bottom: 0; 
+            width: 100%; 
         }
 
-        .currency-btn { background: #1a1025; padding: 10px; border: 1px solid #3b225a; border-radius: 10px; text-align: center; font-size: 11px; font-weight: 900; color: #a19bb0; flex: 1; }
-        .currency-btn.active { border-color: var(--accent); background: #2d164d; color: #fff; }
+        .x-badge { 
+            width: 38px; height: 28px; background: var(--accent); border-radius: 6px; 
+            font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        }
 
-        .btn-main { background: var(--accent); color: white; font-weight: 900; padding: 15px; border-radius: 12px; text-transform: uppercase; width: 100%; font-size: 16px; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4); }
-        .btn-main.btn-cashout { background: #10b981 !important; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4) !important; }
-        
-        .input-box { background: #08040d; border: 1px solid #3b225a; padding: 8px; border-radius: 10px; font-weight: 900; color: #fff; text-align: center; font-size: 1.1rem; width: 100%; outline: none; }
-        
-        select.input-box { font-size: 14px; appearance: none; }
+        /* Панель управления */
+        .controls-ui {
+            width: 100%;
+            max-width: 600px;
+            background: #141414;
+            padding: 25px 40px;
+            border-radius: 30px 30px 0 0;
+            border: 1px solid rgba(255,255,255,0.05);
+            margin-top: auto;
+        }
+
+        .btn-bet { 
+            background: var(--accent); color: white; font-weight: 900; border-radius: 18px; 
+            padding: 18px; width: 100%; border: none; cursor: pointer; text-transform: uppercase;
+            font-size: 18px; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4); 
+        }
+        .btn-bet:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
 
     <header>
-        <div onclick="location.href='index.html'" class="font-black text-accent text-lg italic tracking-tighter uppercase">
-            STARS<span class="text-white">MINES</span>
-        </div>
-        
-        <div class="flex gap-3 font-bold text-[12px]">
-            <div class="flex items-center gap-1.5 bg-black/40 px-2 py-1 rounded-lg border border-white/5">
-                <img src="img/star.png" class="w-3.5 h-3.5"> <span id="val-stars">0</span>
-            </div>
-            <div class="flex items-center gap-1.5 bg-black/40 px-2 py-1 rounded-lg border border-white/5">
-                <img src="img/ton.png" class="w-3.5 h-3.5"> <span id="val-ton">0.00</span>
-            </div>
+        <div class="font-black text-2xl uppercase tracking-tighter italic">Stars<span class="text-purple-500">Plinko</span></div>
+        <div class="bg-white/10 px-5 py-2 rounded-full flex items-center gap-3 border border-white/10">
+            <span id="balance" class="font-black text-purple-400 text-xl">1000</span>
+            <img src="img/star.png" class="w-6 h-6 object-contain" alt="logo">
         </div>
     </header>
 
-    <main class="game-layout">
-        <div id="grid" class="mines-grid"></div>
-        
-        <div id="stats" class="hidden mt-6 bg-black/40 p-3 rounded-xl border border-white/5 max-w-[380px] mx-auto w-full">
-            <div class="flex justify-between text-[11px] font-black text-gray-400 mb-1">МНОЖИТЕЛЬ <span id="cur-mult" class="text-white text-sm">1.00x</span></div>
-            <div class="flex justify-between text-[11px] font-black text-gray-400">ВЫИГРЫШ 
-                <div class="flex items-center gap-1 text-green-400 text-sm">
-                    <span id="cur-win">0</span>
-                    <img id="cur-icon" src="img/star.png" class="w-3 h-3">
+    <div id="game-view">
+        <div id="plinko-container">
+            <div class="multiplier-bar" id="m-bar">
+                </div>
+        </div>
+
+        <div class="controls-ui">
+            <div class="grid grid-cols-3 gap-4 mb-5">
+                <div class="bg-white/5 p-3 rounded-2xl border border-white/5 text-center">
+                    <p class="text-[10px] opacity-40 uppercase font-bold">Ставка</p>
+                    <input id="bet-input" type="number" value="10" class="bg-transparent w-full text-center font-black text-purple-400 text-xl outline-none">
+                </div>
+                <div class="bg-white/5 p-3 rounded-2xl border border-white/5 text-center">
+                    <p class="text-[10px] opacity-40 uppercase font-bold">Риск</p>
+                    <p class="font-black text-sm mt-1">MEDIUM</p>
+                </div>
+                <div class="bg-white/5 p-3 rounded-2xl border border-white/5 text-center">
+                    <p class="text-[10px] opacity-40 uppercase font-bold">Ряды</p>
+                    <p class="font-black text-sm mt-1">8</p>
                 </div>
             </div>
+            <button onclick="dropBall()" class="btn-bet">Сбросить шарик</button>
         </div>
-    </main>
-
-    <aside class="ui-panel">
-        <div class="flex gap-2">
-            <div id="mode-stars" onclick="switchCur('stars')" class="currency-btn active">STARS</div>
-            <div id="mode-ton" onclick="switchCur('ton')" class="currency-btn">TON</div>
-        </div>
-
-        <div class="flex gap-2">
-            <div class="flex-1">
-                <input id="input-bet" type="number" class="input-box" value="10">
-            </div>
-            <div class="flex-1">
-                <select id="mines-count" class="input-box cursor-pointer">
-                    <option value="1">1 МИНА</option>
-                    <option value="3" selected>3 МИНЫ</option>
-                    <option value="5">5 МИН</option>
-                    <option value="10">10 МИН</option>
-                    <option value="20">20 МИН</option>
-                </select>
-            </div>
-        </div>
-
-        <button id="btn-main" onclick="onMainAction()" class="btn-main">Играть</button>
-    </aside>
+    </div>
 
 <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+    // 1. КОНФИГ БАЗЫ
+    const SB_URL = 'https://mwsbkpfarhdankpyifbm.supabase.co';
+    const SB_KEY = 'sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA';
+    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+    const userId = 8015661230;
 
-    const SB_URL = "https://mwsbkpfarhdankpyifbm.supabase.co"; 
-    const SB_KEY = "sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA"; 
-    const SB = supabase.createClient(SB_URL, SB_KEY);
+    let balance = 0; 
+    const multiValues = [5, 0.2, 2, 1.2, 1, 0.5, 1.2, 2, 10];
 
-    let currentUser = null, cur = 'stars', isPlaying = false;
-    let mines = [], opened = 0, betVal = 0;
+    // 2. РЕНДЕР КНОПОК (чтобы не ехали)
+    const mBar = document.getElementById('m-bar');
+    multiValues.forEach((val, i) => {
+        const div = document.createElement('div');
+        div.className = 'x-badge';
+        if(val === 0.2) div.style.background = '#3b0764';
+        div.innerText = val + 'X';
+        mBar.appendChild(div);
+    });
 
-    async function checkAuth() {
-        const saved = localStorage.getItem('stars_user');
-        if (!saved) { location.href = 'index.html'; return; }
-        currentUser = JSON.parse(saved);
-        syncBalances();
-        renderGrid();
-    }
+    // 3. ФИЗИКА MATTER.JS
+    const { Engine, Render, Runner, Bodies, Composite, Events } = Matter;
+    const engine = Engine.create();
+    engine.gravity.y = 1.4;
 
-    async function syncBalances() {
-        const { data } = await SB.from('users').select('*').eq('user_id', currentUser.user_id).single();
-        if (data) {
-            document.getElementById('val-stars').innerText = Math.floor(Number(data.stars || 0)).toLocaleString();
-            document.getElementById('val-ton').innerText = Number(data.balance || 0).toFixed(2);
+    const render = Render.create({
+        element: document.getElementById('plinko-container'),
+        engine: engine,
+        options: { width: 400, height: 440, wireframes: false, background: 'transparent' }
+    });
+
+    // Стены
+    Composite.add(engine.world, [
+        Bodies.rectangle(5, 220, 10, 440, { isStatic: true, render: { visible: false } }),
+        Bodies.rectangle(395, 220, 10, 440, { isStatic: true, render: { visible: false } })
+    ]);
+
+    // Пирамида
+    for (let i = 2; i <= 9; i++) {
+        for (let j = 0; j < i; j++) {
+            const x = 200 + (j - (i - 1) / 2) * 42;
+            const y = 30 + i * 40;
+            Composite.add(engine.world, Bodies.circle(x, y, 4, { isStatic: true, render: { fillStyle: '#444' } }));
         }
     }
 
-    function switchCur(m) {
-        if (isPlaying) return;
-        cur = m;
-        tg.HapticFeedback.impactOccurred('light');
-        document.querySelectorAll('.currency-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('mode-' + m).classList.add('active');
-        document.getElementById('cur-icon').src = `img/${m === 'stars' ? 'star' : 'ton'}.png`;
-        updateStats();
+    // Зоны
+    for (let i = 0; i < 9; i++) {
+        Composite.add(engine.world, Bodies.rectangle(32 + i * 42, 430, 38, 40, { 
+            isStatic: true, isSensor: true, label: `bucket-${i}`, render: { visible: false } 
+        }));
     }
 
-    function renderGrid() {
-        const grid = document.getElementById('grid');
-        grid.innerHTML = '';
-        for (let i = 0; i < 25; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'cell';
-            cell.dataset.idx = i;
-            cell.onclick = () => openCell(i);
-            grid.appendChild(cell);
-        }
-    }
+    Render.run(render);
+    Runner.run(Runner.create(), engine);
 
-    async function onMainAction() {
-        const btn = document.getElementById('btn-main');
-        const dbCol = cur === 'stars' ? 'stars' : 'balance';
-        tg.HapticFeedback.impactOccurred('medium');
-        
-        if (!isPlaying) {
-            const amount = Number(document.getElementById('input-bet').value);
-            const { data: user } = await SB.from('users').select('*').eq('user_id', currentUser.user_id).single();
-            
-            if (!user || Number(user[dbCol]) < amount) return tg.showAlert("Недостаточно средств!");
-
-            const { error } = await SB.from('users').update({ [dbCol]: Number(user[dbCol]) - amount }).eq('user_id', currentUser.user_id);
-            
-            if (!error) {
-                isPlaying = true; betVal = amount; opened = 0;
-                const mCount = parseInt(document.getElementById('mines-count').value);
-                mines = [];
-                while(mines.length < mCount) {
-                    let r = Math.floor(Math.random() * 25);
-                    if(!mines.includes(r)) mines.push(r);
-                }
-                syncBalances(); renderGrid();
-                btn.innerText = "ЗАБРАТЬ"; btn.disabled = true;
-                btn.classList.add('btn-cashout');
-                document.getElementById('stats').classList.remove('hidden');
-                updateStats();
+    // 4. ФУНКЦИИ
+    async function syncBalance() {
+        try {
+            const { data } = await supabaseClient.from('users').select('stars').eq('user_id', userId).single();
+            if (data) { 
+                balance = data.stars; 
+                document.getElementById('balance').innerText = Math.floor(balance); 
             }
-        } else {
-            const mult = calcMult(opened, mines.length);
-            const win = betVal * mult;
-            const { data: user } = await SB.from('users').select(dbCol).eq('user_id', currentUser.user_id).single();
-            await SB.from('users').update({ [dbCol]: Number(user[dbCol]) + win }).eq('user_id', currentUser.user_id);
-            tg.HapticFeedback.notificationOccurred('success');
-            finishGame(true);
-        }
+        } catch(e) { console.error("DB Error"); }
     }
 
-    function calcMult(opened, mCount) {
-        if (opened === 0) return 0;
-        let p = 1;
-        for (let i = 0; i < opened; i++) { p = p * (25 - i - mCount) / (25 - i); }
-        return (0.97 / p);
+    async function dropBall() {
+        const bet = parseInt(document.getElementById('bet-input').value) || 0;
+        if (balance < bet) return alert("Мало звезд!");
+        
+        balance -= bet;
+        document.getElementById('balance').innerText = Math.floor(balance);
+
+        const ball = Bodies.circle(200 + (Math.random() * 4 - 2), 0, 9, {
+            restitution: 0.5, frictionAir: 0.04, render: { fillStyle: '#a855f7' },
+            label: 'ball', betAmount: bet
+        });
+        Composite.add(engine.world, ball);
     }
 
-    function updateStats() {
-        const mult = calcMult(opened, mines.length);
-        document.getElementById('cur-mult').innerText = mult.toFixed(2) + 'x';
-        const winText = (betVal * mult).toFixed(cur === 'stars' ? 0 : 2);
-        document.getElementById('cur-win').innerText = winText;
-        if (opened > 0) {
-            document.getElementById('btn-main').innerText = `ЗАБРАТЬ ` + winText;
-            document.getElementById('btn-main').disabled = false;
-        }
-    }
-
-    async function openCell(idx) {
-        if (!isPlaying) return;
-        const cell = document.querySelector(`[data-idx="${idx}"]`);
-        if (cell.classList.contains('open')) return;
-
-        cell.classList.add('open');
-        if (mines.includes(idx)) {
-            tg.HapticFeedback.notificationOccurred('error');
-            cell.innerHTML = '<img src="img/bomb.png">';
-            cell.style.backgroundColor = '#3d1616';
-            finishGame(false);
-        } else {
-            tg.HapticFeedback.impactOccurred('light');
-            cell.innerHTML = '<img src="img/kolechko.png">';
-            opened++;
-            updateStats();
-            if (opened + mines.length === 25) onMainAction();
-        }
-    }
-
-    function finishGame(win) {
-        isPlaying = false;
-        document.querySelectorAll('.cell').forEach((c, idx) => {
-            if (mines.includes(idx)) {
-                c.classList.add('open');
-                c.innerHTML = `<img src="img/bomb.png" style="opacity:${win ? '0.4' : '1'}">`;
+    Events.on(engine, 'collisionStart', (event) => {
+        event.pairs.forEach(async (pair) => {
+            const { bodyA, bodyB } = pair;
+            if (bodyB.label === 'ball' && bodyA.label.startsWith('bucket-')) {
+                const idx = parseInt(bodyA.label.split('-')[1]);
+                const win = Math.floor(bodyB.betAmount * multiValues[idx]);
+                Composite.remove(engine.world, bodyB);
+                
+                balance += win;
+                document.getElementById('balance').innerText = Math.floor(balance);
+                await supabaseClient.from('users').update({ stars: balance }).eq('user_id', userId);
             }
         });
-        setTimeout(() => { 
-            document.getElementById('stats').classList.add('hidden');
-            document.getElementById('btn-main').classList.remove('btn-cashout');
-            document.getElementById('btn-main').innerText = "ИГРАТЬ";
-            document.getElementById('btn-main').disabled = false;
-            renderGrid();
-            syncBalances();
-        }, 2500);
-    }
+    });
 
-    checkAuth();
+    window.onload = syncBalance;
 </script>
 </body>
 </html>
