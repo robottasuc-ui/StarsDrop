@@ -12,7 +12,6 @@
         :root {
             --bg: #0a0510;
             --accent: #a855f7;
-            --card-bg: #120a1f;
         }
 
         body {
@@ -21,13 +20,13 @@
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* Фиксируем экран, скролл только внутри списка */
+            overflow: hidden;
             height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        /* --- ФИОЛЕТОВЫЙ ХЕДЕР --- */
+        /* ХЕДЕР */
         header {
             background: #08040d;
             border-bottom: 2px solid rgba(168, 85, 247, 0.3);
@@ -36,59 +35,49 @@
             justify-content: space-between;
             align-items: center;
             z-index: 100;
-            flex-shrink: 0;
         }
 
         .logo {
             font-weight: 900;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             letter-spacing: -1.5px;
-            font-style: italic;
             text-transform: uppercase;
+            font-style: italic;
         }
 
         .home-btn {
             background: rgba(168, 85, 247, 0.1);
             border: 1px solid var(--accent);
-            padding: 10px;
-            border-radius: 14px;
-            transition: all 0.2s;
+            padding: 8px;
+            border-radius: 12px;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
+            transition: 0.2s;
         }
 
-        .home-btn:active {
-            transform: scale(0.9);
-            background: var(--accent);
-        }
+        .home-btn:active { transform: scale(0.9); background: var(--accent); }
 
-        /* --- ВЕРТИКАЛЬНЫЙ СПИСОК --- */
+        /* СПИСОК ИГР */
         .games-list {
             flex: 1;
             overflow-y: scroll;
             scroll-snap-type: y mandatory;
             -webkit-overflow-scrolling: touch;
-            padding-bottom: env(safe-area-inset-bottom);
         }
 
         .game-card {
-            height: calc(100vh - 70px); /* Высота за вычетом хедера */
+            height: calc(100vh - 65px);
             scroll-snap-align: start;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            position: relative;
         }
 
         .image-container {
-            width: 100%;
-            max-width: 280px;
-            aspect-ratio: 1/1;
-            background: radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, transparent 70%);
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -96,19 +85,17 @@
         }
 
         .game-img {
-            width: 85%;
+            width: 90%;
             height: auto;
-            filter: drop-shadow(0 0 30px var(--accent));
-            transition: transform 0.3s ease;
+            filter: drop-shadow(0 0 25px var(--accent));
         }
 
         .game-title {
             font-weight: 900;
             font-size: 2.8rem;
             text-transform: uppercase;
-            margin-bottom: 1.5rem;
             letter-spacing: -2px;
-            text-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+            margin-bottom: 1.5rem;
         }
 
         .btn-play {
@@ -118,17 +105,12 @@
             padding: 16px 70px;
             border-radius: 18px;
             text-transform: uppercase;
-            font-size: 1.3rem;
-            box-shadow: 0 6px 25px rgba(168, 85, 247, 0.4);
-            transition: all 0.2s ease;
+            font-size: 1.2rem;
+            box-shadow: 0 5px 20px rgba(168, 85, 247, 0.4);
             border: none;
-            cursor: pointer;
         }
 
-        .btn-play:active {
-            transform: scale(0.95);
-            filter: brightness(1.2);
-        }
+        .btn-play:active { transform: scale(0.95); }
 
         .games-list::-webkit-scrollbar { width: 0px; }
     </style>
@@ -182,10 +164,10 @@
 
         function launch(file) {
             tg.HapticFeedback.impactOccurred('heavy');
-            window.location.href = file;
+            // Используем относительный путь для GitHub
+            window.location.href = "./" + file;
         }
 
-        // Прячем стандартную кнопку "Назад", так как у нас есть кастомная Home
         tg.BackButton.hide();
     </script>
 </body>
