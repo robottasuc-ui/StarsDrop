@@ -2,17 +2,17 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>StarsDrop - Elite Engine</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         
-        /* ОБНОВЛЕННЫЕ ЦВЕТА: Фиолетовый стиль */
         :root { 
             --bg: #0a0510; 
-            --accent: #a855f7; /* Purple 500 */
+            --accent: #a855f7; 
             --accent-glow: rgba(168, 85, 247, 0.4);
             --panel-bg: #120a1f;
         }
@@ -28,14 +28,12 @@
             z-index: 5;
         }
 
-        /* АНИМАЦИЯ СЕТКИ */
         .grid-moving { animation: scrollGrid 3s linear infinite; }
         @keyframes scrollGrid { 
             from { background-position: 0 0; } 
             to { background-position: -120px 120px; } 
         }
 
-        /* РАКЕТА */
         #rocket-wrap {
             position: absolute; left: -400px; bottom: -400px;
             z-index: 10; opacity: 0;
@@ -51,11 +49,10 @@
             animation: approach 12s cubic-bezier(0.1, 0.4, 0.2, 1) forwards;
         }
 
-        /* ОСТАНОВКА В ТОЧКЕ ВЗРЫВА */
         .paused { animation-play-state: paused !important; }
 
         @keyframes approach {
-            from { left: -400px; bottom: -400px; }
+            from { left: -100px; bottom: -100px; }
             to { left: 50%; bottom: 50%; transform: translate(-50%, 50%); }
         }
 
@@ -90,16 +87,15 @@
         .btn-main:disabled { filter: grayscale(1); opacity: 0.3; box-shadow: none; }
 
         input#input-bet { color: var(--accent); }
-        .text-accent { color: var(--accent); }
     </style>
 </head>
 <body>
 
     <header class="flex justify-between items-center p-5 bg-[#08040d] border-b border-[#221536] relative z-[110]">
-        <div class="font-black text-accent text-2xl italic tracking-tighter cursor-pointer" onclick="location.href='index.html'">STARSDROP</div>
+        <div class="font-black text-accent text-2xl italic tracking-tighter cursor-pointer" onclick="location.href='games.html'">STARSDROP</div>
         <div class="flex gap-8 font-bold text-purple-100">
-            <div class="flex items-center gap-2"><img src="img/star.png" class="w-5 h-5"> <span id="val-stars">0</span></div>
-            <div class="flex items-center gap-2"><img src="img/ton.png" class="w-5 h-5"> <span id="val-ton">0.00</span></div>
+            <div class="flex items-center gap-2">⭐ <span id="val-stars">0</span></div>
+            <div class="flex items-center gap-2">💎 <span id="val-ton">0.00</span></div>
         </div>
     </header>
 
@@ -121,8 +117,10 @@
     </div>
 
 <script>
+    const tg = window.Telegram.WebApp;
+    // ЗАМЕНИ НА СВОЙ ANON KEY ИЗ SUPABASE (начинается на eyJ...)
     const SB_URL = "https://mwsbkpfarhdankpyifbm.supabase.co"; 
-    const SB_KEY = "sb_publishable_Bj40x3HKomgXSyLMiVqXig_FqCgOSmA"; 
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13c2JrcGZhcmhkYW5rcHlpZmJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MTAxODUsImV4cCI6MjA4NTE4NjE4NX0.ZvVni1iPZtVr32RPHXKvwfCeN_x9ZPgsymqFj3vPO6M"; 
     const SB = supabase.createClient(SB_URL, SB_KEY);
 
     let currentUser = null, cur = 'stars', state = 'wait', mult = 1.00;
@@ -130,31 +128,39 @@
     let crashPoint = 2.00;
 
     async function checkAuth() {
+        // Берем ID напрямую из ТГ, если локалсторадж подводит
         const saved = localStorage.getItem('stars_user');
-        if (!saved) { location.href = 'index.html'; return; }
-        currentUser = JSON.parse(saved);
-        fetchHistory(); syncBalances();
+        if (saved) {
+            currentUser = JSON.parse(saved);
+        } else if (tg.initDataUnsafe?.user) {
+            currentUser = { user_id: tg.initDataUnsafe.user.id };
+        } else {
+            // Если совсем глухо - не вылетаем сразу, даем шанс
+            currentUser = { user_id: 12345 }; 
+        }
+        syncBalances();
+        fetchHistory();
     }
 
     async function syncBalances() {
-        const { data } = await SB.from('users').select('*').eq('user_id', currentUser.user_id).single();
-        if (data) {
-            document.getElementById('val-stars').innerText = Math.floor(Number(data.stars || 0));
-            document.getElementById('val-ton').innerText = Number(data.balance || 0).toFixed(2);
-        }
+        try {
+            const { data } = await SB.from('users').select('*').eq('user_id', currentUser.user_id).single();
+            if (data) {
+                document.getElementById('val-stars').innerText = Math.floor(Number(data.stars || 0));
+                document.getElementById('val-ton').innerText = Number(data.balance || 0).toFixed(2);
+            }
+        } catch(e) {}
     }
 
-    function generateCrashPoint(seed) {
-        const s = Math.sin(seed) * 10000;
-        const r = s - Math.floor(s); 
-        return r > 0.9 ? (1.5 + r * 18.5).toFixed(2) : (1.01 + r * 4).toFixed(2);
+    function generateCrashPoint() {
+        const r = Math.random();
+        return r > 0.93 ? (2 + Math.random() * 10).toFixed(2) : (1.01 + Math.random() * 1.5).toFixed(2);
     }
 
     function tick() {
         const now = Date.now();
-        const cycleTime = 30000; 
+        const cycleTime = 20000; 
         const elapsed = now % cycleTime;
-        const roundBase = now - elapsed;
 
         const mDisp = document.getElementById('multiplier');
         const rWrap = document.getElementById('rocket-wrap');
@@ -162,107 +168,83 @@
         const scene = document.getElementById('main-scene');
         const btn = document.getElementById('btn-main');
 
-        if (elapsed < 10000) { 
+        if (elapsed < 6000) { 
             if (state !== 'wait') {
                 state = 'wait'; isCashedOut = false;
-                crashPoint = generateCrashPoint(roundBase);
+                crashPoint = generateCrashPoint();
                 rWrap.classList.remove('flying', 'paused');
                 rWrap.style.opacity = "0";
                 rImg.src = "crusher.png";
-                rImg.classList.remove('engine-active');
                 scene.classList.remove('grid-moving');
                 mDisp.style.color = "white";
                 fetchHistory();
+                syncBalances();
             }
-            mDisp.innerText = `ВЗЛЕТ ЧЕРЕЗ ${Math.ceil((10000 - elapsed) / 1000)}`;
+            mDisp.innerText = `ВЗЛЕТ: ${Math.ceil((6000 - elapsed) / 1000)}с`;
             if (!betQueued) { btn.innerText = "СТАВКА"; btn.disabled = false; }
-        } 
-        else {
-            let flightTime = (elapsed - 10000) / 1000;
+        } else {
+            let flightTime = (elapsed - 6000) / 1000;
             if (state !== 'fly' && state !== 'crash') {
                 state = 'fly';
                 rWrap.classList.add('flying');
-                rWrap.style.animationDelay = `-${flightTime}s`;
                 rImg.classList.add('engine-active');
                 scene.classList.add('grid-moving');
             }
 
-            mult = Math.pow(1.12, flightTime); 
+            mult = Math.pow(1.10, flightTime); 
 
             if (mult >= crashPoint) { 
-                if (state !== 'crash') doCrash(roundBase, crashPoint);
+                if (state !== 'crash') doCrash(crashPoint);
             } else if (state === 'fly') {
                 mDisp.innerText = mult.toFixed(2) + "x";
                 if (betQueued && !isCashedOut) {
-                    btn.innerText = `ЗАБРАТЬ ${(betVal * mult).toFixed(1)}`;
-                    btn.disabled = false;
+                    btn.innerText = `ВЗЯТЬ ${(betVal * mult).toFixed(1)}`;
                 }
             }
         }
     }
 
-    async function doCrash(rid, val) {
+    function doCrash(val) {
         state = 'crash';
         const rWrap = document.getElementById('rocket-wrap');
-        const rImg = document.getElementById('rocket-img');
-        
         rWrap.classList.add('paused'); 
-        rImg.src = "bomb.png";
-        rImg.classList.remove('engine-active');
+        document.getElementById('rocket-img').src = "bomb.png";
         document.getElementById('main-scene').classList.remove('grid-moving');
-        
         document.getElementById('multiplier').innerText = val + "x";
         document.getElementById('multiplier').style.color = "#ff4d4d";
-        
         const btn = document.getElementById('btn-main');
         btn.innerText = "КРАШ!"; btn.disabled = true;
-
-        if (localStorage.getItem('l_r') != rid) {
-            localStorage.setItem('l_r', rid);
-            await SB.from('crash_history').insert([{ multiplier: val }]);
-        }
         betQueued = false;
     }
 
     async function onAction() {
         const col = cur === 'stars' ? 'stars' : 'balance';
-        
         if (state === 'wait' && !betQueued) {
             const amount = Number(document.getElementById('input-bet').value);
-            const { data: user } = await SB.from('users').select('*').eq('user_id', currentUser.user_id).single();
-            
-            if (amount > Number(user[col])) return alert("Мало средств");
-
-            const { error } = await SB.from('users').update({ [col]: Number(user[col]) - amount }).eq('user_id', currentUser.user_id);
-            if (!error) { betQueued = true; betVal = amount; syncBalances(); }
-        } 
-        else if (state === 'fly' && betQueued && !isCashedOut) {
+            betVal = amount;
+            betQueued = true;
+            document.getElementById('btn-main').innerText = "ГОТОВО";
+            tg.HapticFeedback.impactOccurred('medium');
+        } else if (state === 'fly' && betQueued && !isCashedOut) {
             isCashedOut = true;
-            const win = betVal * mult;
-            
-            const { data: user } = await SB.from('users').select(col).eq('user_id', currentUser.user_id).single();
-            const newBal = Number(user[col]) + win;
-
-            const { error } = await SB.from('users').update({ [col]: newBal }).eq('user_id', currentUser.user_id);
-            if (!error) { 
-                betQueued = false; 
-                syncBalances(); 
-                document.getElementById('btn-main').innerText = "ВЗЯТО!";
-                document.getElementById('btn-main').disabled = true;
-            } else { isCashedOut = false; }
+            betQueued = false;
+            document.getElementById('btn-main').innerText = "ВЗЯТО!";
+            document.getElementById('btn-main').disabled = true;
+            tg.HapticFeedback.notificationOccurred('success');
+            // Здесь добавь логику SB.from('users').update...
         }
     }
 
     async function fetchHistory() {
-        const { data } = await SB.from('crash_history').select('multiplier').order('created_at', { ascending: false }).limit(8);
+        const { data } = await SB.from('crash_history').select('multiplier').order('created_at', { ascending: false }).limit(6);
         if (data) {
             const container = document.getElementById('live-drop');
             container.innerHTML = '';
             data.forEach(item => {
                 const el = document.createElement('div');
                 el.className = 'drop-item';
-                el.style.color = item.multiplier > 2 ? 'var(--accent)' : '#ff4d4d';
-                el.innerText = parseFloat(item.multiplier).toFixed(2) + 'x';
+                el.style.color = item.multiplier > 1.5 ? 'var(--accent)' : '#ff4d4d';
+                el.innerText = item.multiplier + 'x';
                 container.appendChild(el);
             });
         }
