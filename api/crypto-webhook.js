@@ -7,20 +7,21 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
-    // CryptoBot отправляет POST запросы
     if (req.method === 'POST') {
-        const { status, payload, amount, asset } = req.body;
+        const { update_type, payload } = req.body;
 
-        console.log("Получен вебхук:", req.body);
+        console.log("Получен вебхук тип:", update_type);
 
-        if (status === 'paid') {
-            const userId = payload; // ID пользователя из Telegram
-            const sum = parseFloat(amount); // Сумма платежа
+        // В Crypto Bot статус оплаты проверяется через update_type
+        if (update_type === 'invoice_paid') {
+            const userId = payload.payload; // Мы передавали ID юзера в поле payload при создании счета
+            const sum = parseFloat(payload.amount);
+            const asset = payload.asset;
 
-            console.log(`Процесс зачисления: ${sum} ${asset} для юзера ${userId}`);
+            console.log(`Зачисление: ${sum} ${asset} для юзера ${userId}`);
 
             try {
-                // 1. Пытаемся получить текущие данные юзера
+                // 1. Получаем текущий баланс
                 const { data: user, error: fetchError } = await supabase
                     .from('users')
                     .select('ton_balance')
@@ -28,7 +29,6 @@ export default async function handler(req, res) {
                     .single();
 
                 if (fetchError && fetchError.code !== 'PGRST116') {
-                    console.error("Ошибка поиска юзера:", fetchError);
                     throw fetchError;
                 }
 
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
                 const currentBalance = user?.ton_balance || 0;
                 const newBalance = currentBalance + sum;
 
-                // 3. Сохраняем обратно в Supabase (если юзера нет - создаст, если есть - обновит только TON)
+                // 3. Обновляем базу
                 const { error: updateError } = await supabase
                     .from('users')
                     .upsert({ 
@@ -44,23 +44,18 @@ export default async function handler(req, res) {
                         ton_balance: newBalance 
                     }, { onConflict: 'user_id' });
 
-                if (updateError) {
-                    console.error("Ошибка при обновлении баланса:", updateError);
-                    throw updateError;
-                }
+                if (updateError) throw updateError;
 
-                console.log(`УСПЕХ! Баланс юзера ${userId} теперь: ${newBalance} TON`);
+                console.log(`УСПЕХ! Юзер ${userId} пополнен. Баланс: ${newBalance}`);
 
             } catch (err) {
-                console.error("Критическая ошибка базы:", err.message);
-                // Мы не выдаем 500 ошибку CryptoBot-у, чтобы он не слал повторы, 
-                // но логируем её у себя в Vercel
+                console.error("Ошибка Supabase:", err.message);
             }
         }
 
-        // ОТВЕТ ДЛЯ КРИПТОБОТА (Обязательно 200 OK)
+        // Всегда отвечаем 200 для CryptoBot
         return res.status(200).send('OK');
     } else {
-        return res.status(200).json({ message: "Webhook is active. Send POST request from CryptoBot." });
+        return res.status(200).send('Webhook Active');
     }
 }
