@@ -18,7 +18,7 @@ else:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Твои токены
-CRYPTO_PAY_TOKEN = '519389:AAnFdMg1D8ywsfVEd0aA02B8872Zzz61ATO'
+CRYPTO_PAY_TOKEN = '536139:AAD16qZ884FGDUXO75J6HssmhCl9PbFJ0eb'
 BOT_TOKEN = '8451029637:AAHF6jJdQ98QhYRRsJxH_wuktMeE5QctT-I'
 
 def get_or_create_user(user_id):
